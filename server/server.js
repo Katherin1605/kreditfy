@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
+import customersRoutes from './routes/customersRoutes.js';
+import salesRoutes from './routes/salesRoutes.js';
 
 
 const PORT = process.env.PORT;
@@ -10,6 +12,8 @@ const app = express();
 
 app.use(cors());
 app.use(express.json())
+app.use(customersRoutes);
+app.use(salesRoutes);
 
 
 // Routes
