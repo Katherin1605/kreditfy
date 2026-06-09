@@ -79,13 +79,14 @@ const Shopping = () => {
               <th className="px-4 py-3">Producto</th>
               <th className="px-4 py-3">Cantidad</th>
               <th className="px-4 py-3">Costo</th>
+              <th className="px-4 py-3">Ganancia</th>
               <th className="px-4 py-3">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {shopping.length === 0 ? (
               <tr>
-                <td className="text-center px-4 py-5 text-secondary" colSpan={5}>
+                <td className="text-center px-4 py-5 text-secondary" colSpan={6}>
                   No hay compras registradas
                 </td>
               </tr>
@@ -96,6 +97,14 @@ const Shopping = () => {
                   <td className="px-4 py-3">{products.find(p => p.id === row.product_id)?.name || '-'}</td>
                   <td className="px-4 py-3">{row.quantity}</td>
                   <td className="px-4 py-3">${parseFloat(row.cost).toFixed(2)}</td>
+                  <td className="px-4 py-3">
+                    {(() => {
+                      const product = products.find(p => p.id === row.product_id);
+                      if (!product) return '-';
+                      const ganancia = (parseFloat(product.price) - parseFloat(row.cost)) * row.quantity;
+                      return <span className={ganancia >= 0 ? 'text-success' : 'text-danger'}>${ganancia.toFixed(2)}</span>;
+                    })()}
+                  </td>
                   <td className="px-4 py-3">
                     <button
                       className="btn btn-sm btn-outline-danger"
