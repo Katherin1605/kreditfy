@@ -7,6 +7,7 @@ import productsRoutes from './routes/productsRoutes.js';
 import paymentsRoutes from './routes/paymentsRoutes.js';
 import shoppingRoutes from './routes/shoppingRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import auditRoutes from './routes/auditRoutes.js';
 
 
 const PORT = process.env.PORT;
@@ -22,6 +23,7 @@ app.use(productsRoutes);
 app.use(paymentsRoutes);
 app.use(shoppingRoutes);
 app.use(adminRoutes);
+app.use(auditRoutes);
 
 
 // Routes
