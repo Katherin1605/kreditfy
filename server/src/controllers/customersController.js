@@ -35,3 +35,66 @@ export const createCustomer = async (req, res) => {
     res.status(500).json({ error: "Error al crear cliente" });
   }
 };
+
+// GET /customers/:id
+export const getCustomerById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const customer = await customerModel.getCustomerById(id);
+
+    if (!customer) {
+      return res.status(404).json({ error: "Cliente no encontrado" });
+    }
+
+    res.json(customer);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener el cliente" });
+  }
+};
+
+// PUT /customers/:id
+export const updateCustomer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { identity_card, name } = req.body;
+
+    if (!identity_card || !name) {
+      return res.status(400).json({ error: "Cédula y nombre son obligatorios" });
+    }
+
+    const updated = await customerModel.updateCustomer(id, req.body);
+
+    if (!updated) {
+      return res.status(404).json({ error: "Cliente no encontrado" });
+    }
+
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+
+    if (error.code === "23505") {
+      return res.status(400).json({ error: "La cédula ya existe" });
+    }
+
+    res.status(500).json({ error: "Error al actualizar el cliente" });
+  }
+};
+
+// DELETE /customers/:id
+export const deleteCustomer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const existing = await customerModel.getCustomerById(id);
+
+    if (!existing) {
+      return res.status(404).json({ error: "Cliente no encontrado" });
+    }
+
+    await customerModel.deleteCustomer(id);
+    res.json({ message: "Cliente eliminado correctamente" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al eliminar el cliente" });
+  }
+};

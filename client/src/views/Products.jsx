@@ -1,37 +1,121 @@
-import FormProducts from "../components/FormProducts"
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import FormProducts from '../components/FormProducts';
+
 const Products = () => {
+  const [products, setProducts] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [formData, setFormData] = useState({ name: '', price: '', description: '', stock: '' });
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = () => {
+    axios.get('http://localhost:3000/products')
+      .then(res => setProducts(res.data))
+      .catch(err => alert(err.response?.data?.error || 'Error al procesar la solicitud'));
+  };
+
+  const handleNew = () => {
+    setFormData({ name: '', price: '', description: '', stock: '' });
+    setEditingProduct(null);
+    setShowForm(true);
+  };
+
+  const handleEdit = (product) => {
+    setFormData({
+      name: product.name,
+      price: product.price.toString(),
+      description: product.description || '',
+      stock: product.stock !== undefined ? product.stock.toString() : '',
+    });
+    setEditingProduct(product);
+    setShowForm(true);
+  };
+
+  const handleDelete = (id) => {
+    if (!window.confirm('¿Eliminar este producto?')) return;
+    axios.delete(`http://localhost:3000/products/${id}`)
+      .then(() => loadProducts())
+      .catch(err => alert(err.response?.data?.error || 'Error al procesar la solicitud'));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const request = editingProduct
+      ? axios.put(`http://localhost:3000/products/${editingProduct.id}`, formData)
+      : axios.post('http://localhost:3000/products', formData);
+    request
+      .then(() => { resetForm(); loadProducts(); })
+      .catch(err => alert(err.response?.data?.error || 'Error al procesar la solicitud'));
+  };
+
+  const resetForm = () => {
+    setFormData({ name: '', price: '', description: '', stock: '' });
+    setEditingProduct(null);
+    setShowForm(false);
+  };
+
   return (
     <>
-      <div className='d-flex justify-content-between'>
-        <div>
-          <h5 className="text-2xl font-bold mb-4">Productos</h5>
-        </div>
-        <div className='text-end mb-3'>
-          <button className='btn btn-primary' onClick={FormProducts}>+ Nuevo Producto</button>
-        </div>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h5>Productos</h5>
+        <button className="btn btn-primary" onClick={handleNew}>
+          <i className="bi bi-plus-lg me-1"></i> Nuevo Producto
+        </button>
       </div>
+
+      {showForm && (
+        <FormProducts
+          formData={formData}
+          setFormData={setFormData}
+          editingProduct={editingProduct}
+          onSubmit={handleSubmit}
+          onClose={resetForm}
+        />
+      )}
+
       <div className="bg-white rounded shadow overflow-hidden">
-        <table className="w-100">
-          <thead className="bg-secondary bg-opacity-10">
+        <table className="table table-hover mb-0">
+          <thead style={{ backgroundColor: 'var(--bg-section)' }}>
             <tr>
-              <th className="px-4 py-2">Nombre</th>
-              <th className="px-4 py-2">SKU</th>
-              <th className="px-4 py-2">Descripción</th>
-              <th className="px-4 py-2">Precio</th>
-              <th className="px-4 py-2">Stock</th>
-              <th className="px-4 py-2">Stock Mín.</th>
-              <th className="px-4 py-2">Acciones</th>
+              <th className="px-4 py-3">Nombre</th>
+              <th className="px-4 py-3">Descripción</th>
+              <th className="px-4 py-3">Precio</th>
+              <th className="px-4 py-3">Stock</th>
+              <th className="px-4 py-3">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            <td className='text-center px-4 py-5 text-secondary' colSpan={7}>
-              No hay productos registrados
-            </td>
+            {products.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="text-center py-5 text-muted">No hay productos registrados</td>
+              </tr>
+            ) : (
+              products.map(p => (
+                <tr key={p.id}>
+                  <td className="px-4 py-2">{p.name}</td>
+                  <td className="px-4 py-2">{p.description || '-'}</td>
+                  <td className="px-4 py-2">${parseFloat(p.price).toFixed(2)}</td>
+                  <td className="px-4 py-2">{p.stock}</td>
+                  <td className="px-4 py-2">
+                    <button className="btn btn-sm btn-outline-primary me-1" onClick={() => handleEdit(p)}>
+                      <i className="bi bi-pencil"></i>
+                    </button>
+                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(p.id)}>
+                      <i className="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default Products
+export default Products;
