@@ -1,57 +1,64 @@
-import Products from "../views/Products"
+import { useState } from 'react';
 
-const FormShopping = () => {
-    return (
-        <>
-            <div className='border border-secondary-subtle rounded p-4'>
-                <div className='d-flex justify-content-between'>
-                    <div>
-                        <h3>Nueva Compra</h3>
-                    </div>
-                    <div>
-                        <button type="button" className="btn-close" aria-label="Close"></button>
-                    </div>
-                </div>
-                <form className="row g-3">
-                    <div className="col-md-12 text-start">
-                        <label for="inputProduct" className="form-label">Producto</label>
-                        <select class="form-select" aria-label="Default select example">
-                            <option selected>Seleccione un producto</option>
-                            <option>{Products}</option>
-                        </select>
-                    </div>
-                    <div className="col-md-12 text-start">
-                        <label for="inputId" className="form-label">SKU</label>
-                        <input type="id" className="form-control" id="inputId" />
-                    </div>
-                    <div className="col-md-6 text-start">
-                        <label for="inputQuantity" className="form-label">Cantidad</label>
-                        <input type="id" className="form-control" id="inputQuantity" />
-                    </div>
-                    <div className="col-md-6 text-start">
-                        <label for="inputSupplier" className="form-label">Proveedor</label>
-                        <input type="id" className="form-control" id="inputSupplier" />
-                    </div>
-                    <div className="col-md-6 text-start">
-                        <label for="inputPurchasePrice" className="form-label">Precio de Compra</label>
-                        <input type="text" className="form-control" id="inputPurchasePrice" />
-                    </div>
-                    <div className="col-md-6 text-start">
-                        <label for="inputSalePrice" className="form-label">Precio de Venta</label>
-                        <input type="text" className="form-control" id="inputSalePrice" />
-                    </div>
-                    <div className="col-md-12 text-start">
-                        <label for="inputNotes" className="form-label">Notas</label>
-                        <textarea class="form-control" id="inputNotes" rows="3"></textarea>
-                    </div>
-                    <div className="col-md-12 text-start">
-                        <button type="submit" className="btn btn-success">Guardar</button>
-                        <button type="submit" className="btn btn-danger ms-3">Cancelar</button>
-                    </div>
-                </form>
-            </div>
-        </>
-    )
-}
+const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) => {
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-export default FormShopping
+  return (
+    <div className="bg-white rounded shadow p-4 mb-4">
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h5>Nueva Compra</h5>
+        <button type="button" className="btn-close" onClick={onClose} aria-label="Close"></button>
+      </div>
+      <form onSubmit={onSubmit} className="row g-3">
+        <div className="col-md-12">
+          <label className="form-label">Producto *</label>
+          <select
+            className="form-select"
+            name="product_id"
+            value={formData.product_id}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Seleccione un producto</option>
+            {products.map(p => (
+              <option key={p.id} value={p.id}>{p.name} (Stock: {p.stock})</option>
+            ))}
+          </select>
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Cantidad *</label>
+          <input
+            type="number"
+            min="1"
+            className="form-control"
+            name="quantity"
+            value={formData.quantity}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Costo *</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            className="form-control"
+            name="cost"
+            value={formData.cost}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="col-12">
+          <button type="submit" className="btn btn-success me-2">Guardar</button>
+          <button type="button" className="btn btn-danger" onClick={onClose}>Cancelar</button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+export default FormShopping;
