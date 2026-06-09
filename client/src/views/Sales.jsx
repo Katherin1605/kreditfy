@@ -1,5 +1,5 @@
 import React from 'react'
-import FormSales from '../Components/FormSales'
+import FormSales from '../components/FormSales'
 
 const Sales = () => {
   return (

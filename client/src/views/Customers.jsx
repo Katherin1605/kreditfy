@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState } from 'react';
-import FormCustomers from '../Components/FormCustomers';
+import FormCustomers from '../components/FormCustomers';
 
 const Customers = () => {
     

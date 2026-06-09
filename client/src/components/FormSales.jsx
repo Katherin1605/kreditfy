@@ -1,6 +1,6 @@
 import React from 'react'
-import Customers from '../Views/Customers'
-import Products from '../Views/Products'
+import Customers from '../views/Customers'
+import Products from '../views/Products'
 
 const FormSales = () => {
     return (

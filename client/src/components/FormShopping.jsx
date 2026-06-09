@@ -1,4 +1,4 @@
-import Products from "../Views/Products"
+import Products from "../views/Products"
 
 const FormShopping = () => {
     return (

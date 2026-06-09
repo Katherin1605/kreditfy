@@ -1,13 +1,13 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Layout from "./Components/Layout";
-import Dashboard from "./Views/Dashboard";
-import Customers from "./Views/Customers";
-import Products from "./Views/Products";
-import Shopping from "./Views/Shopping";
-import Sales from "./Views/Sales";
-import Payments from "./Views/Payments";
-import Admin from "./Views/Admin";
-import Audit from "./Views/Audit";
+import Layout from "./components/Layout";
+import Dashboard from "./views/Dashboard";
+import Customers from "./views/Customers";
+import Products from "./views/Products";
+import Shopping from "./views/Shopping";
+import Sales from "./views/Sales";
+import Payments from "./views/Payments";
+import Admin from "./views/Admin";
+import Audit from "./views/Audit";
 
 function App() {
   return (

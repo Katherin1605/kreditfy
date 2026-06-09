@@ -1,4 +1,4 @@
-import FormProducts from "../Components/FormProducts"
+import FormProducts from "../components/FormProducts"
 const Products = () => {
   return (
     <>

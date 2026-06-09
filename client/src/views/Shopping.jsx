@@ -1,5 +1,5 @@
 import React from 'react'
-import FormShopping from '../Components/FormShopping'
+import FormShopping from '../components/FormShopping'
 
 const Shopping = () => {
   return (
