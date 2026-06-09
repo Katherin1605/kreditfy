@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import FormSales from '../components/FormSales';
 
@@ -161,8 +161,8 @@ const Sales = () => {
               </tr>
             ) : (
               sales.map(s => (
-                <>
-                  <tr key={s.id}>
+                <React.Fragment key={s.id}>
+                  <tr>
                     <td className="px-4 py-2">
                       {new Date(s.created_at).toLocaleDateString()}
                     </td>
@@ -208,7 +208,7 @@ const Sales = () => {
                     </td>
                   </tr>
                   {expandedId === s.id && (
-                    <tr key={`detail-${s.id}`} className="table-light">
+                    <tr className="table-light">
                       <td colSpan={8} className="px-4 py-3">
                         {saleDetails[s.id] ? (
                           <table className="table table-sm mb-0">
@@ -237,7 +237,7 @@ const Sales = () => {
                       </td>
                     </tr>
                   )}
-                </>
+                </React.Fragment>
               ))
             )}
           </tbody>
