@@ -4,6 +4,7 @@ import FormProducts from '../components/FormProducts';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
+  const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState({ name: '', price: '', description: '', stock: '' });
@@ -58,13 +59,32 @@ const Products = () => {
     setShowForm(false);
   };
 
+  const filteredProducts = products.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h5>Productos</h5>
-        <button className="btn btn-primary" onClick={handleNew}>
-          <i className="bi bi-plus-lg me-1"></i> Nuevo Producto
-        </button>
+        <div className="d-flex gap-2 align-items-center">
+          <div className="input-group">
+            <span className="input-group-text bg-white border-end-0">
+              <i className="bi bi-search text-muted"></i>
+            </span>
+            <input
+              type="text"
+              className="form-control border-start-0"
+              placeholder="Buscar por nombre..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ minWidth: '200px' }}
+            />
+          </div>
+          <button className="btn btn-primary text-nowrap" onClick={handleNew}>
+            <i className="bi bi-plus-lg me-1"></i> Nuevo Producto
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -89,12 +109,14 @@ const Products = () => {
             </tr>
           </thead>
           <tbody>
-            {products.length === 0 ? (
+            {filteredProducts.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center py-5 text-muted">No hay productos registrados</td>
+                <td colSpan={5} className="text-center py-5 text-muted">
+                  {products.length === 0 ? 'No hay productos registrados' : 'No se encontraron productos con ese nombre'}
+                </td>
               </tr>
             ) : (
-              products.map(p => (
+              filteredProducts.map(p => (
                 <tr key={p.id}>
                   <td className="px-4 py-2">{p.name}</td>
                   <td className="px-4 py-2">{p.description || '-'}</td>

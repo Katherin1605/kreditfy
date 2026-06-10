@@ -165,6 +165,7 @@ const Sales = () => {
         <table className="table table-hover mb-0">
           <thead style={{ backgroundColor: 'var(--bg-section)' }}>
             <tr>
+              <th className="px-4 py-2">#ID</th>
               <th className="px-4 py-2">Fecha</th>
               <th className="px-4 py-2">Cliente</th>
               <th className="px-4 py-2">Total</th>
@@ -176,16 +177,19 @@ const Sales = () => {
             </tr>
           </thead>
           <tbody>
-            {sales.length === 0 ? (
+            {filteredSales.length === 0 ? (
               <tr>
-                <td className="text-center px-4 py-5 text-secondary" colSpan={8}>
-                  No hay ventas registradas
+                <td className="text-center px-4 py-5 text-secondary" colSpan={9}>
+                  {sales.length === 0 ? 'No hay ventas registradas' : 'No se encontraron ventas con ese criterio'}
                 </td>
               </tr>
             ) : (
-              sales.map(s => (
+              filteredSales.map(s => (
                 <React.Fragment key={s.id}>
                   <tr>
+                    <td className="px-4 py-2">
+                      <span className="badge bg-light text-dark border">#{s.id}</span>
+                    </td>
                     <td className="px-4 py-2">
                       {new Date(s.created_at).toLocaleDateString()}
                     </td>
@@ -232,7 +236,7 @@ const Sales = () => {
                   </tr>
                   {expandedId === s.id && (
                     <tr className="table-light">
-                      <td colSpan={8} className="px-4 py-3">
+                      <td colSpan={9} className="px-4 py-3">
                         {saleDetails[s.id] ? (
                           <table className="table table-sm mb-0">
                             <thead>
