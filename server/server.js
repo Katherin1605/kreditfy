@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
+import authRoutes from './routes/authRoutes.js';
 import customersRoutes from './routes/customersRoutes.js';
 import salesRoutes from './routes/salesRoutes.js';
 import productsRoutes from './routes/productsRoutes.js';
@@ -17,6 +18,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json())
+app.use(authRoutes);
 app.use(customersRoutes);
 app.use(salesRoutes);
 app.use(productsRoutes);

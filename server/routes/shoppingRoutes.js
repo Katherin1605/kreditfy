@@ -6,13 +6,14 @@ import {
   createShopping,
   deleteShopping,
 } from "../src/controllers/shoppingController.js";
+import { authenticateToken } from "../src/middleware/authMiddleware.js";
 
 const router = Router();
 
-router.get("/shopping", getAllShopping);
-router.get("/shopping/product/:product_id", getShoppingByProductId);
-router.get("/shopping/:id", getShoppingById);
-router.post("/shopping", createShopping);
-router.delete("/shopping/:id", deleteShopping);
+router.get("/shopping", authenticateToken, getAllShopping);
+router.get("/shopping/product/:product_id", authenticateToken, getShoppingByProductId);
+router.get("/shopping/:id", authenticateToken, getShoppingById);
+router.post("/shopping", authenticateToken, createShopping);
+router.delete("/shopping/:id", authenticateToken, deleteShopping);
 
 export default router;

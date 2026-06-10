@@ -1,11 +1,23 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
+
+const AVAILABLE_VIEWS = [
+  { key: 'customers', label: 'Clientes' },
+  { key: 'products', label: 'Productos' },
+  { key: 'shopping', label: 'Compras' },
+  { key: 'sales', label: 'Ventas' },
+  { key: 'payments', label: 'Pagos' },
+  { key: 'audit', label: 'Auditoría' },
+];
 
 const Admin = () => {
+  const { currentAdmin } = useAuth();
   const [admins, setAdmins] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState(null);
   const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'admin' });
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     loadAdmins();
@@ -24,6 +36,7 @@ const Admin = () => {
   const handleNew = () => {
     setFormData({ name: '', email: '', password: '', role: 'admin' });
     setEditingAdmin(null);
+    setShowPassword(false);
     setShowForm(true);
   };
 
@@ -43,6 +56,24 @@ const Admin = () => {
     axios.delete(`http://localhost:3000/admins/${id}`)
       .then(() => loadAdmins())
       .catch(err => alert(err.response?.data?.error || 'Error al procesar la solicitud'));
+  };
+
+  const handleToggleActive = (admin) => {
+    const action = admin.active ? 'deshabilitar' : 'habilitar';
+    if (!window.confirm(`¿Seguro que deseas ${action} a ${admin.name}?`)) return;
+    axios.patch(`http://localhost:3000/admins/${admin.id}/active`)
+      .then(() => loadAdmins())
+      .catch(err => alert(err.response?.data?.error || 'Error al cambiar estado'));
+  };
+
+  const handleTogglePermission = (adminId, viewKey, currentPermissions) => {
+    const perms = currentPermissions || [];
+    const newPerms = perms.includes(viewKey)
+      ? perms.filter(p => p !== viewKey)
+      : [...perms, viewKey];
+    axios.patch(`http://localhost:3000/admins/${adminId}/permissions`, { permissions: newPerms })
+      .then(() => loadAdmins())
+      .catch(err => alert(err.response?.data?.error || 'Error al actualizar permisos'));
   };
 
   const handleSubmit = (e) => {
@@ -70,9 +101,11 @@ const Admin = () => {
     <>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h5>Administradores</h5>
-        <button className="btn btn-primary" onClick={handleNew}>
-          <i className="bi bi-plus-lg me-1"></i> Nuevo Administrador
-        </button>
+        {currentAdmin?.role === 'superadmin' && (
+          <button className="btn btn-primary" onClick={handleNew}>
+            <i className="bi bi-plus-lg me-1"></i> Nuevo Administrador
+          </button>
+        )}
       </div>
 
       {showForm && (
@@ -108,14 +141,24 @@ const Admin = () => {
               <label className="form-label">
                 {editingAdmin ? 'Nueva contraseña (dejar vacío para no cambiar)' : 'Contraseña *'}
               </label>
-              <input
-                type="password"
-                className="form-control"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required={!editingAdmin}
-              />
+              <div className="input-group">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  className="form-control"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required={!editingAdmin}
+                />
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={() => setShowPassword(prev => !prev)}
+                  tabIndex={-1}
+                >
+                  <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                </button>
+              </div>
             </div>
             <div className="col-md-6">
               <label className="form-label">Rol</label>
@@ -155,7 +198,10 @@ const Admin = () => {
                     <div className="d-flex align-items-center gap-2">
                       <i className="bi bi-person-circle fs-3 text-primary"></i>
                       <div>
-                        <h6 className="mb-0">{admin.name}</h6>
+                        <h6 className="mb-0">
+                          {admin.name}
+                          {!admin.active && <span className="badge bg-danger ms-1 small">Inactivo</span>}
+                        </h6>
                         <span className={`badge ${admin.role === 'superadmin' ? 'bg-primary' : 'bg-secondary'}`}>
                           {admin.role}
                         </span>
@@ -168,12 +214,23 @@ const Admin = () => {
                       >
                         <i className="bi bi-pencil"></i>
                       </button>
-                      <button
-                        className="btn btn-sm btn-outline-danger"
-                        onClick={() => handleDelete(admin.id)}
-                      >
-                        <i className="bi bi-trash"></i>
-                      </button>
+                      {currentAdmin?.role === 'superadmin' && admin.id !== currentAdmin.id && (
+                        <button
+                          className={`btn btn-sm ${admin.active ? 'btn-outline-warning' : 'btn-outline-success'}`}
+                          onClick={() => handleToggleActive(admin)}
+                          title={admin.active ? 'Deshabilitar' : 'Habilitar'}
+                        >
+                          <i className={`bi ${admin.active ? 'bi-person-slash' : 'bi-person-check'}`}></i>
+                        </button>
+                      )}
+                      {currentAdmin?.role === 'superadmin' && (
+                        <button
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() => handleDelete(admin.id)}
+                        >
+                          <i className="bi bi-trash"></i>
+                        </button>
+                      )}
                     </div>
                   </div>
                   <p className="text-muted small mb-1">
@@ -183,6 +240,27 @@ const Admin = () => {
                     <i className="bi bi-calendar me-1"></i>
                     Desde {new Date(admin.created_at).toLocaleDateString()}
                   </p>
+                  {currentAdmin?.role === 'superadmin' && admin.role !== 'superadmin' && (
+                    <div className="mt-3 pt-3 border-top">
+                      <p className="small fw-bold mb-2 text-muted">Acceso a vistas:</p>
+                      <div className="d-flex flex-wrap gap-2">
+                        {AVAILABLE_VIEWS.map(v => (
+                          <div key={v.key} className="form-check form-check-inline m-0">
+                            <input
+                              type="checkbox"
+                              className="form-check-input"
+                              id={`perm-${admin.id}-${v.key}`}
+                              checked={admin.permissions?.includes(v.key) || false}
+                              onChange={() => handleTogglePermission(admin.id, v.key, admin.permissions)}
+                            />
+                            <label className="form-check-label small" htmlFor={`perm-${admin.id}-${v.key}`}>
+                              {v.label}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

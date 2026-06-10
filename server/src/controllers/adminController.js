@@ -67,3 +67,32 @@ export const deleteAdmin = async (req, res) => {
     res.status(500).json({ error: "Error al eliminar administrador" });
   }
 };
+
+export const toggleAdminActive = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const admin = await adminModel.getAdminById(id);
+    if (!admin) return res.status(404).json({ error: "Administrador no encontrado" });
+    const updated = await adminModel.updateAdminActive(id, !admin.active);
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al cambiar estado del administrador" });
+  }
+};
+
+export const updateAdminPermissions = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { permissions } = req.body;
+    if (!Array.isArray(permissions)) {
+      return res.status(400).json({ error: "permissions debe ser un array" });
+    }
+    const updated = await adminModel.updateAdminPermissions(id, permissions);
+    if (!updated) return res.status(404).json({ error: "Administrador no encontrado" });
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al actualizar permisos" });
+  }
+};
