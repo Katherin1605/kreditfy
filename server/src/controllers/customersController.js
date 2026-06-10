@@ -1,4 +1,5 @@
 import * as customerModel from "../models/customersModel.js";
+import * as auditModel from "../models/auditModel.js";
 
 // GET /customers
 export const getCustomers = async (req, res) => {
@@ -24,6 +25,14 @@ export const createCustomer = async (req, res) => {
     const newCustomer = await customerModel.createCustomer(req.body);
 
     res.status(201).json(newCustomer);
+
+    auditModel.createAuditLog({
+      admin_id: req.admin?.id || null,
+      action: 'CREATE',
+      table_name: 'customers',
+      record_id: newCustomer.id,
+      description: `Creó cliente: ${newCustomer.name}`,
+    }).catch(() => {});
   } catch (error) {
     console.error(error);
 
@@ -70,6 +79,14 @@ export const updateCustomer = async (req, res) => {
     }
 
     res.json(updated);
+
+    auditModel.createAuditLog({
+      admin_id: req.admin?.id || null,
+      action: 'UPDATE',
+      table_name: 'customers',
+      record_id: parseInt(req.params.id),
+      description: `Actualizó cliente ID ${req.params.id}`,
+    }).catch(() => {});
   } catch (error) {
     console.error(error);
 
@@ -93,6 +110,14 @@ export const deleteCustomer = async (req, res) => {
 
     await customerModel.deleteCustomer(id);
     res.json({ message: "Cliente eliminado correctamente" });
+
+    auditModel.createAuditLog({
+      admin_id: req.admin?.id || null,
+      action: 'DELETE',
+      table_name: 'customers',
+      record_id: parseInt(req.params.id),
+      description: `Eliminó cliente ID ${req.params.id}`,
+    }).catch(() => {});
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al eliminar el cliente" });

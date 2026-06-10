@@ -1,7 +1,12 @@
 import pool from "../../db/config.js";
 
 export const getAllAuditLogs = async () => {
-  const result = await pool.query("SELECT * FROM audit_logs ORDER BY created_at DESC");
+  const result = await pool.query(
+    `SELECT al.*, a.name AS admin_name
+     FROM audit_logs al
+     LEFT JOIN admins a ON al.admin_id = a.id
+     ORDER BY al.created_at DESC`
+  );
   return result.rows;
 };
 

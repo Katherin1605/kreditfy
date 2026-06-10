@@ -1,4 +1,5 @@
 import * as adminModel from "../models/adminModel.js";
+import * as auditModel from "../models/auditModel.js";
 
 export const getAdmins = async (req, res) => {
   try {
@@ -29,6 +30,14 @@ export const createAdmin = async (req, res) => {
     }
     const newAdmin = await adminModel.createAdmin(req.body);
     res.status(201).json(newAdmin);
+
+    auditModel.createAuditLog({
+      admin_id: req.admin?.id || null,
+      action: 'CREATE',
+      table_name: 'admins',
+      record_id: newAdmin.id,
+      description: `Creó administrador: ${newAdmin.name}`,
+    }).catch(() => {});
   } catch (error) {
     console.error(error);
     if (error.code === "23505") {
@@ -47,6 +56,14 @@ export const updateAdmin = async (req, res) => {
     const updated = await adminModel.updateAdmin(req.params.id, req.body);
     if (!updated) return res.status(404).json({ error: "Administrador no encontrado" });
     res.json(updated);
+
+    auditModel.createAuditLog({
+      admin_id: req.admin?.id || null,
+      action: 'UPDATE',
+      table_name: 'admins',
+      record_id: parseInt(req.params.id),
+      description: `Actualizó administrador ID ${req.params.id}`,
+    }).catch(() => {});
   } catch (error) {
     console.error(error);
     if (error.code === "23505") {
@@ -62,6 +79,14 @@ export const deleteAdmin = async (req, res) => {
     if (!admin) return res.status(404).json({ error: "Administrador no encontrado" });
     await adminModel.deleteAdmin(req.params.id);
     res.json({ message: "Administrador eliminado correctamente" });
+
+    auditModel.createAuditLog({
+      admin_id: req.admin?.id || null,
+      action: 'DELETE',
+      table_name: 'admins',
+      record_id: parseInt(req.params.id),
+      description: `Eliminó administrador ID ${req.params.id}`,
+    }).catch(() => {});
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al eliminar administrador" });
@@ -75,6 +100,14 @@ export const toggleAdminActive = async (req, res) => {
     if (!admin) return res.status(404).json({ error: "Administrador no encontrado" });
     const updated = await adminModel.updateAdminActive(id, !admin.active);
     res.json(updated);
+
+    auditModel.createAuditLog({
+      admin_id: req.admin?.id || null,
+      action: 'UPDATE',
+      table_name: 'admins',
+      record_id: parseInt(req.params.id),
+      description: `Cambió estado de administrador ID ${req.params.id}`,
+    }).catch(() => {});
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al cambiar estado del administrador" });
@@ -91,6 +124,14 @@ export const updateAdminPermissions = async (req, res) => {
     const updated = await adminModel.updateAdminPermissions(id, permissions);
     if (!updated) return res.status(404).json({ error: "Administrador no encontrado" });
     res.json(updated);
+
+    auditModel.createAuditLog({
+      admin_id: req.admin?.id || null,
+      action: 'UPDATE',
+      table_name: 'admins',
+      record_id: parseInt(req.params.id),
+      description: `Actualizó permisos de administrador ID ${req.params.id}`,
+    }).catch(() => {});
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al actualizar permisos" });

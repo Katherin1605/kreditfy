@@ -1,4 +1,5 @@
 import * as salesModel from "../models/salesModel.js";
+import * as auditModel from "../models/auditModel.js";
 
 export const getSales = async (req, res) => {
   try {
@@ -37,6 +38,14 @@ export const createSale = async (req, res) => {
 
     res.status(201).json(sale);
 
+    auditModel.createAuditLog({
+      admin_id: req.admin?.id || null,
+      action: 'CREATE',
+      table_name: 'sales',
+      record_id: sale.id,
+      description: `Creó venta ID ${sale.id}`,
+    }).catch(() => {});
+
   } catch (error) {
     console.error(error);
 
@@ -60,6 +69,14 @@ export const deleteSale = async (req, res) => {
     await salesModel.deleteSaleById(id);
 
     res.json({ message: "Venta eliminada correctamente" });
+
+    auditModel.createAuditLog({
+      admin_id: req.admin?.id || null,
+      action: 'DELETE',
+      table_name: 'sales',
+      record_id: parseInt(req.params.id),
+      description: `Eliminó venta ID ${req.params.id}`,
+    }).catch(() => {});
   } catch (error) {
     console.error(error);
 
@@ -88,6 +105,14 @@ export const updateSale = async (req, res) => {
     const updated = await salesModel.updateSaleById(id, req.body);
 
     res.json(updated);
+
+    auditModel.createAuditLog({
+      admin_id: req.admin?.id || null,
+      action: 'UPDATE',
+      table_name: 'sales',
+      record_id: parseInt(req.params.id),
+      description: `Actualizó venta ID ${req.params.id}`,
+    }).catch(() => {});
   } catch (error) {
     console.error(error);
 

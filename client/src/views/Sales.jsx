@@ -6,6 +6,7 @@ const Sales = () => {
   const [sales, setSales] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
+  const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
   const [saleDetails, setSaleDetails] = useState({});
@@ -108,14 +109,36 @@ const Sales = () => {
       .catch(err => alert(err.response?.data?.error || 'Error al eliminar la venta'));
   };
 
+  const filteredSales = sales.filter(s => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      String(s.id).includes(q) ||
+      (s.customer_name || '').toLowerCase().includes(q)
+    );
+  });
+
   return (
     <>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <div>
           <h5 className="mb-0">Ventas a Crédito</h5>
         </div>
-        <div className="text-end">
-          <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+        <div className="d-flex gap-2 align-items-center">
+          <div className="input-group">
+            <span className="input-group-text bg-white border-end-0">
+              <i className="bi bi-search text-muted"></i>
+            </span>
+            <input
+              type="text"
+              className="form-control border-start-0"
+              placeholder="Buscar por ID, cliente..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ minWidth: '220px' }}
+            />
+          </div>
+          <button className="btn btn-primary text-nowrap" onClick={() => setShowForm(true)}>
             <i className="bi bi-plus-lg me-1"></i>
             Nueva Venta
           </button>

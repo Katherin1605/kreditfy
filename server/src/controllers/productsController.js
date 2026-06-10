@@ -1,4 +1,5 @@
 import * as productModel from "../models/productsModel.js";
+import * as auditModel from "../models/auditModel.js";
 
 export const getProducts = async (req, res) => {
   try {
@@ -32,6 +33,14 @@ export const createProduct = async (req, res) => {
     }
     const newProduct = await productModel.createProduct(req.body);
     res.status(201).json(newProduct);
+
+    auditModel.createAuditLog({
+      admin_id: req.admin?.id || null,
+      action: 'CREATE',
+      table_name: 'products',
+      record_id: newProduct.id,
+      description: `Creó producto: ${newProduct.name}`,
+    }).catch(() => {});
   } catch (error) {
     console.error(error);
     if (error.code === "23505") {
@@ -50,6 +59,14 @@ export const updateProduct = async (req, res) => {
     }
     const updated = await productModel.updateProduct(id, req.body);
     res.json(updated);
+
+    auditModel.createAuditLog({
+      admin_id: req.admin?.id || null,
+      action: 'UPDATE',
+      table_name: 'products',
+      record_id: parseInt(req.params.id),
+      description: `Actualizó producto ID ${req.params.id}`,
+    }).catch(() => {});
   } catch (error) {
     console.error(error);
     if (error.code === "23505") {
@@ -68,6 +85,14 @@ export const deleteProduct = async (req, res) => {
     }
     await productModel.deleteProduct(id);
     res.json({ message: "Producto eliminado correctamente" });
+
+    auditModel.createAuditLog({
+      admin_id: req.admin?.id || null,
+      action: 'DELETE',
+      table_name: 'products',
+      record_id: parseInt(req.params.id),
+      description: `Eliminó producto ID ${req.params.id}`,
+    }).catch(() => {});
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al eliminar el producto" });
