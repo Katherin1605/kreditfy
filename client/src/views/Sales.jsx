@@ -162,8 +162,9 @@ const Sales = () => {
       )}
 
       <div className="rounded shadow overflow-hidden">
-        <table className="table table-hover mb-0">
-          <thead style={{ backgroundColor: 'var(--bg-section)' }}>
+        <div className="table-responsive">
+          <table className="table table-hover mb-0">
+            <thead style={{ backgroundColor: 'var(--bg-section)' }}>
             <tr>
               <th className="px-4 py-2">#ID</th>
               <th className="px-4 py-2">Fecha</th>
@@ -175,8 +176,8 @@ const Sales = () => {
               <th className="px-4 py-2">Estado</th>
               <th className="px-4 py-2">Acciones</th>
             </tr>
-          </thead>
-          <tbody>
+            </thead>
+            <tbody>
             {filteredSales.length === 0 ? (
               <tr>
                 <td className="text-center px-4 py-5 text-secondary" colSpan={9}>
@@ -267,8 +268,9 @@ const Sales = () => {
                 </React.Fragment>
               ))
             )}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
     </>
   );

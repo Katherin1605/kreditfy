@@ -7,6 +7,13 @@ export const AuthProvider = ({ children }) => {
   const [currentAdmin, setCurrentAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const clearSession = () => {
+    setCurrentAdmin(null);
+    localStorage.removeItem('admin');
+    localStorage.removeItem('token');
+    delete axios.defaults.headers.common['Authorization'];
+  };
+
   useEffect(() => {
     const stored = localStorage.getItem('admin');
     const token = localStorage.getItem('token');
@@ -15,6 +22,22 @@ export const AuthProvider = ({ children }) => {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
     setLoading(false);
+
+    const interceptor = axios.interceptors.response.use(
+      res => res,
+      err => {
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          const isLoginRoute = err.config?.url?.includes('/auth/login');
+          if (!isLoginRoute) {
+            clearSession();
+            window.location.href = '/login';
+          }
+        }
+        return Promise.reject(err);
+      }
+    );
+
+    return () => axios.interceptors.response.eject(interceptor);
   }, []);
 
   const login = (adminData, token) => {

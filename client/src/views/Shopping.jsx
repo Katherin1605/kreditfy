@@ -6,6 +6,7 @@ const Shopping = () => {
   const [shopping, setShopping] = useState([]);
   const [products, setProducts] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({ product_id: '', quantity: '', cost: '' });
 
   useEffect(() => {
@@ -21,7 +22,8 @@ const Shopping = () => {
         setShopping(shoppingRes.data);
         setProducts(productsRes.data);
       })
-      .catch(err => alert(err.response?.data?.error || 'Error al cargar los datos'));
+      .catch(err => alert(err.response?.data?.error || 'Error al cargar los datos'))
+      .finally(() => setLoading(false));
   };
 
   const handleNew = () => {
@@ -52,6 +54,13 @@ const Shopping = () => {
     setShowForm(false);
   };
 
+  if (loading) return (
+    <div className="text-center py-5 text-muted">
+      <div className="spinner-border text-primary mb-3" role="status"></div>
+      <p>Cargando...</p>
+    </div>
+  );
+
   return (
     <>
       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -72,52 +81,54 @@ const Shopping = () => {
       )}
 
       <div className="bg-white rounded shadow overflow-hidden">
-        <table className="table table-hover mb-0">
-          <thead style={{ backgroundColor: 'var(--bg-section)' }}>
-            <tr>
-              <th className="px-4 py-3">Fecha</th>
-              <th className="px-4 py-3">Producto</th>
-              <th className="px-4 py-3">Cantidad</th>
-              <th className="px-4 py-3">Costo</th>
-              <th className="px-4 py-3">Ganancia</th>
-              <th className="px-4 py-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {shopping.length === 0 ? (
+        <div className="table-responsive">
+          <table className="table table-hover mb-0">
+            <thead style={{ backgroundColor: 'var(--bg-section)' }}>
               <tr>
-                <td className="text-center px-4 py-5 text-secondary" colSpan={6}>
-                  No hay compras registradas
-                </td>
+                <th className="px-4 py-3">Fecha</th>
+                <th className="px-4 py-3">Producto</th>
+                <th className="px-4 py-3">Cantidad</th>
+                <th className="px-4 py-3">Costo</th>
+                <th className="px-4 py-3">Ganancia</th>
+                <th className="px-4 py-3">Acciones</th>
               </tr>
-            ) : (
-              shopping.map(row => (
-                <tr key={row.id}>
-                  <td className="px-4 py-3">{new Date(row.date).toLocaleDateString()}</td>
-                  <td className="px-4 py-3">{products.find(p => p.id === row.product_id)?.name || '-'}</td>
-                  <td className="px-4 py-3">{row.quantity}</td>
-                  <td className="px-4 py-3">${parseFloat(row.cost).toFixed(2)}</td>
-                  <td className="px-4 py-3">
-                    {(() => {
-                      const product = products.find(p => p.id === row.product_id);
-                      if (!product) return '-';
-                      const ganancia = (parseFloat(product.price) - parseFloat(row.cost)) * row.quantity;
-                      return <span className={ganancia >= 0 ? 'text-success' : 'text-danger'}>${ganancia.toFixed(2)}</span>;
-                    })()}
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      className="btn btn-sm btn-outline-danger"
-                      onClick={() => handleDelete(row.id)}
-                    >
-                      <i className="bi bi-trash"></i>
-                    </button>
+            </thead>
+            <tbody>
+              {shopping.length === 0 ? (
+                <tr>
+                  <td className="text-center px-4 py-5 text-secondary" colSpan={6}>
+                    No hay compras registradas
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                shopping.map(row => (
+                  <tr key={row.id}>
+                    <td className="px-4 py-3">{new Date(row.date).toLocaleDateString()}</td>
+                    <td className="px-4 py-3">{products.find(p => p.id === row.product_id)?.name || '-'}</td>
+                    <td className="px-4 py-3">{row.quantity}</td>
+                    <td className="px-4 py-3">${parseFloat(row.cost).toFixed(2)}</td>
+                    <td className="px-4 py-3">
+                      {(() => {
+                        const product = products.find(p => p.id === row.product_id);
+                        if (!product) return '-';
+                        const ganancia = (parseFloat(product.price) - parseFloat(row.cost)) * row.quantity;
+                        return <span className={ganancia >= 0 ? 'text-success' : 'text-danger'}>${ganancia.toFixed(2)}</span>;
+                      })()}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={() => handleDelete(row.id)}
+                      >
+                        <i className="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </>
   );

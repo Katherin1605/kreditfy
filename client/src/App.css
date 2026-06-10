@@ -41,8 +41,14 @@
 
 .dash {
   text-align: start;
-  padding: 4rem;
+  padding: 1rem 2rem;
   background-color: var(--bg-section);
+}
+
+.view-container {
+  padding: 1.5rem 2rem;
+  background-color: var(--bg-page);
+  min-height: calc(100vh - 130px);
 }
 
 .navbar {
@@ -58,6 +64,11 @@
 }
 .navbar .nav-link svg {
   font-size: 1.2rem;
+}
+.navbar .nav-link.active {
+  color: var(--primary-color);
+  font-weight: 600;
+  border-bottom: 2px solid var(--primary-color);
 }
 .navbar .nav-item {
   margin-right: 1rem;

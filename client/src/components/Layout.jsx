@@ -68,7 +68,9 @@ const Layout = () => {
         </div>
       </nav>
 
-      <Outlet />
+      <main className="view-container">
+        <Outlet />
+      </main>
     </>
   );
 };
