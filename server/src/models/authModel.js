@@ -7,3 +7,11 @@ export const findAdminByEmail = async (email) => {
   );
   return result.rows[0];
 };
+
+export const findAdminById = async (id) => {
+  const result = await pool.query(
+    "SELECT * FROM admins WHERE id = $1 AND active = TRUE",
+    [id]
+  );
+  return result.rows[0];
+};

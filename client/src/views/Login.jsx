@@ -25,7 +25,7 @@ const Login = () => {
     setLoading(true);
     try {
       const res = await axios.post('http://localhost:3000/auth/login', formData);
-      login(res.data.admin, res.data.token);
+      login(res.data.admin, res.data.token, res.data.refreshToken);
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.error || 'Error al iniciar sesión');

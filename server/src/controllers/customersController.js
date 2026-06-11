@@ -1,10 +1,11 @@
 import * as customerModel from "../models/customersModel.js";
 import * as auditModel from "../models/auditModel.js";
 
-// GET /customers
+// GET /customers?q=texto
 export const getCustomers = async (req, res) => {
   try {
-    const customers = await customerModel.getAllCustomers();
+    const search = (req.query.q || '').trim();
+    const customers = await customerModel.getAllCustomers(search);
     res.json(customers);
   } catch (error) {
     console.error(error);

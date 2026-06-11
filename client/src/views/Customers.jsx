@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import FormCustomers from '../components/FormCustomers';
 
@@ -8,16 +8,27 @@ const Customers = () => {
   const [loading, setLoading] = useState(true);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [formData, setFormData] = useState({ name: '', identity_card: '', phone: '', address: '' });
+  const [search, setSearch] = useState('');
+  const debounceRef = useRef(null);
 
   useEffect(() => {
-    loadCustomers();
+    loadCustomers('');
   }, []);
 
-  const loadCustomers = () => {
-    axios.get('http://localhost:3000/customers')
+  const loadCustomers = (q = '') => {
+    setLoading(true);
+    const params = q ? { q } : {};
+    axios.get('http://localhost:3000/customers', { params })
       .then(res => setCustomers(res.data))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
+  };
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearch(value);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => loadCustomers(value.trim()), 350);
   };
 
   const resetForm = () => {
@@ -46,7 +57,7 @@ const Customers = () => {
   const handleDelete = (id) => {
     if (!window.confirm('¿Está seguro de eliminar este cliente?')) return;
     axios.delete(`http://localhost:3000/customers/${id}`)
-      .then(() => loadCustomers())
+      .then(() => loadCustomers(search.trim()))
       .catch(err => alert(err.response?.data?.error || 'Error al procesar la solicitud'));
   };
 
@@ -59,7 +70,7 @@ const Customers = () => {
     request
       .then(() => {
         resetForm();
-        loadCustomers();
+        loadCustomers(search.trim());
       })
       .catch(err => alert(err.response?.data?.error || 'Error al procesar la solicitud'));
   };
@@ -78,6 +89,29 @@ const Customers = () => {
         <button className="btn btn-primary" onClick={handleNew}>
           <i className="bi bi-plus-lg me-1"></i> Nuevo Cliente
         </button>
+      </div>
+
+      <div className="mb-3">
+        <div className="input-group">
+          <span className="input-group-text bg-white">
+            <i className="bi bi-search text-muted"></i>
+          </span>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Buscar por nombre o cédula..."
+            value={search}
+            onChange={handleSearchChange}
+          />
+          {search && (
+            <button
+              className="btn btn-outline-secondary"
+              onClick={() => { setSearch(''); loadCustomers(''); }}
+            >
+              <i className="bi bi-x-lg"></i>
+            </button>
+          )}
+        </div>
       </div>
 
       {showForm && (
@@ -106,7 +140,7 @@ const Customers = () => {
               {customers.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="text-center py-5 text-muted">
-                    No hay clientes registrados
+                    {search ? `Sin resultados para "${search}"` : 'No hay clientes registrados'}
                   </td>
                 </tr>
               ) : (

@@ -1,8 +1,17 @@
 import pool from "../../db/config.js";
 
-// Obtener todos los clientes
-export const getAllCustomers = async () => {
-  const result = await pool.query("SELECT * FROM customers ORDER BY id");
+// Obtener todos los clientes, con búsqueda opcional por nombre o cédula
+export const getAllCustomers = async (search = '') => {
+  if (search) {
+    const result = await pool.query(
+      `SELECT * FROM customers
+       WHERE name ILIKE $1 OR identity_card ILIKE $1
+       ORDER BY name`,
+      [`%${search}%`]
+    );
+    return result.rows;
+  }
+  const result = await pool.query("SELECT * FROM customers ORDER BY name");
   return result.rows;
 };
 
