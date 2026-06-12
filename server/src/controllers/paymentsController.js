@@ -38,7 +38,7 @@ export const createPayment = async (req, res) => {
   try {
     const { sale_id, amount, method } = req.body;
     if (!sale_id) return res.status(400).json({ error: "sale_id es obligatorio" });
-    if (!amount) return res.status(400).json({ error: "amount es obligatorio" });
+    if (!amount) return res.status(400).json({ error: "El monto es obligatorio" });
     const payment = await paymentModel.createPayment({ sale_id, amount, method });
     res.status(201).json(payment);
 
