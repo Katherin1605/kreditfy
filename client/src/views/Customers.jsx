@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import FormCustomers from '../components/FormCustomers';
+import TableSkeleton from '../components/TableSkeleton';
+import useConfirm from '../hooks/useConfirm';
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -8,8 +11,10 @@ const Customers = () => {
   const [loading, setLoading] = useState(true);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [formData, setFormData] = useState({ name: '', identity_card: '', phone: '', address: '' });
+  const [formErrors, setFormErrors] = useState({});
   const [search, setSearch] = useState('');
   const debounceRef = useRef(null);
+  const { confirmModal, ask } = useConfirm();
 
   useEffect(() => {
     loadCustomers('');
@@ -35,11 +40,13 @@ const Customers = () => {
     setShowForm(false);
     setEditingCustomer(null);
     setFormData({ name: '', identity_card: '', phone: '', address: '' });
+    setFormErrors({});
   };
 
   const handleNew = () => {
     setEditingCustomer(null);
     setFormData({ name: '', identity_card: '', phone: '', address: '' });
+    setFormErrors({});
     setShowForm(true);
   };
 
@@ -51,39 +58,51 @@ const Customers = () => {
       phone: customer.phone || '',
       address: customer.address || '',
     });
+    setFormErrors({});
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
-    if (!window.confirm('¿Está seguro de eliminar este cliente?')) return;
+  const handleDelete = async (id) => {
+    const ok = await ask('¿Está seguro de eliminar este cliente?');
+    if (!ok) return;
     axios.delete(`http://localhost:3000/customers/${id}`)
-      .then(() => loadCustomers(search.trim()))
-      .catch(err => alert(err.response?.data?.error || 'Error al procesar la solicitud'));
+      .then(() => {
+        toast.success('Cliente eliminado');
+        loadCustomers(search.trim());
+      })
+      .catch(err => toast.error(err.response?.data?.error || 'Error al procesar la solicitud'));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const errs = {};
+    if (!formData.name.trim()) errs.name = 'El nombre es obligatorio';
+    if (!formData.identity_card.trim()) errs.identity_card = 'La cédula es obligatoria';
+    if (Object.keys(errs).length) { setFormErrors(errs); return; }
+    setFormErrors({});
     const request = editingCustomer
       ? axios.put(`http://localhost:3000/customers/${editingCustomer.id}`, formData)
       : axios.post('http://localhost:3000/customers', formData);
 
     request
       .then(() => {
+        toast.success(editingCustomer ? 'Cliente actualizado' : 'Cliente creado');
         resetForm();
         loadCustomers(search.trim());
       })
-      .catch(err => alert(err.response?.data?.error || 'Error al procesar la solicitud'));
+      .catch(err => {
+        const msg = err.response?.data?.error || 'Error al procesar la solicitud';
+        if (msg.toLowerCase().includes('cédula') && msg.toLowerCase().includes('exist')) {
+          setFormErrors({ identity_card: 'Esta cédula ya está registrada' });
+        } else {
+          toast.error(msg);
+        }
+      });
   };
-
-  if (loading) return (
-    <div className="text-center py-5 text-muted">
-      <div className="spinner-border text-primary mb-3" role="status"></div>
-      <p>Cargando...</p>
-    </div>
-  );
 
   return (
     <>
+      {confirmModal}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h5>Clientes</h5>
         <button className="btn btn-primary" onClick={handleNew}>
@@ -121,6 +140,7 @@ const Customers = () => {
           editingCustomer={editingCustomer}
           onSubmit={handleSubmit}
           onClose={resetForm}
+          errors={formErrors}
         />
       )}
 
@@ -137,7 +157,9 @@ const Customers = () => {
               </tr>
             </thead>
             <tbody>
-              {customers.length === 0 ? (
+              {loading ? (
+                <TableSkeleton cols={5} />
+              ) : customers.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="text-center py-5 text-muted">
                     {search ? `Sin resultados para "${search}"` : 'No hay clientes registrados'}

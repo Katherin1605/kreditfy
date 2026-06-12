@@ -97,9 +97,10 @@ const Audit = () => {
       </div>
 
       {loading ? (
-        <div className="text-center text-muted py-5">
-          <div className="spinner-border text-primary mb-3" role="status"></div>
-          <p>Cargando registros...</p>
+        <div className="d-flex flex-column gap-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="skeleton-card" style={{ height: '80px' }}></div>
+          ))}
         </div>
       ) : error ? (
         <div className="alert alert-danger">

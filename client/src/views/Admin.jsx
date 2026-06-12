@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import useConfirm from '../hooks/useConfirm';
 
 const AVAILABLE_VIEWS = [
   { key: 'customers', label: 'Clientes' },
@@ -14,19 +16,23 @@ const AVAILABLE_VIEWS = [
 const Admin = () => {
   const { currentAdmin } = useAuth();
   const [admins, setAdmins] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState(null);
   const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'admin' });
   const [showPassword, setShowPassword] = useState(false);
+  const { confirmModal, ask } = useConfirm();
 
   useEffect(() => {
     loadAdmins();
   }, []);
 
   const loadAdmins = () => {
+    setLoading(true);
     axios.get('http://localhost:3000/admins')
       .then(res => setAdmins(res.data))
-      .catch(err => console.error(err));
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
   };
 
   const handleChange = (e) => {
@@ -51,19 +57,27 @@ const Admin = () => {
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
-    if (!window.confirm('¿Estás seguro de que deseas eliminar este administrador?')) return;
+  const handleDelete = async (id) => {
+    const ok = await ask('¿Estás seguro de que deseas eliminar este administrador?');
+    if (!ok) return;
     axios.delete(`http://localhost:3000/admins/${id}`)
-      .then(() => loadAdmins())
-      .catch(err => alert(err.response?.data?.error || 'Error al procesar la solicitud'));
+      .then(() => {
+        toast.success('Administrador eliminado');
+        loadAdmins();
+      })
+      .catch(err => toast.error(err.response?.data?.error || 'Error al procesar la solicitud'));
   };
 
-  const handleToggleActive = (admin) => {
+  const handleToggleActive = async (admin) => {
     const action = admin.active ? 'deshabilitar' : 'habilitar';
-    if (!window.confirm(`¿Seguro que deseas ${action} a ${admin.name}?`)) return;
+    const ok = await ask(`¿Seguro que deseas ${action} a ${admin.name}?`);
+    if (!ok) return;
     axios.patch(`http://localhost:3000/admins/${admin.id}/active`)
-      .then(() => loadAdmins())
-      .catch(err => alert(err.response?.data?.error || 'Error al cambiar estado'));
+      .then(() => {
+        toast.success(`Administrador ${admin.active ? 'deshabilitado' : 'habilitado'}`);
+        loadAdmins();
+      })
+      .catch(err => toast.error(err.response?.data?.error || 'Error al cambiar estado'));
   };
 
   const handleTogglePermission = (adminId, viewKey, currentPermissions) => {
@@ -73,21 +87,32 @@ const Admin = () => {
       : [...perms, viewKey];
     axios.patch(`http://localhost:3000/admins/${adminId}/permissions`, { permissions: newPerms })
       .then(() => loadAdmins())
-      .catch(err => alert(err.response?.data?.error || 'Error al actualizar permisos'));
+      .catch(err => toast.error(err.response?.data?.error || 'Error al actualizar permisos'));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!formData.name.trim()) { toast.error('El nombre es obligatorio'); return; }
+    if (!formData.email.trim()) { toast.error('El email es obligatorio'); return; }
+    if (!editingAdmin && !formData.password) { toast.error('La contraseña es obligatoria'); return; }
     if (editingAdmin) {
       const body = { name: formData.name, email: formData.email, role: formData.role };
       if (formData.password) body.password = formData.password;
       axios.put(`http://localhost:3000/admins/${editingAdmin.id}`, body)
-        .then(() => { resetForm(); loadAdmins(); })
-        .catch(err => alert(err.response?.data?.error || 'Error al procesar la solicitud'));
+        .then(() => {
+          toast.success('Administrador actualizado');
+          resetForm();
+          loadAdmins();
+        })
+        .catch(err => toast.error(err.response?.data?.error || 'Error al procesar la solicitud'));
     } else {
       axios.post('http://localhost:3000/admins', formData)
-        .then(() => { resetForm(); loadAdmins(); })
-        .catch(err => alert(err.response?.data?.error || 'Error al procesar la solicitud'));
+        .then(() => {
+          toast.success('Administrador creado');
+          resetForm();
+          loadAdmins();
+        })
+        .catch(err => toast.error(err.response?.data?.error || 'Error al procesar la solicitud'));
     }
   };
 
@@ -99,6 +124,7 @@ const Admin = () => {
 
   return (
     <>
+      {confirmModal}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h5>Administradores</h5>
         {currentAdmin?.role === 'superadmin' && (
@@ -114,7 +140,7 @@ const Admin = () => {
             <h5>{editingAdmin ? 'Editar Administrador' : 'Nuevo Administrador'}</h5>
             <button type="button" className="btn-close" onClick={resetForm} />
           </div>
-          <form onSubmit={handleSubmit} className="row g-3">
+          <form onSubmit={handleSubmit} className="row g-3" noValidate>
             <div className="col-md-6">
               <label className="form-label">Nombre *</label>
               <input
@@ -123,7 +149,6 @@ const Admin = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                required
               />
             </div>
             <div className="col-md-6">
@@ -134,7 +159,6 @@ const Admin = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                required
               />
             </div>
             <div className="col-md-6">
@@ -148,7 +172,6 @@ const Admin = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  required={!editingAdmin}
                 />
                 <button
                   type="button"
@@ -185,7 +208,13 @@ const Admin = () => {
       )}
 
       <div className="row g-3">
-        {admins.length === 0 ? (
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="col-md-6 col-lg-4">
+              <div className="skeleton-card"></div>
+            </div>
+          ))
+        ) : admins.length === 0 ? (
           <div className="col-12">
             <p className="text-muted text-center py-5">No hay administradores registrados</p>
           </div>

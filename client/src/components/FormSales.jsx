@@ -54,7 +54,7 @@ const FormSales = ({ customers, products, selectedCustomerId, setSelectedCustome
         <button type="button" className="btn-close" onClick={onClose} aria-label="Close"></button>
       </div>
 
-      <form className="row g-3" onSubmit={onSubmit}>
+      <form className="row g-3" onSubmit={onSubmit} noValidate>
         <div className="col-12">
           <h6 className="text-muted mb-2">Cliente</h6>
         </div>
@@ -78,7 +78,6 @@ const FormSales = ({ customers, products, selectedCustomerId, setSelectedCustome
             id="selectCliente"
             value={selectedCustomerId}
             onChange={e => setSelectedCustomerId(e.target.value)}
-            required
           >
             <option value="">Seleccione un cliente</option>
             {filteredClientes.map(c => (
@@ -98,7 +97,6 @@ const FormSales = ({ customers, products, selectedCustomerId, setSelectedCustome
             min={1}
             value={cuotas}
             onChange={e => setCuotas(e.target.value)}
-            required
           />
           {items.length > 0 && parseInt(cuotas) > 0 && (
             <small className="text-muted">

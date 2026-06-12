@@ -1,27 +1,44 @@
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useState, useEffect } from 'react';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import useConfirm from '../hooks/useConfirm';
+import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = [
-  { to: "/", label: "Dashboard", icon: "bi-columns-gap", view: null, end: true },
-  { to: "/customers", label: "Clientes", icon: "bi-people", view: "customers" },
-  { to: "/products", label: "Productos", icon: "bi-box-seam", view: "products" },
-  { to: "/shopping", label: "Compras", icon: "bi-cart", view: "shopping" },
-  { to: "/sales", label: "Ventas", icon: "bi-currency-dollar", view: "sales" },
-  { to: "/payments", label: "Pagos", icon: "bi-credit-card", view: "payments" },
-  { to: "/admin", label: "Administradores", icon: "bi-shield", view: "admin" },
-  { to: "/audit", label: "Auditoría", icon: "bi-file-earmark-text", view: "audit" },
+  { to: '/', label: 'Dashboard', icon: 'bi-columns-gap', view: null, end: true },
+  { to: '/customers', label: 'Clientes', icon: 'bi-people', view: 'customers' },
+  { to: '/products', label: 'Productos', icon: 'bi-box-seam', view: 'products' },
+  { to: '/shopping', label: 'Compras', icon: 'bi-cart', view: 'shopping' },
+  { to: '/sales', label: 'Ventas', icon: 'bi-currency-dollar', view: 'sales' },
+  { to: '/payments', label: 'Pagos', icon: 'bi-credit-card', view: 'payments' },
+  { to: '/admin', label: 'Administradores', icon: 'bi-shield', view: 'admin' },
+  { to: '/audit', label: 'Auditoría', icon: 'bi-file-earmark-text', view: 'audit' },
 ];
 
 const Layout = () => {
   const { currentAdmin, logout } = useAuth();
   const navigate = useNavigate();
+  const { confirmModal, ask } = useConfirm();
 
-  const handleLogout = () => {
-    if (window.confirm('¿Seguro que deseas cerrar sesión?')) {
-      logout();
-      navigate('/login');
-    }
+  const savedCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+  const [collapsed, setCollapsed] = useState(savedCollapsed);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('sidebar_collapsed', collapsed);
+  }, [collapsed]);
+
+  const handleLogout = async () => {
+    const ok = await ask('¿Seguro que deseas cerrar sesión?');
+    if (!ok) return;
+    logout();
+    toast.success('Sesión cerrada');
+    navigate('/login');
   };
+
+  const toggleCollapse = () => setCollapsed(prev => !prev);
+  const toggleMobile = () => setMobileOpen(prev => !prev);
+  const closeMobile = () => setMobileOpen(false);
 
   const visibleItems = NAV_ITEMS.filter(item => {
     if (!item.view) return true;
@@ -30,45 +47,95 @@ const Layout = () => {
     return currentAdmin?.permissions?.includes(item.view);
   });
 
+  const sidebarClass = [
+    'sidebar',
+    collapsed ? 'collapsed' : '',
+    mobileOpen ? 'mobile-open' : '',
+  ].filter(Boolean).join(' ');
+
+  const mainClass = ['layout-main', collapsed ? 'collapsed' : ''].filter(Boolean).join(' ');
+
   return (
     <>
-      <div className="dash d-flex justify-content-between align-items-center">
-        <div>
-          <h1 className="mb-0">CrediShoping</h1>
-          <p className="mb-0">Bienvenido al panel de control de CrediShoping.</p>
-        </div>
-        {currentAdmin && (
-          <div className="d-flex align-items-center gap-3">
-            <span className="text-dark fw-semibold">
-              <i className="bi bi-person-circle me-1"></i>
-              {currentAdmin.name}
-              {currentAdmin.role === 'superadmin' && (
-                <span className="badge bg-primary ms-2 small">superadmin</span>
-              )}
-            </span>
-            <button className="btn btn-sm btn-outline-secondary" onClick={handleLogout}>
-              <i className="bi bi-box-arrow-right me-1"></i>Salir
-            </button>
-          </div>
-        )}
-      </div>
+      {confirmModal}
 
-      <nav className="navbar navbar-expand-lg">
-        <div className="container-fluid">
+      <div
+        className={`sidebar-overlay ${mobileOpen ? 'active' : ''}`}
+        onClick={closeMobile}
+      />
+
+      <aside className={sidebarClass}>
+        <div className="sidebar-brand">
+          <div className="sidebar-brand-icon">
+            <i className="bi bi-bag-heart"></i>
+          </div>
+          <span className="sidebar-brand-text">CrediShoping</span>
+        </div>
+
+        <nav className="sidebar-nav">
           {visibleItems.map(item => (
             <NavLink
               key={item.to}
-              className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}
               to={item.to}
               end={item.end}
+              className={({ isActive }) =>
+                `sidebar-nav-item ${isActive ? 'active' : ''}`
+              }
+              onClick={closeMobile}
+              title={collapsed ? item.label : undefined}
             >
-              <i className={`bi ${item.icon}`}></i> {item.label}
+              <i className={`bi ${item.icon}`}></i>
+              <span className="sidebar-nav-label">{item.label}</span>
             </NavLink>
           ))}
-        </div>
-      </nav>
+        </nav>
 
-      <main className="view-container">
+        {currentAdmin && (
+          <div className="sidebar-footer">
+            <div className="sidebar-user">
+              <i className="bi bi-person-circle fs-4 text-primary flex-shrink-0"></i>
+              <div className="sidebar-user-info">
+                <div className="fw-semibold small text-truncate" style={{ maxWidth: '140px' }}>
+                  {currentAdmin.name}
+                </div>
+                {currentAdmin.role === 'superadmin' && (
+                  <span className="badge bg-primary" style={{ fontSize: '0.65rem' }}>superadmin</span>
+                )}
+              </div>
+            </div>
+            <button
+              className="btn btn-sm btn-outline-secondary sidebar-logout"
+              onClick={handleLogout}
+              title={collapsed ? 'Cerrar sesión' : undefined}
+            >
+              <i className="bi bi-box-arrow-right flex-shrink-0"></i>
+              <span>Cerrar sesión</span>
+            </button>
+          </div>
+        )}
+      </aside>
+
+      {/* Toggle desktop — fuera del aside para no ser cortado por overflow:hidden */}
+      <button
+        className="sidebar-toggle-btn d-none d-md-flex"
+        style={{ left: collapsed ? 46 : 226 }}
+        onClick={toggleCollapse}
+        aria-label="Toggle sidebar"
+      >
+        <i className={`bi ${collapsed ? 'bi-chevron-right' : 'bi-chevron-left'}`}></i>
+      </button>
+
+      {/* Hamburger mobile */}
+      <button
+        className="d-md-none btn btn-sm btn-outline-secondary"
+        style={{ position: 'fixed', top: '1rem', left: '1rem', zIndex: 1100 }}
+        onClick={toggleMobile}
+        aria-label="Abrir menú"
+      >
+        <i className="bi bi-list"></i>
+      </button>
+
+      <main className={mainClass} style={{ padding: '1.5rem 2rem' }}>
         <Outlet />
       </main>
     </>

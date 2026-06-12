@@ -1,22 +1,28 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
+import useConfirm from '../hooks/useConfirm';
 
 const Payments = () => {
   const [sales, setSales] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedSale, setSelectedSale] = useState(null);
   const [saleDetail, setSaleDetail] = useState(null);
   const [payments, setPayments] = useState([]);
   const [showPayForm, setShowPayForm] = useState(false);
   const [payForm, setPayForm] = useState({ amount: '', method: '' });
+  const { confirmModal } = useConfirm();
 
   useEffect(() => {
     loadSales();
   }, []);
 
   const loadSales = () => {
+    setLoading(true);
     axios.get('http://localhost:3000/sales')
       .then(res => setSales(res.data))
-      .catch(err => alert(err.response?.data?.error || 'Error al cargar las ventas'));
+      .catch(err => toast.error(err.response?.data?.error || 'Error al cargar las ventas'))
+      .finally(() => setLoading(false));
   };
 
   const handleSelectSale = (sale) => {
@@ -31,7 +37,7 @@ const Payments = () => {
         setSaleDetail(detailRes.data);
         setPayments(paymentsRes.data);
       })
-      .catch(err => alert(err.response?.data?.error || 'Error al cargar el detalle'));
+      .catch(err => toast.error(err.response?.data?.error || 'Error al cargar el detalle'));
   };
 
   const handleCloseDetail = () => {
@@ -46,7 +52,7 @@ const Payments = () => {
     const amount = parseFloat(payForm.amount);
     const balance = parseFloat(selectedSale.balance);
     if (amount <= 0 || amount > balance) {
-      alert('El monto debe ser mayor a 0 y no puede superar el saldo pendiente');
+      toast.error('El monto debe ser mayor a 0 y no puede superar el saldo pendiente');
       return;
     }
     const body = {
@@ -60,6 +66,7 @@ const Payments = () => {
         axios.get(`http://localhost:3000/payments/sale/${selectedSale.id}`)
       ]))
       .then(([detailRes, paymentsRes]) => {
+        toast.success('Pago registrado');
         loadSales();
         setSaleDetail(detailRes.data);
         setPayments(paymentsRes.data);
@@ -68,7 +75,7 @@ const Payments = () => {
         setPayForm({ amount: '', method: '' });
         if (parseFloat(detailRes.data.balance) <= 0) handleCloseDetail();
       })
-      .catch(err => alert(err.response?.data?.error || 'Error al registrar el pago'));
+      .catch(err => toast.error(err.response?.data?.error || 'Error al registrar el pago'));
   };
 
   const pendingSales = sales.filter(s => s.status !== 'paid');
@@ -81,6 +88,7 @@ const Payments = () => {
 
   return (
     <>
+      {confirmModal}
       <h5 className="mb-4">Control de Pagos</h5>
       <div className="row g-4">
 
@@ -90,7 +98,13 @@ const Payments = () => {
               <strong>Ventas Pendientes</strong>
             </div>
             <div className="card-body p-3">
-              {pendingSales.length === 0 ? (
+              {loading ? (
+                <div className="d-flex flex-column gap-2">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="skeleton-card" style={{ height: '80px' }}></div>
+                  ))}
+                </div>
+              ) : pendingSales.length === 0 ? (
                 <p className="text-muted text-center py-4">No hay ventas pendientes</p>
               ) : (
                 pendingSales.map(s => (
@@ -203,7 +217,7 @@ const Payments = () => {
                         <i className="bi bi-cash-coin me-2"></i>Registrar Pago
                       </button>
                     ) : (
-                      <form onSubmit={handleSubmitPago} className="mt-3">
+                      <form onSubmit={handleSubmitPago} className="mt-3" noValidate>
                         <hr />
                         <p className="fw-bold mb-3">Nuevo Pago</p>
                         <div className="mb-3">
@@ -216,7 +230,6 @@ const Payments = () => {
                             value={payForm.amount}
                             onChange={e => setPayForm({ ...payForm, amount: e.target.value })}
                             placeholder={`Sugerido: $${parseFloat(selectedSale.valor_cuota || 0).toFixed(2)} · Máx: $${parseFloat(selectedSale.balance).toFixed(2)}`}
-                            required
                           />
                         </div>
                         <div className="mb-3">

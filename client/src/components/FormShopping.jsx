@@ -11,7 +11,7 @@ const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) =>
         <h5>Nueva Compra</h5>
         <button type="button" className="btn-close" onClick={onClose} aria-label="Close"></button>
       </div>
-      <form onSubmit={onSubmit} className="row g-3">
+      <form onSubmit={onSubmit} className="row g-3" noValidate>
         <div className="col-md-12">
           <label className="form-label">Producto *</label>
           <select
@@ -19,7 +19,6 @@ const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) =>
             name="product_id"
             value={formData.product_id}
             onChange={handleChange}
-            required
           >
             <option value="">Seleccione un producto</option>
             {products.map(p => (

@@ -1,4 +1,4 @@
-const FormProducts = ({ formData, setFormData, editingProduct, onSubmit, onClose }) => {
+const FormProducts = ({ formData, setFormData, editingProduct, onSubmit, onClose, errors }) => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -9,18 +9,18 @@ const FormProducts = ({ formData, setFormData, editingProduct, onSubmit, onClose
         <h5>{editingProduct ? 'Editar Producto' : 'Nuevo Producto'}</h5>
         <button type="button" className="btn-close" onClick={onClose} aria-label="Close"></button>
       </div>
-      <form onSubmit={onSubmit} className="row g-3">
+      <form onSubmit={onSubmit} className="row g-3" noValidate>
         <div className="col-md-6">
           <label htmlFor="name" className="form-label">Nombre *</label>
           <input
             type="text"
-            className="form-control"
+            className={`form-control ${errors?.name ? 'is-invalid' : ''}`}
             id="name"
             name="name"
             value={formData.name}
             onChange={handleChange}
-            required
           />
+          {errors?.name && <div className="invalid-feedback">{errors.name}</div>}
         </div>
         <div className="col-md-6">
           <label htmlFor="price" className="form-label">Precio *</label>
@@ -28,13 +28,13 @@ const FormProducts = ({ formData, setFormData, editingProduct, onSubmit, onClose
             type="number"
             step="0.01"
             min="0"
-            className="form-control"
+            className={`form-control ${errors?.price ? 'is-invalid' : ''}`}
             id="price"
             name="price"
             value={formData.price}
             onChange={handleChange}
-            required
           />
+          {errors?.price && <div className="invalid-feedback">{errors.price}</div>}
         </div>
         <div className="col-md-12">
           <label htmlFor="description" className="form-label">Descripción</label>
@@ -52,12 +52,13 @@ const FormProducts = ({ formData, setFormData, editingProduct, onSubmit, onClose
           <input
             type="number"
             min="0"
-            className="form-control"
+            className={`form-control ${errors?.stock ? 'is-invalid' : ''}`}
             id="stock"
             name="stock"
             value={formData.stock}
             onChange={handleChange}
           />
+          {errors?.stock && <div className="invalid-feedback">{errors.stock}</div>}
         </div>
         <div className="col-12">
           <button type="submit" className="btn btn-success me-2">

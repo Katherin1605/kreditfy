@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import FormShopping from '../components/FormShopping';
+import TableSkeleton from '../components/TableSkeleton';
+import useConfirm from '../hooks/useConfirm';
 
 const Shopping = () => {
   const [shopping, setShopping] = useState([]);
@@ -8,6 +11,7 @@ const Shopping = () => {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({ product_id: '', quantity: '', cost: '' });
+  const { confirmModal, ask } = useConfirm();
 
   useEffect(() => {
     loadData();
@@ -22,7 +26,7 @@ const Shopping = () => {
         setShopping(shoppingRes.data);
         setProducts(productsRes.data);
       })
-      .catch(err => alert(err.response?.data?.error || 'Error al cargar los datos'))
+      .catch(err => toast.error(err.response?.data?.error || 'Error al cargar los datos'))
       .finally(() => setLoading(false));
   };
 
@@ -31,22 +35,39 @@ const Shopping = () => {
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
-    if (!window.confirm('¿Seguro que deseas eliminar esta compra?')) return;
+  const handleDelete = async (id) => {
+    const ok = await ask('¿Seguro que deseas eliminar esta compra?');
+    if (!ok) return;
     axios.delete(`http://localhost:3000/shopping/${id}`)
-      .then(() => loadData())
-      .catch(err => alert(err.response?.data?.error || 'Error al eliminar'));
+      .then(() => {
+        toast.success('Compra eliminada');
+        loadData();
+      })
+      .catch(err => toast.error(err.response?.data?.error || 'Error al eliminar'));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!formData.product_id) {
+      toast.error('Selecciona un producto');
+      return;
+    }
+    if (!formData.quantity || parseInt(formData.quantity) < 1) {
+      toast.error('Ingresa una cantidad válida');
+      return;
+    }
+    if (!formData.cost || parseFloat(formData.cost) < 0) {
+      toast.error('Ingresa un costo válido');
+      return;
+    }
     axios.post('http://localhost:3000/shopping', formData)
       .then(() => {
+        toast.success('Compra registrada');
         setFormData({ product_id: '', quantity: '', cost: '' });
         setShowForm(false);
         loadData();
       })
-      .catch(err => alert(err.response?.data?.error || 'Error al procesar la solicitud'));
+      .catch(err => toast.error(err.response?.data?.error || 'Error al procesar la solicitud'));
   };
 
   const resetForm = () => {
@@ -54,15 +75,9 @@ const Shopping = () => {
     setShowForm(false);
   };
 
-  if (loading) return (
-    <div className="text-center py-5 text-muted">
-      <div className="spinner-border text-primary mb-3" role="status"></div>
-      <p>Cargando...</p>
-    </div>
-  );
-
   return (
     <>
+      {confirmModal}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h5>Compras</h5>
         <button className="btn btn-primary" onClick={handleNew}>
@@ -94,7 +109,9 @@ const Shopping = () => {
               </tr>
             </thead>
             <tbody>
-              {shopping.length === 0 ? (
+              {loading ? (
+                <TableSkeleton cols={6} />
+              ) : shopping.length === 0 ? (
                 <tr>
                   <td className="text-center px-4 py-5 text-secondary" colSpan={6}>
                     No hay compras registradas
