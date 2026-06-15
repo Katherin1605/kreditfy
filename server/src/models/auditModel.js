@@ -1,13 +1,53 @@
 import pool from "../../db/config.js";
 
-export const getAllAuditLogs = async () => {
-  const result = await pool.query(
-    `SELECT al.*, a.name AS admin_name
-     FROM audit_logs al
-     LEFT JOIN admins a ON al.admin_id = a.id
-     ORDER BY al.created_at DESC`
-  );
-  return result.rows;
+export const getAllAuditLogs = async ({ page = 1, limit = 15, q = '', table = '', action = '' } = {}) => {
+  const offset = (parseInt(page) - 1) * parseInt(limit);
+  const conditions = [];
+  const params = [];
+  let idx = 1;
+
+  if (q) {
+    conditions.push(`(a.name ILIKE $${idx} OR al.description ILIKE $${idx})`);
+    params.push(`%${q}%`);
+    idx++;
+  }
+  if (table) {
+    conditions.push(`al.table_name = $${idx}`);
+    params.push(table);
+    idx++;
+  }
+  if (action) {
+    conditions.push(`al.action = $${idx}`);
+    params.push(action);
+    idx++;
+  }
+
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const [countRes, dataRes] = await Promise.all([
+    pool.query(
+      `SELECT COUNT(*) FROM audit_logs al LEFT JOIN admins a ON al.admin_id = a.id ${where}`,
+      params
+    ),
+    pool.query(
+      `SELECT al.*, a.name AS admin_name
+       FROM audit_logs al
+       LEFT JOIN admins a ON al.admin_id = a.id
+       ${where}
+       ORDER BY al.created_at DESC
+       LIMIT $${idx} OFFSET $${idx + 1}`,
+      [...params, parseInt(limit), offset]
+    ),
+  ]);
+
+  const total = parseInt(countRes.rows[0].count);
+  return {
+    data:       dataRes.rows,
+    total,
+    page:       parseInt(page),
+    limit:      parseInt(limit),
+    totalPages: Math.ceil(total / parseInt(limit)),
+  };
 };
 
 export const getAuditLogById = async (id) => {

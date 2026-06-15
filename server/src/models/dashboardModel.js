@@ -46,3 +46,23 @@ export const getStats = async () => {
     low_stock_products:  lowStockRes.rows,
   };
 };
+
+export const getMonthlyStats = async () => {
+  const result = await pool.query(`
+    SELECT
+      DATE_TRUNC('month', s.created_at)            AS month,
+      COALESCE(SUM(s.total), 0)::numeric           AS total_ventas,
+      COALESCE(SUM(COALESCE(paid.total_paid, 0)), 0)::numeric AS total_cobrado,
+      COUNT(s.id)                                  AS num_ventas
+    FROM sales s
+    LEFT JOIN (
+      SELECT sale_id, SUM(amount) AS total_paid
+      FROM payments
+      GROUP BY sale_id
+    ) paid ON s.id = paid.sale_id
+    WHERE s.created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+    GROUP BY DATE_TRUNC('month', s.created_at)
+    ORDER BY month ASC
+  `);
+  return result.rows;
+};

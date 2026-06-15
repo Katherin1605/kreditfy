@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const METRICS = [
   { key: 'totalVentas',      label: 'Total Ventas',      icon: 'bi-currency-dollar', iconClass: 'metric-icon-primary' },
@@ -11,19 +12,37 @@ const METRICS = [
   { key: 'ventasPendientes', label: 'Ventas Pendientes', icon: 'bi-receipt',         iconClass: 'metric-icon-danger'  },
 ];
 
+const formatMonth = (monthStr) => {
+  const d = new Date(monthStr);
+  return d.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
+};
+
 const Dashboard = () => {
   const { currentAdmin } = useAuth();
   const [stats, setStats] = useState(null);
+  const [monthlyStats, setMonthlyStats] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('http://localhost:3000/dashboard/stats')
-      .then(res => setStats(res.data))
+    Promise.all([
+      axios.get('http://localhost:3000/dashboard/stats'),
+      axios.get('http://localhost:3000/dashboard/monthly-stats'),
+    ])
+      .then(([statsRes, monthlyRes]) => {
+        setStats(statsRes.data);
+        setMonthlyStats(monthlyRes.data);
+      })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, []);
 
   const fmt = (n) => `$${parseFloat(n || 0).toFixed(2)}`;
+
+  const chartData = monthlyStats.map(m => ({
+    mes: formatMonth(m.month),
+    Ventas: parseFloat(m.total_ventas),
+    Cobrado: parseFloat(m.total_cobrado),
+  }));
 
   const values = stats ? {
     totalVentas:      fmt(stats.total_ventas),
@@ -68,6 +87,29 @@ const Dashboard = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="card border-0 shadow-sm mb-4">
+        <div className="card-header dashboard-card-header">
+          <i className="bi bi-bar-chart me-2"></i>Ventas últimos 6 meses
+        </div>
+        <div className="card-body">
+          {chartData.length === 0 ? (
+            <div className="text-center text-muted py-4">Sin datos de ventas en los últimos 6 meses</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="mes" />
+                <YAxis />
+                <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                <Legend />
+                <Bar dataKey="Ventas" fill="#4e1da9" />
+                <Bar dataKey="Cobrado" fill="#157347" />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
       </div>
 
       <div className="row g-3">

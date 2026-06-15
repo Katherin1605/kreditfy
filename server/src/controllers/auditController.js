@@ -2,7 +2,8 @@ import * as auditModel from "../models/auditModel.js";
 
 export const getAllAuditLogs = async (req, res) => {
   try {
-    const data = await auditModel.getAllAuditLogs();
+    const { page = 1, limit = 15, q = '', table = '', action = '' } = req.query;
+    const data = await auditModel.getAllAuditLogs({ page, limit, q, table, action });
     res.json(data);
   } catch (error) {
     console.error(error);

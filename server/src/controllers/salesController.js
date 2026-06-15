@@ -3,7 +3,8 @@ import * as auditModel from "../models/auditModel.js";
 
 export const getSales = async (req, res) => {
   try {
-    const data = await salesModel.getAllSales();
+    const { page = 1, limit = 15, q = '' } = req.query;
+    const data = await salesModel.getAllSales({ page, limit, q });
     res.json(data);
   } catch (error) {
     console.error(error);

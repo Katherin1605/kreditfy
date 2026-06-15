@@ -1,25 +1,50 @@
 import pool from "../../db/config.js";
 
-export const getAllSales = async () => {
-  const result = await pool.query(
-    `SELECT
-       s.id,
-       s.customer_id,
-       c.name AS customer_name,
-       s.total,
-       s.cuotas,
-       ROUND(s.total / NULLIF(s.cuotas, 0), 2) AS valor_cuota,
-       s.status,
-       s.created_at,
-       COALESCE(SUM(p.amount), 0) AS total_paid,
-       s.total - COALESCE(SUM(p.amount), 0) AS balance
-     FROM sales s
-     LEFT JOIN customers c ON s.customer_id = c.id
-     LEFT JOIN payments p ON s.id = p.sale_id
-     GROUP BY s.id, c.name
-     ORDER BY s.created_at DESC`
-  );
-  return result.rows;
+export const getAllSales = async ({ page = 1, limit = 15, q = '' } = {}) => {
+  const offset = (parseInt(page) - 1) * parseInt(limit);
+  const params = [];
+  let where = '';
+  let idx = 1;
+
+  if (q) {
+    where = `WHERE (c.name ILIKE $${idx} OR CAST(s.id AS TEXT) LIKE $${idx})`;
+    params.push(`%${q}%`);
+    idx++;
+  }
+
+  const [countRes, dataRes] = await Promise.all([
+    pool.query(
+      `SELECT COUNT(DISTINCT s.id)
+       FROM sales s LEFT JOIN customers c ON s.customer_id = c.id ${where}`,
+      params
+    ),
+    pool.query(
+      `SELECT
+         s.id, s.customer_id, c.name AS customer_name,
+         s.total, s.cuotas,
+         ROUND(s.total / NULLIF(s.cuotas, 0), 2) AS valor_cuota,
+         s.status, s.created_at,
+         COALESCE(SUM(p.amount), 0) AS total_paid,
+         s.total - COALESCE(SUM(p.amount), 0) AS balance
+       FROM sales s
+       LEFT JOIN customers c ON s.customer_id = c.id
+       LEFT JOIN payments p ON s.id = p.sale_id
+       ${where}
+       GROUP BY s.id, c.name
+       ORDER BY s.created_at DESC
+       LIMIT $${idx} OFFSET $${idx + 1}`,
+      [...params, parseInt(limit), offset]
+    ),
+  ]);
+
+  const total = parseInt(countRes.rows[0].count);
+  return {
+    data:       dataRes.rows,
+    total,
+    page:       parseInt(page),
+    limit:      parseInt(limit),
+    totalPages: Math.ceil(total / parseInt(limit)),
+  };
 };
 
 export const getSaleById = async (id) => {

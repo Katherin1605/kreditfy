@@ -1,12 +1,13 @@
 import * as customerModel from "../models/customersModel.js";
 import * as auditModel from "../models/auditModel.js";
 
-// GET /customers?q=texto
+// GET /customers?q=texto&page=1&limit=20
 export const getCustomers = async (req, res) => {
   try {
     const search = (req.query.q || '').trim();
-    const customers = await customerModel.getAllCustomers(search);
-    res.json(customers);
+    const { page = 1, limit = 20 } = req.query;
+    const result = await customerModel.getAllCustomers({ search, page, limit });
+    res.json(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al obtener clientes" });

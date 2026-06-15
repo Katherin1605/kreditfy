@@ -9,3 +9,13 @@ export const getStats = async (req, res) => {
     res.status(500).json({ error: "Error al obtener estadísticas del dashboard" });
   }
 };
+
+export const getMonthlyStats = async (req, res) => {
+  try {
+    const data = await dashboardModel.getMonthlyStats();
+    res.json(data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener estadísticas mensuales" });
+  }
+};

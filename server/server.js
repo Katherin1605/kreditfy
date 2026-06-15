@@ -10,6 +10,7 @@ import shoppingRoutes from './routes/shoppingRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import auditRoutes from './routes/auditRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
+import earningsRoutes from './routes/earningsRoutes.js';
 
 
 const PORT = process.env.PORT;
@@ -28,6 +29,7 @@ app.use(shoppingRoutes);
 app.use(adminRoutes);
 app.use(auditRoutes);
 app.use(dashboardRoutes);
+app.use(earningsRoutes);
 
 
 // Routes
