@@ -19,6 +19,7 @@ const Sales = () => {
   const [items, setItems] = useState([]);
   const [editingSale, setEditingSale] = useState(null);
   const [cuotas, setCuotas] = useState('1');
+  const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
   const debounceRef = useRef(null);
@@ -93,6 +94,7 @@ const Sales = () => {
     setShowForm(false);
     setEditingSale(null);
     setCuotas('1');
+    setSaleDate(new Date().toISOString().split('T')[0]);
   };
 
   const handleSubmit = (e) => {
@@ -108,6 +110,7 @@ const Sales = () => {
     const payload = {
       customer_id: parseInt(selectedCustomerId),
       cuotas: parseInt(cuotas) || 1,
+      sale_date: saleDate,
       products: items.map(i => ({
         product_id: i.product_id,
         quantity: i.quantity,
@@ -147,6 +150,7 @@ const Sales = () => {
         subtotal: d.quantity * parseFloat(d.price),
       })));
       setCuotas(detail.cuotas?.toString() || '1');
+      setSaleDate(detail.sale_date ? detail.sale_date.split('T')[0] : new Date().toISOString().split('T')[0]);
       setShowForm(true);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Error al cargar la venta');
@@ -202,6 +206,8 @@ const Sales = () => {
           editingSale={editingSale}
           cuotas={cuotas}
           setCuotas={setCuotas}
+          saleDate={saleDate}
+          setSaleDate={setSaleDate}
           onSubmit={handleSubmit}
           onClose={resetForm}
         />
@@ -240,7 +246,7 @@ const Sales = () => {
                         <span className="badge bg-light text-dark border">#{s.id}</span>
                       </td>
                       <td className="px-4 py-2">
-                        {new Date(s.created_at).toLocaleDateString()}
+                        {new Date((s.sale_date || s.created_at) + 'T12:00:00').toLocaleDateString('es-ES')}
                       </td>
                       <td className="px-4 py-2">{s.customer_name || '-'}</td>
                       <td className="px-4 py-2">${parseFloat(s.total).toFixed(2)}</td>

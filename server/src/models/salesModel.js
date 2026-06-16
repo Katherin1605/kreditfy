@@ -1,5 +1,10 @@
 import pool from "../../db/config.js";
 
+// Agrega columna sale_date si no existe (preserva created_at como timestamp de auditoría)
+pool.query(`
+  ALTER TABLE sales ADD COLUMN IF NOT EXISTS sale_date DATE NOT NULL DEFAULT CURRENT_DATE
+`).catch(err => console.error('[sales] Error en migración sale_date:', err));
+
 export const getAllSales = async ({ page = 1, limit = 15, q = '' } = {}) => {
   const offset = (parseInt(page) - 1) * parseInt(limit);
   const params = [];
@@ -23,7 +28,7 @@ export const getAllSales = async ({ page = 1, limit = 15, q = '' } = {}) => {
          s.id, s.customer_id, c.name AS customer_name,
          s.total, s.cuotas,
          ROUND(s.total / NULLIF(s.cuotas, 0), 2) AS valor_cuota,
-         s.status, s.created_at,
+         s.status, s.sale_date, s.created_at,
          COALESCE(SUM(p.amount), 0) AS total_paid,
          s.total - COALESCE(SUM(p.amount), 0) AS balance
        FROM sales s
@@ -31,7 +36,7 @@ export const getAllSales = async ({ page = 1, limit = 15, q = '' } = {}) => {
        LEFT JOIN payments p ON s.id = p.sale_id
        ${where}
        GROUP BY s.id, c.name
-       ORDER BY s.created_at DESC
+       ORDER BY s.sale_date DESC, s.created_at DESC
        LIMIT $${idx} OFFSET $${idx + 1}`,
       [...params, parseInt(limit), offset]
     ),
@@ -57,6 +62,7 @@ export const getSaleById = async (id) => {
        s.cuotas,
        ROUND(s.total / NULLIF(s.cuotas, 0), 2) AS valor_cuota,
        s.status,
+       s.sale_date,
        s.created_at,
        COALESCE(SUM(p.amount), 0) AS total_paid,
        s.total - COALESCE(SUM(p.amount), 0) AS balance
@@ -88,20 +94,18 @@ export const createSaleWithDetails = async (saleData) => {
   try {
     await client.query("BEGIN");
 
-    const { customer_id, products, cuotas = 1 } = saleData;
+    const { customer_id, products, cuotas = 1, sale_date } = saleData;
 
-    // Calcular total
     const total = products.reduce(
       (sum, p) => sum + p.quantity * p.price,
       0
     );
 
-    // Insertar venta
     const saleResult = await client.query(
-      `INSERT INTO sales (customer_id, total, cuotas)
-       VALUES ($1, $2, $3)
+      `INSERT INTO sales (customer_id, total, cuotas, sale_date)
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [customer_id, total, cuotas]
+      [customer_id, total, cuotas, sale_date || new Date().toISOString().split('T')[0]]
     );
 
     const sale = saleResult.rows[0];
@@ -160,7 +164,7 @@ export const updateSaleById = async (id, saleData) => {
   try {
     await client.query("BEGIN");
 
-    const { customer_id, products, cuotas = 1 } = saleData;
+    const { customer_id, products, cuotas = 1, sale_date } = saleData;
 
     // Restaurar stock de los detalles actuales
     const currentDetails = await client.query(
@@ -184,10 +188,9 @@ export const updateSaleById = async (id, saleData) => {
       0
     );
 
-    // Actualizar la venta
     const saleResult = await client.query(
-      `UPDATE sales SET customer_id = $1, total = $2, cuotas = $3 WHERE id = $4 RETURNING *`,
-      [customer_id, total, cuotas, id]
+      `UPDATE sales SET customer_id = $1, total = $2, cuotas = $3, sale_date = $4 WHERE id = $5 RETURNING *`,
+      [customer_id, total, cuotas, sale_date || new Date().toISOString().split('T')[0], id]
     );
 
     const sale = saleResult.rows[0];

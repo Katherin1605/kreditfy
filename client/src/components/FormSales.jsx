@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const FormSales = ({ customers, products, selectedCustomerId, setSelectedCustomerId, items, setItems, editingSale, cuotas, setCuotas, onSubmit, onClose }) => {
+const FormSales = ({ customers, products, selectedCustomerId, setSelectedCustomerId, items, setItems, editingSale, cuotas, setCuotas, saleDate, setSaleDate, onSubmit, onClose }) => {
   const [clienteSearch, setClienteSearch] = useState('');
   const [productoSearch, setProductoSearch] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -48,7 +48,7 @@ const FormSales = ({ customers, products, selectedCustomerId, setSelectedCustome
   const total = items.reduce((sum, i) => sum + i.subtotal, 0);
 
   return (
-    <div className="border border-secondary-subtle rounded p-4 mb-4" style={{ backgroundColor: 'var(--bg-card)' }}>
+    <div className="border border-secondary-subtle rounded p-4 mb-4 bg-white">
       <div className="d-flex justify-content-between mb-3">
         <h5 className="mb-0">{editingSale ? 'Editar Venta' : 'Nueva Venta'}</h5>
         <button type="button" className="btn-close" onClick={onClose} aria-label="Close"></button>
@@ -88,7 +88,18 @@ const FormSales = ({ customers, products, selectedCustomerId, setSelectedCustome
           </select>
         </div>
 
-        <div className="col-md-6 text-start">
+        <div className="col-md-3 text-start">
+          <label htmlFor="saleDate" className="form-label">Fecha de venta *</label>
+          <input
+            type="date"
+            className="form-control"
+            id="saleDate"
+            value={saleDate}
+            onChange={e => setSaleDate(e.target.value)}
+          />
+        </div>
+
+        <div className="col-md-3 text-start">
           <label htmlFor="cuotas" className="form-label">Número de Cuotas *</label>
           <input
             type="number"
@@ -165,7 +176,7 @@ const FormSales = ({ customers, products, selectedCustomerId, setSelectedCustome
           <div className="col-12 mt-2">
             <div className="table-responsive">
               <table className="table table-sm table-bordered mb-1">
-                <thead style={{ backgroundColor: 'var(--bg-section)' }}>
+                <thead className="sales-table-head">
                   <tr>
                     <th>Producto</th>
                     <th>Cantidad</th>
