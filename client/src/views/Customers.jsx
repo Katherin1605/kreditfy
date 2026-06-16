@@ -3,6 +3,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import FormCustomers from '../components/FormCustomers';
 import TableSkeleton from '../components/TableSkeleton';
+import Pagination from '../components/Pagination';
 import useConfirm from '../hooks/useConfirm';
 
 const Customers = () => {
@@ -13,18 +14,34 @@ const Customers = () => {
   const [formData, setFormData] = useState({ name: '', identity_card: '', phone: '', address: '' });
   const [formErrors, setFormErrors] = useState({});
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
   const debounceRef = useRef(null);
   const { confirmModal, ask } = useConfirm();
 
   useEffect(() => {
-    loadCustomers('');
+    loadCustomers('', 1);
   }, []);
 
-  const loadCustomers = (q = '') => {
+  useEffect(() => {
+    loadCustomers(search, page);
+  }, [page]);
+
+  const loadCustomers = (q = '', p = 1) => {
     setLoading(true);
-    const params = q ? { q } : {};
+    const params = { page: p, limit: 20 };
+    if (q) params.q = q;
     axios.get('http://localhost:3000/customers', { params })
-      .then(res => setCustomers(res.data))
+      .then(res => {
+        const data = res.data;
+        if (Array.isArray(data)) {
+          setCustomers(data);
+          setPagination({ total: data.length, totalPages: 1 });
+        } else {
+          setCustomers(data.data || []);
+          setPagination({ total: data.total || 0, totalPages: data.totalPages || 1 });
+        }
+      })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   };
@@ -33,7 +50,14 @@ const Customers = () => {
     const value = e.target.value;
     setSearch(value);
     clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => loadCustomers(value.trim()), 350);
+    debounceRef.current = setTimeout(() => {
+      setPage(1);
+      loadCustomers(value.trim(), 1);
+    }, 350);
+  };
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
   };
 
   const resetForm = () => {
@@ -68,7 +92,7 @@ const Customers = () => {
     axios.delete(`http://localhost:3000/customers/${id}`)
       .then(() => {
         toast.success('Cliente eliminado');
-        loadCustomers(search.trim());
+        loadCustomers(search.trim(), page);
       })
       .catch(err => toast.error(err.response?.data?.error || 'Error al procesar la solicitud'));
   };
@@ -88,7 +112,7 @@ const Customers = () => {
       .then(() => {
         toast.success(editingCustomer ? 'Cliente actualizado' : 'Cliente creado');
         resetForm();
-        loadCustomers(search.trim());
+        loadCustomers(search.trim(), page);
       })
       .catch(err => {
         const msg = err.response?.data?.error || 'Error al procesar la solicitud';
@@ -125,7 +149,7 @@ const Customers = () => {
           {search && (
             <button
               className="btn btn-outline-secondary"
-              onClick={() => { setSearch(''); loadCustomers(''); }}
+              onClick={() => { setSearch(''); setPage(1); loadCustomers('', 1); }}
             >
               <i className="bi bi-x-lg"></i>
             </button>
@@ -147,7 +171,7 @@ const Customers = () => {
       <div className="bg-white rounded shadow overflow-hidden">
         <div className="table-responsive">
           <table className="table table-hover mb-0">
-            <thead style={{ backgroundColor: 'var(--bg-section)' }}>
+            <thead className="customers-table-head">
               <tr>
                 <th className="px-4 py-3">Nombre</th>
                 <th className="px-4 py-3">Cédula</th>
@@ -193,6 +217,13 @@ const Customers = () => {
           </table>
         </div>
       </div>
+
+      <Pagination
+        page={page}
+        totalPages={pagination.totalPages}
+        total={pagination.total}
+        onPageChange={handlePageChange}
+      />
     </>
   );
 };

@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import Pagination from '../components/Pagination';
 
 const ACTION_LABELS = { CREATE: 'Crear', UPDATE: 'Editar', DELETE: 'Eliminar' };
 const ACTION_BADGES = { CREATE: 'bg-success', UPDATE: 'bg-primary', DELETE: 'bg-danger' };
@@ -22,34 +23,63 @@ const Audit = () => {
   const [filterAction, setFilterAction] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
+  const debounceRef = useRef(null);
 
-  useEffect(() => {
-    axios.get('http://localhost:3000/audit')
-      .then(res => setLogs(res.data))
+  const loadLogs = (q, table, action, p) => {
+    setLoading(true);
+    setError('');
+    const params = { page: p, limit: 15 };
+    if (q) params.q = q;
+    if (table) params.table = table;
+    if (action) params.action = action;
+
+    axios.get('http://localhost:3000/audit', { params })
+      .then(res => {
+        const data = res.data;
+        if (Array.isArray(data)) {
+          setLogs(data);
+          setPagination({ total: data.length, totalPages: 1 });
+        } else {
+          setLogs(data.data || []);
+          setPagination({ total: data.total || 0, totalPages: data.totalPages || 1 });
+        }
+      })
       .catch(err => {
         const msg = err.response?.data?.error || err.message || 'Error al cargar los registros';
         setError(`${err.response?.status ? `[${err.response.status}] ` : ''}${msg}`);
       })
       .finally(() => setLoading(false));
-  }, []);
+  };
 
-  const filtered = logs.filter(log => {
-    const matchSearch = !search ||
-      (log.admin_name || '').toLowerCase().includes(search.toLowerCase()) ||
-      (log.description || '').toLowerCase().includes(search.toLowerCase());
-    const matchTable = !filterTable || log.table_name === filterTable;
-    const matchAction = !filterAction || log.action === filterAction;
-    return matchSearch && matchTable && matchAction;
-  });
+  useEffect(() => {
+    loadLogs(search, filterTable, filterAction, page);
+  }, [page]);
 
-  const uniqueTables = [...new Set(logs.map(l => l.table_name).filter(Boolean))];
+  useEffect(() => {
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setPage(1);
+      loadLogs(search, filterTable, filterAction, 1);
+    }, 350);
+  }, [search]);
+
+  useEffect(() => {
+    setPage(1);
+    loadLogs(search, filterTable, filterAction, 1);
+  }, [filterTable, filterAction]);
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+  };
 
   return (
     <>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h5>Registro de Auditoría</h5>
         <span className="text-muted small">
-          {filtered.length} de {logs.length} registros
+          {pagination.total} registros
         </span>
       </div>
 
@@ -76,8 +106,8 @@ const Audit = () => {
               onChange={e => setFilterTable(e.target.value)}
             >
               <option value="">Todos los módulos</option>
-              {uniqueTables.map(t => (
-                <option key={t} value={t}>{TABLE_LABELS[t] || t}</option>
+              {Object.entries(TABLE_LABELS).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
               ))}
             </select>
           </div>
@@ -99,7 +129,7 @@ const Audit = () => {
       {loading ? (
         <div className="d-flex flex-column gap-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="skeleton-card" style={{ height: '80px' }}></div>
+            <div key={i} className="skeleton-card skeleton-card-log"></div>
           ))}
         </div>
       ) : error ? (
@@ -107,14 +137,14 @@ const Audit = () => {
           <i className="bi bi-exclamation-triangle me-2"></i>
           {error}
         </div>
-      ) : filtered.length === 0 ? (
+      ) : logs.length === 0 ? (
         <div className="text-center text-muted py-5">
           <i className="bi bi-file-earmark-text fs-1 d-block mb-3"></i>
-          <p>{logs.length === 0 ? 'No hay registros de auditoría todavía' : 'No se encontraron registros con ese filtro'}</p>
+          <p>{pagination.total === 0 ? 'No hay registros de auditoría todavía' : 'No se encontraron registros con ese filtro'}</p>
         </div>
       ) : (
         <div className="d-flex flex-column gap-2">
-          {filtered.map(log => (
+          {logs.map(log => (
             <div key={log.id} className="bg-white rounded shadow-sm p-3">
               <div className="d-flex justify-content-between align-items-start">
                 <div className="flex-grow-1">
@@ -130,7 +160,7 @@ const Audit = () => {
                     )}
                   </div>
                   <p className="mb-1 small">{log.description || '—'}</p>
-                  <div className="d-flex gap-3 text-muted" style={{ fontSize: '0.78rem' }}>
+                  <div className="d-flex gap-3 text-muted audit-log-meta">
                     <span>
                       <i className="bi bi-person me-1"></i>
                       {log.admin_name || 'Sistema'}
@@ -149,6 +179,13 @@ const Audit = () => {
           ))}
         </div>
       )}
+
+      <Pagination
+        page={page}
+        totalPages={pagination.totalPages}
+        total={pagination.total}
+        onPageChange={handlePageChange}
+      />
     </>
   );
 };

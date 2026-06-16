@@ -433,6 +433,113 @@
 }
 
 /* =========================================
+   Pagination
+   ========================================= */
+
+.pagination-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.5rem 0;
+}
+
+.pagination-info {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.pagination-ellipsis {
+  padding: 0 0.25rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1;
+  align-self: flex-end;
+}
+
+/* =========================================
+   Table heads (replace inline styles)
+   ========================================= */
+
+.sales-table-head,
+.customers-table-head {
+  background-color: var(--bg-section);
+}
+
+.sales-search-input {
+  min-width: 220px;
+}
+
+/* =========================================
+   Audit log meta
+   ========================================= */
+
+.audit-log-meta {
+  font-size: 0.78rem;
+}
+
+/* =========================================
+   Earnings view
+   ========================================= */
+
+.earnings-table thead th {
+  background-color: var(--bg-section);
+  font-weight: 600;
+  color: var(--text-heading);
+  font-size: 0.85rem;
+}
+
+.earnings-empty-row td {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.earnings-tfoot td {
+  background-color: var(--bg-section);
+  border-top: 2px solid var(--secondary-bg);
+  font-size: 0.9rem;
+}
+
+.modal-backdrop-earnings {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1040;
+}
+
+.earnings-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 1rem;
+}
+
+.earnings-modal-card {
+  width: 100%;
+  max-width: 500px;
+  border-radius: var(--border-radius);
+}
+
+/* =========================================
+   Payments
+   ========================================= */
+
+.payment-sale-card {
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color var(--transition);
+}
+
+.payment-sale-card--active {
+  border-color: var(--primary-color);
+}
+
+/* =========================================
    Skeleton loader
    ========================================= */
 
@@ -443,6 +550,10 @@
   animation: shimmer 1.2s infinite;
   border-radius: 4px;
   margin: 4px 0;
+}
+
+.skeleton-card-log {
+  height: 80px;
 }
 
 .skeleton-card {

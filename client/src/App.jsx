@@ -10,13 +10,17 @@ import Sales from "./views/Sales";
 import Payments from "./views/Payments";
 import Admin from "./views/Admin";
 import Audit from "./views/Audit";
+import Earnings from "./views/Earnings";
+
+const SUPERADMIN_VIEWS = ['admin', 'audit', 'earnings'];
 
 const ProtectedRoute = ({ element, view }) => {
   const { currentAdmin, loading } = useAuth();
   if (loading) return null;
   if (!currentAdmin) return <Navigate to="/login" replace />;
-  if (view === 'admin' && currentAdmin.role !== 'superadmin') return <Navigate to="/" replace />;
-  if (view && currentAdmin.role !== 'superadmin' && !currentAdmin.permissions?.includes(view)) {
+  if (currentAdmin.role === 'superadmin') return element;
+  if (SUPERADMIN_VIEWS.includes(view)) return <Navigate to="/" replace />;
+  if (view && !currentAdmin.permissions?.includes(view)) {
     return <Navigate to="/" replace />;
   }
   return element;
@@ -36,6 +40,7 @@ function App() {
           <Route path="payments" element={<ProtectedRoute element={<Payments />} view="payments" />} />
           <Route path="admin" element={<ProtectedRoute element={<Admin />} view="admin" />} />
           <Route path="audit" element={<ProtectedRoute element={<Audit />} view="audit" />} />
+          <Route path="earnings" element={<ProtectedRoute element={<Earnings />} view="earnings" />} />
         </Route>
       </Routes>
     </BrowserRouter>

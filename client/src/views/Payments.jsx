@@ -19,8 +19,11 @@ const Payments = () => {
 
   const loadSales = () => {
     setLoading(true);
-    axios.get('http://localhost:3000/sales')
-      .then(res => setSales(res.data))
+    axios.get('http://localhost:3000/sales', { params: { limit: 500 } })
+      .then(res => {
+        const data = res.data;
+        setSales(Array.isArray(data) ? data : (data.data || []));
+      })
       .catch(err => toast.error(err.response?.data?.error || 'Error al cargar las ventas'))
       .finally(() => setLoading(false));
   };
@@ -94,7 +97,7 @@ const Payments = () => {
 
         <div className="col-lg-5">
           <div className="card">
-            <div className="card-header" style={{ backgroundColor: 'var(--bg-section)' }}>
+            <div className="card-header dashboard-card-header">
               <strong>Ventas Pendientes</strong>
             </div>
             <div className="card-body p-3">
@@ -110,8 +113,7 @@ const Payments = () => {
                 pendingSales.map(s => (
                   <div
                     key={s.id}
-                    className="card mb-3"
-                    style={{ cursor: 'pointer', border: selectedSale?.id === s.id ? '2px solid var(--primary-color)' : '' }}
+                    className={`card mb-3 payment-sale-card ${selectedSale?.id === s.id ? 'payment-sale-card--active' : ''}`}
                     onClick={() => handleSelectSale(s)}
                   >
                     <div className="card-body py-2">
@@ -138,7 +140,7 @@ const Payments = () => {
         <div className="col-lg-7">
           {selectedSale ? (
             <div className="card">
-              <div className="card-header d-flex justify-content-between align-items-center" style={{ backgroundColor: 'var(--bg-section)' }}>
+              <div className="card-header dashboard-card-header d-flex justify-content-between align-items-center">
                 <strong>Detalle de Venta</strong>
                 <button type="button" className="btn-close" onClick={handleCloseDetail} />
               </div>

@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import FormSales from '../components/FormSales';
 import TableSkeleton from '../components/TableSkeleton';
+import Pagination from '../components/Pagination';
 import useConfirm from '../hooks/useConfirm';
 
 const Sales = () => {
@@ -18,22 +19,54 @@ const Sales = () => {
   const [items, setItems] = useState([]);
   const [editingSale, setEditingSale] = useState(null);
   const [cuotas, setCuotas] = useState('1');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
+  const debounceRef = useRef(null);
   const { confirmModal, ask } = useConfirm();
 
   useEffect(() => {
-    loadSales();
+    loadCatalogs();
   }, []);
 
-  const loadSales = () => {
+  useEffect(() => {
+    loadSales(search, page);
+  }, [page]);
+
+  useEffect(() => {
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setPage(1);
+      loadSales(search, 1);
+    }, 350);
+  }, [search]);
+
+  const loadCatalogs = () => {
     Promise.all([
-      axios.get('http://localhost:3000/sales'),
-      axios.get('http://localhost:3000/customers'),
+      axios.get('http://localhost:3000/customers', { params: { limit: 500 } }),
       axios.get('http://localhost:3000/products'),
     ])
-      .then(([salesRes, customersRes, productsRes]) => {
-        setSales(salesRes.data);
-        setCustomers(customersRes.data);
+      .then(([customersRes, productsRes]) => {
+        const cData = customersRes.data;
+        setCustomers(Array.isArray(cData) ? cData : (cData.data || []));
         setProducts(productsRes.data);
+      })
+      .catch(err => console.error(err));
+  };
+
+  const loadSales = (q = '', p = 1) => {
+    setLoading(true);
+    const params = { page: p, limit: 15 };
+    if (q) params.q = q;
+    axios.get('http://localhost:3000/sales', { params })
+      .then(res => {
+        const data = res.data;
+        if (Array.isArray(data)) {
+          setSales(data);
+          setPagination({ total: data.length, totalPages: 1 });
+        } else {
+          setSales(data.data || []);
+          setPagination({ total: data.total || 0, totalPages: data.totalPages || 1 });
+        }
       })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
@@ -86,7 +119,7 @@ const Sales = () => {
         .then(() => {
           toast.success('Venta actualizada');
           resetForm();
-          loadSales();
+          loadSales(search, page);
         })
         .catch(err => toast.error(err.response?.data?.error || 'Error al actualizar la venta'));
     } else {
@@ -94,7 +127,7 @@ const Sales = () => {
         .then(() => {
           toast.success('Venta creada');
           resetForm();
-          loadSales();
+          loadSales(search, page);
         })
         .catch(err => toast.error(err.response?.data?.error || 'Error al crear la venta'));
     }
@@ -126,19 +159,10 @@ const Sales = () => {
     axios.delete(`http://localhost:3000/sales/${saleId}`)
       .then(() => {
         toast.success('Venta eliminada');
-        loadSales();
+        loadSales(search, page);
       })
       .catch(err => toast.error(err.response?.data?.error || 'Error al eliminar la venta'));
   };
-
-  const filteredSales = sales.filter(s => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (
-      String(s.id).includes(q) ||
-      (s.customer_name || '').toLowerCase().includes(q)
-    );
-  });
 
   return (
     <>
@@ -148,7 +172,7 @@ const Sales = () => {
           <h5 className="mb-0">Ventas a Crédito</h5>
         </div>
         <div className="d-flex gap-2 align-items-center">
-          <div className="input-group">
+          <div className="input-group sales-search-input">
             <span className="input-group-text bg-white border-end-0">
               <i className="bi bi-search text-muted"></i>
             </span>
@@ -158,7 +182,6 @@ const Sales = () => {
               placeholder="Buscar por ID, cliente..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{ minWidth: '220px' }}
             />
           </div>
           <button className="btn btn-primary text-nowrap" onClick={() => setShowForm(true)}>
@@ -187,7 +210,7 @@ const Sales = () => {
       <div className="rounded shadow overflow-hidden">
         <div className="table-responsive">
           <table className="table table-hover mb-0">
-            <thead style={{ backgroundColor: 'var(--bg-section)' }}>
+            <thead className="sales-table-head">
               <tr>
                 <th className="px-4 py-2">#ID</th>
                 <th className="px-4 py-2">Fecha</th>
@@ -203,14 +226,14 @@ const Sales = () => {
             <tbody>
               {loading ? (
                 <TableSkeleton cols={9} />
-              ) : filteredSales.length === 0 ? (
+              ) : sales.length === 0 ? (
                 <tr>
                   <td className="text-center px-4 py-5 text-secondary" colSpan={9}>
-                    {sales.length === 0 ? 'No hay ventas registradas' : 'No se encontraron ventas con ese criterio'}
+                    {pagination.total === 0 && !search ? 'No hay ventas registradas' : 'No se encontraron ventas con ese criterio'}
                   </td>
                 </tr>
               ) : (
-                filteredSales.map(s => (
+                sales.map(s => (
                   <>
                     <tr key={s.id}>
                       <td className="px-4 py-2">
@@ -297,6 +320,13 @@ const Sales = () => {
           </table>
         </div>
       </div>
+
+      <Pagination
+        page={page}
+        totalPages={pagination.totalPages}
+        total={pagination.total}
+        onPageChange={setPage}
+      />
     </>
   );
 };
