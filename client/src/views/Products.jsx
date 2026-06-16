@@ -114,7 +114,6 @@ const Products = () => {
               placeholder="Buscar por nombre..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="products-search-input"
             />
           </div>
           <button className="btn btn-primary text-nowrap" onClick={handleNew}>
