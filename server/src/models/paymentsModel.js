@@ -19,14 +19,15 @@ export const getPaymentsBySaleId = async (sale_id) => {
 };
 
 export const createPayment = async (data) => {
-  const { sale_id, amount, method } = data;
+  const { sale_id, amount, method, payment_date } = data;
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
     const paymentResult = await client.query(
-      `INSERT INTO payments (sale_id, amount, method) VALUES ($1, $2, $3) RETURNING *`,
-      [sale_id, amount, method ?? null]
+      `INSERT INTO payments (sale_id, amount, method, payment_date)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [sale_id, amount, method ?? null, payment_date || new Date().toISOString().split('T')[0]]
     );
     const payment = paymentResult.rows[0];
 

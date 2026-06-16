@@ -10,7 +10,7 @@ const Payments = () => {
   const [saleDetail, setSaleDetail] = useState(null);
   const [payments, setPayments] = useState([]);
   const [showPayForm, setShowPayForm] = useState(false);
-  const [payForm, setPayForm] = useState({ amount: '', method: '' });
+  const [payForm, setPayForm] = useState({ amount: '', method: '', payment_date: new Date().toISOString().split('T')[0] });
   const { confirmModal } = useConfirm();
 
   useEffect(() => {
@@ -31,7 +31,7 @@ const Payments = () => {
   const handleSelectSale = (sale) => {
     setSelectedSale(sale);
     setShowPayForm(false);
-    setPayForm({ amount: '', method: '' });
+    setPayForm({ amount: '', method: '', payment_date: new Date().toISOString().split('T')[0] });
     Promise.all([
       axios.get(`http://localhost:3000/sales/${sale.id}`),
       axios.get(`http://localhost:3000/payments/sale/${sale.id}`)
@@ -61,6 +61,7 @@ const Payments = () => {
     const body = {
       sale_id: selectedSale.id,
       amount,
+      payment_date: payForm.payment_date || new Date().toISOString().split('T')[0],
       ...(payForm.method ? { method: payForm.method } : {})
     };
     axios.post('http://localhost:3000/payments', body)
@@ -75,7 +76,7 @@ const Payments = () => {
         setPayments(paymentsRes.data);
         setSelectedSale(detailRes.data);
         setShowPayForm(false);
-        setPayForm({ amount: '', method: '' });
+        setPayForm({ amount: '', method: '', payment_date: new Date().toISOString().split('T')[0] });
         if (parseFloat(detailRes.data.balance) <= 0) handleCloseDetail();
       })
       .catch(err => toast.error(err.response?.data?.error || 'Error al registrar el pago'));
@@ -232,6 +233,15 @@ const Payments = () => {
                             value={payForm.amount}
                             onChange={e => setPayForm({ ...payForm, amount: e.target.value })}
                             placeholder={`Sugerido: $${parseFloat(selectedSale.valor_cuota || 0).toFixed(2)} · Máx: $${parseFloat(selectedSale.balance).toFixed(2)}`}
+                          />
+                        </div>
+                        <div className="mb-3">
+                          <label className="form-label">Fecha de pago *</label>
+                          <input
+                            type="date"
+                            className="form-control"
+                            value={payForm.payment_date}
+                            onChange={e => setPayForm({ ...payForm, payment_date: e.target.value })}
                           />
                         </div>
                         <div className="mb-3">

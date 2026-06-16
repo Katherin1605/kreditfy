@@ -246,7 +246,7 @@ const Sales = () => {
                         <span className="badge bg-light text-dark border">#{s.id}</span>
                       </td>
                       <td className="px-4 py-2">
-                        {new Date((s.sale_date || s.created_at) + 'T12:00:00').toLocaleDateString('es-ES')}
+                        {new Date(s.sale_date || s.created_at).toLocaleDateString('es-ES')}
                       </td>
                       <td className="px-4 py-2">{s.customer_name || '-'}</td>
                       <td className="px-4 py-2">${parseFloat(s.total).toFixed(2)}</td>

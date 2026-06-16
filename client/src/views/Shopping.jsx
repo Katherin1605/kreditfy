@@ -98,7 +98,7 @@ const Shopping = () => {
       <div className="bg-white rounded shadow overflow-hidden">
         <div className="table-responsive">
           <table className="table table-hover mb-0">
-            <thead style={{ backgroundColor: 'var(--bg-section)' }}>
+            <thead className="sales-table-head">
               <tr>
                 <th className="px-4 py-3">Fecha</th>
                 <th className="px-4 py-3">Producto</th>

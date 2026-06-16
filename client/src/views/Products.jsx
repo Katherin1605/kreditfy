@@ -114,7 +114,7 @@ const Products = () => {
               placeholder="Buscar por nombre..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{ minWidth: '200px' }}
+              className="products-search-input"
             />
           </div>
           <button className="btn btn-primary text-nowrap" onClick={handleNew}>
@@ -137,7 +137,7 @@ const Products = () => {
       <div className="bg-white rounded shadow overflow-hidden">
         <div className="table-responsive">
           <table className="table table-hover mb-0">
-            <thead style={{ backgroundColor: 'var(--bg-section)' }}>
+            <thead className="sales-table-head">
               <tr>
                 <th className="px-4 py-3">Nombre</th>
                 <th className="px-4 py-3">Descripción</th>
