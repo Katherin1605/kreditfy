@@ -1,5 +1,18 @@
 import pool from "../../db/config.js";
 
+// Crea la tabla si no existe al cargar el módulo
+pool.query(`
+  CREATE TABLE IF NOT EXISTS monthly_closings (
+    id         SERIAL PRIMARY KEY,
+    year       INTEGER NOT NULL,
+    month      INTEGER NOT NULL CHECK (month BETWEEN 1 AND 12),
+    notas      TEXT,
+    cerrado    BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    UNIQUE (year, month)
+  )
+`).catch(err => console.error('[earnings] Error creando monthly_closings:', err));
+
 export const getMonthlySummary = async (year) => {
   const targetYear = parseInt(year) || new Date().getFullYear();
 

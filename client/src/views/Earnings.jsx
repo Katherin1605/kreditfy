@@ -15,7 +15,9 @@ const Earnings = () => {
     axios.get('http://localhost:3000/earnings/years')
       .then(res => {
         const list = res.data;
-        setYears(list);
+        // Asegurar que el año actual siempre aparece en el selector
+        const withCurrent = list.includes(currentYear) ? list : [currentYear, ...list];
+        setYears(withCurrent);
         if (list.length > 0 && !list.includes(currentYear)) {
           setSelectedYear(list[0]);
         }
