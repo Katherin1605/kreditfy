@@ -476,6 +476,10 @@
   min-width: 200px;
 }
 
+.dashboard-currency-select {
+  min-width: 90px;
+}
+
 /* =========================================
    Audit log meta
    ========================================= */

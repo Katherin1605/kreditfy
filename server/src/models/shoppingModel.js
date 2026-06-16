@@ -1,7 +1,11 @@
 import pool from "../../db/config.js";
 
+pool.query(`
+  ALTER TABLE shopping ADD COLUMN IF NOT EXISTS currency VARCHAR(3) NOT NULL DEFAULT 'USD'
+`).catch(err => console.error('[shopping] Error en migración:', err));
+
 export const getAllShopping = async () => {
-  const result = await pool.query("SELECT * FROM shopping ORDER BY id");
+  const result = await pool.query("SELECT * FROM shopping ORDER BY date DESC, id DESC");
   return result.rows;
 };
 
@@ -19,10 +23,10 @@ export const getShoppingByProductId = async (product_id) => {
 };
 
 export const createShopping = async (data) => {
-  const { product_id, quantity, cost } = data;
+  const { product_id, quantity, cost, currency = 'USD' } = data;
   const result = await pool.query(
-    `INSERT INTO shopping (product_id, quantity, cost) VALUES ($1, $2, $3) RETURNING *`,
-    [product_id, quantity, cost]
+    `INSERT INTO shopping (product_id, quantity, cost, currency) VALUES ($1, $2, $3, $4) RETURNING *`,
+    [product_id, quantity, cost, currency]
   );
   return result.rows[0];
 };

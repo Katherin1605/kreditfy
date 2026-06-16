@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { formatCurrency } from '../utils/currency';
 import useConfirm from '../hooks/useConfirm';
 
 const Payments = () => {
@@ -126,9 +127,9 @@ const Payments = () => {
                         <i className="bi bi-eye text-primary fs-5"></i>
                       </div>
                       <div className="d-flex justify-content-between mt-2 small">
-                        <span>Total: <strong>${parseFloat(s.total).toFixed(2)}</strong></span>
+                        <span>Total: <strong>{formatCurrency(s.total, s.currency)}</strong></span>
                         <span className="text-muted">{getCuotasPagadas(s)}/{s.cuotas} cuotas</span>
-                        <span className="text-warning fw-bold">Saldo: ${parseFloat(s.balance).toFixed(2)}</span>
+                        <span className="text-warning fw-bold">Saldo: {formatCurrency(s.balance, s.currency)}</span>
                       </div>
                     </div>
                   </div>
@@ -152,9 +153,13 @@ const Payments = () => {
                     <p className="text-muted mb-0 small">Cliente</p>
                     <p className="fw-bold mb-0">{selectedSale.customer_name}</p>
                   </div>
-                  <div className="col-6">
+                  <div className="col-4">
                     <p className="text-muted mb-0 small">Fecha</p>
-                    <p className="mb-0">{new Date(selectedSale.created_at).toLocaleDateString()}</p>
+                    <p className="mb-0">{new Date(selectedSale.sale_date || selectedSale.created_at).toLocaleDateString('es-ES')}</p>
+                  </div>
+                  <div className="col-2">
+                    <p className="text-muted mb-0 small">Moneda</p>
+                    <span className="badge bg-light text-dark border">{selectedSale.currency || 'USD'}</span>
                   </div>
                 </div>
 
@@ -163,21 +168,21 @@ const Payments = () => {
                 {saleDetail?.details?.map(d => (
                   <div key={d.id} className="d-flex justify-content-between small mb-1">
                     <span>{d.product_name} × {d.quantity}</span>
-                    <span>${(d.quantity * parseFloat(d.price)).toFixed(2)}</span>
+                    <span>{formatCurrency(d.quantity * parseFloat(d.price), selectedSale.currency)}</span>
                   </div>
                 ))}
 
                 <hr />
                 <div className="d-flex justify-content-between mb-1">
                   <span>Total</span>
-                  <strong>${parseFloat(selectedSale.total).toFixed(2)}</strong>
+                  <strong>{formatCurrency(selectedSale.total, selectedSale.currency)}</strong>
                 </div>
                 <div className="d-flex justify-content-between mb-1">
                   <span className="text-muted small">Cuotas</span>
                   <span className="small">
                     {getCuotasPagadas(selectedSale)}/{selectedSale.cuotas} pagadas
                     &nbsp;·&nbsp;
-                    ${parseFloat(selectedSale.valor_cuota || 0).toFixed(2)}/c.
+                    {formatCurrency(selectedSale.valor_cuota || 0, selectedSale.currency)}/c.
                   </span>
                 </div>
                 <div className="d-flex justify-content-between mb-1">
@@ -186,11 +191,11 @@ const Payments = () => {
                 </div>
                 <div className="d-flex justify-content-between mb-1 text-success">
                   <span>Pagado</span>
-                  <span>${parseFloat(selectedSale.total_paid).toFixed(2)}</span>
+                  <span>{formatCurrency(selectedSale.total_paid, selectedSale.currency)}</span>
                 </div>
                 <div className="d-flex justify-content-between fw-bold text-warning">
                   <span>Saldo pendiente</span>
-                  <span>${parseFloat(selectedSale.balance).toFixed(2)}</span>
+                  <span>{formatCurrency(selectedSale.balance, selectedSale.currency)}</span>
                 </div>
 
                 {payments.length > 0 && (
@@ -200,8 +205,8 @@ const Payments = () => {
                     {payments.map(p => (
                       <div key={p.id} className="bg-light rounded p-2 mb-2">
                         <div className="d-flex justify-content-between">
-                          <span className="text-success fw-bold">${parseFloat(p.amount).toFixed(2)}</span>
-                          <small className="text-muted">{new Date(p.payment_date).toLocaleDateString()}</small>
+                          <span className="text-success fw-bold">{formatCurrency(p.amount, selectedSale.currency)}</span>
+                          <small className="text-muted">{new Date(p.payment_date).toLocaleDateString('es-ES')}</small>
                         </div>
                         {p.method && (
                           <small className="text-muted">
@@ -232,7 +237,7 @@ const Payments = () => {
                             className="form-control"
                             value={payForm.amount}
                             onChange={e => setPayForm({ ...payForm, amount: e.target.value })}
-                            placeholder={`Sugerido: $${parseFloat(selectedSale.valor_cuota || 0).toFixed(2)} · Máx: $${parseFloat(selectedSale.balance).toFixed(2)}`}
+                            placeholder={`Sugerido: ${formatCurrency(selectedSale.valor_cuota || 0, selectedSale.currency)} · Máx: ${formatCurrency(selectedSale.balance, selectedSale.currency)}`}
                           />
                         </div>
                         <div className="mb-3">

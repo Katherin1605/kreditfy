@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { formatCurrency, CURRENCIES } from '../utils/currency';
 
 const Earnings = () => {
   const currentYear = new Date().getFullYear();
   const [years, setYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [currency, setCurrency] = useState('USD');
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState({ show: false, month: null, notas: '', cerrado: false });
@@ -15,7 +17,6 @@ const Earnings = () => {
     axios.get('http://localhost:3000/earnings/years')
       .then(res => {
         const list = res.data;
-        // Asegurar que el año actual siempre aparece en el selector
         const withCurrent = list.includes(currentYear) ? list : [currentYear, ...list];
         setYears(withCurrent);
         if (list.length > 0 && !list.includes(currentYear)) {
@@ -26,18 +27,20 @@ const Earnings = () => {
   }, []);
 
   useEffect(() => {
-    loadEarnings(selectedYear);
-  }, [selectedYear]);
+    loadEarnings(selectedYear, currency);
+  }, [selectedYear, currency]);
 
-  const loadEarnings = (year) => {
+  const loadEarnings = (year, cur) => {
     setLoading(true);
-    axios.get(`http://localhost:3000/earnings/monthly?year=${year}`)
+    const params = { year };
+    if (cur) params.currency = cur;
+    axios.get('http://localhost:3000/earnings/monthly', { params })
       .then(res => setRows(res.data))
       .catch(err => toast.error(err.response?.data?.error || 'Error al cargar cobros'))
       .finally(() => setLoading(false));
   };
 
-  const fmt = (val) => `$${parseFloat(val || 0).toFixed(2)}`;
+  const fmt = (val) => formatCurrency(val, currency);
 
   const openModal = (row) => {
     setModal({ show: true, month: row.month, notas: row.notas || '', cerrado: !!row.cerrado });
@@ -56,7 +59,7 @@ const Earnings = () => {
       });
       toast.success('Cierre guardado');
       closeModal();
-      loadEarnings(selectedYear);
+      loadEarnings(selectedYear, currency);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Error al guardar');
     } finally {
@@ -67,10 +70,10 @@ const Earnings = () => {
   const totals = rows.reduce(
     (acc, r) => ({
       ingresos: acc.ingresos + parseFloat(r.ingresos || 0),
-      gastos: acc.gastos + parseFloat(r.gastos || 0),
-      ganancia: acc.ganancia + parseFloat(r.ganancia || 0),
-      socio_1: acc.socio_1 + parseFloat(r.socio_1 || 0),
-      socio_2: acc.socio_2 + parseFloat(r.socio_2 || 0),
+      gastos:   acc.gastos   + parseFloat(r.gastos   || 0),
+      ganancia: acc.ganancia + parseFloat(r.ganancia  || 0),
+      socio_1:  acc.socio_1  + parseFloat(r.socio_1   || 0),
+      socio_2:  acc.socio_2  + parseFloat(r.socio_2   || 0),
     }),
     { ingresos: 0, gastos: 0, ganancia: 0, socio_1: 0, socio_2: 0 }
   );
@@ -82,9 +85,20 @@ const Earnings = () => {
           <h5 className="mb-0">Cobros Mensuales</h5>
           <small className="text-muted">Resumen financiero por mes</small>
         </div>
-        <div>
+        <div className="d-flex gap-2 align-items-center">
+          <label className="form-label mb-0 text-muted small">Moneda:</label>
           <select
-            className="form-select form-select-sm"
+            className="form-select form-select-sm dashboard-currency-select"
+            value={currency}
+            onChange={e => setCurrency(e.target.value)}
+          >
+            {CURRENCIES.map(c => (
+              <option key={c.code} value={c.code}>{c.code}</option>
+            ))}
+          </select>
+          <label className="form-label mb-0 text-muted small">Año:</label>
+          <select
+            className="form-select form-select-sm dashboard-currency-select"
             value={selectedYear}
             onChange={e => setSelectedYear(Number(e.target.value))}
           >
@@ -157,7 +171,7 @@ const Earnings = () => {
             {!loading && rows.length > 0 && (
               <tfoot className="earnings-tfoot">
                 <tr>
-                  <td className="px-4 py-2 fw-bold">Totales</td>
+                  <td className="px-4 py-2 fw-bold">Totales {selectedYear}</td>
                   <td className="px-4 py-2 fw-bold text-success">{fmt(totals.ingresos)}</td>
                   <td className="px-4 py-2 fw-bold text-danger">{fmt(totals.gastos)}</td>
                   <td className="px-4 py-2 fw-bold">{fmt(totals.ganancia)}</td>

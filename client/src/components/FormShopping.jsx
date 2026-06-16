@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { CURRENCIES } from '../utils/currency';
 
 const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) => {
   const handleChange = (e) => {
@@ -26,7 +26,7 @@ const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) =>
             ))}
           </select>
         </div>
-        <div className="col-md-6">
+        <div className="col-md-4">
           <label className="form-label">Cantidad *</label>
           <input
             type="number"
@@ -35,10 +35,9 @@ const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) =>
             name="quantity"
             value={formData.quantity}
             onChange={handleChange}
-            required
           />
         </div>
-        <div className="col-md-6">
+        <div className="col-md-4">
           <label className="form-label">Costo *</label>
           <input
             type="number"
@@ -48,8 +47,20 @@ const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) =>
             name="cost"
             value={formData.cost}
             onChange={handleChange}
-            required
           />
+        </div>
+        <div className="col-md-4">
+          <label className="form-label">Moneda *</label>
+          <select
+            className="form-select"
+            name="currency"
+            value={formData.currency || 'USD'}
+            onChange={handleChange}
+          >
+            {CURRENCIES.map(c => (
+              <option key={c.code} value={c.code}>{c.label}</option>
+            ))}
+          </select>
         </div>
         <div className="col-12">
           <button type="submit" className="btn btn-success me-2">Guardar</button>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { formatCurrency } from '../utils/currency';
 import FormSales from '../components/FormSales';
 import TableSkeleton from '../components/TableSkeleton';
 import Pagination from '../components/Pagination';
@@ -20,6 +21,7 @@ const Sales = () => {
   const [editingSale, setEditingSale] = useState(null);
   const [cuotas, setCuotas] = useState('1');
   const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
+  const [currency, setCurrency] = useState('USD');
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
   const debounceRef = useRef(null);
@@ -95,6 +97,7 @@ const Sales = () => {
     setEditingSale(null);
     setCuotas('1');
     setSaleDate(new Date().toISOString().split('T')[0]);
+    setCurrency('USD');
   };
 
   const handleSubmit = (e) => {
@@ -111,6 +114,7 @@ const Sales = () => {
       customer_id: parseInt(selectedCustomerId),
       cuotas: parseInt(cuotas) || 1,
       sale_date: saleDate,
+      currency,
       products: items.map(i => ({
         product_id: i.product_id,
         quantity: i.quantity,
@@ -151,6 +155,7 @@ const Sales = () => {
       })));
       setCuotas(detail.cuotas?.toString() || '1');
       setSaleDate(detail.sale_date ? detail.sale_date.split('T')[0] : new Date().toISOString().split('T')[0]);
+      setCurrency(detail.currency || 'USD');
       setShowForm(true);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Error al cargar la venta');
@@ -208,6 +213,8 @@ const Sales = () => {
           setCuotas={setCuotas}
           saleDate={saleDate}
           setSaleDate={setSaleDate}
+          currency={currency}
+          setCurrency={setCurrency}
           onSubmit={handleSubmit}
           onClose={resetForm}
         />
@@ -221,6 +228,7 @@ const Sales = () => {
                 <th className="px-4 py-2">#ID</th>
                 <th className="px-4 py-2">Fecha</th>
                 <th className="px-4 py-2">Cliente</th>
+                <th className="px-4 py-2">Moneda</th>
                 <th className="px-4 py-2">Total</th>
                 <th className="px-4 py-2">Cuotas</th>
                 <th className="px-4 py-2">Pagado</th>
@@ -231,10 +239,10 @@ const Sales = () => {
             </thead>
             <tbody>
               {loading ? (
-                <TableSkeleton cols={9} />
+                <TableSkeleton cols={10} />
               ) : sales.length === 0 ? (
                 <tr>
-                  <td className="text-center px-4 py-5 text-secondary" colSpan={9}>
+                  <td className="text-center px-4 py-5 text-secondary" colSpan={10}>
                     {pagination.total === 0 && !search ? 'No hay ventas registradas' : 'No se encontraron ventas con ese criterio'}
                   </td>
                 </tr>
@@ -249,16 +257,19 @@ const Sales = () => {
                         {new Date(s.sale_date || s.created_at).toLocaleDateString('es-ES')}
                       </td>
                       <td className="px-4 py-2">{s.customer_name || '-'}</td>
-                      <td className="px-4 py-2">${parseFloat(s.total).toFixed(2)}</td>
+                      <td className="px-4 py-2">
+                        <span className="badge bg-light text-dark border">{s.currency || 'USD'}</span>
+                      </td>
+                      <td className="px-4 py-2">{formatCurrency(s.total, s.currency)}</td>
                       <td className="px-4 py-2">
                         <span>{s.cuotas} cuotas</span><br />
-                        <small className="text-muted">${parseFloat(s.valor_cuota || 0).toFixed(2)}/c.</small>
+                        <small className="text-muted">{formatCurrency(s.valor_cuota || 0, s.currency)}/c.</small>
                       </td>
                       <td className="px-4 py-2 text-success">
-                        ${parseFloat(s.total_paid).toFixed(2)}
+                        {formatCurrency(s.total_paid, s.currency)}
                       </td>
                       <td className="px-4 py-2 text-warning">
-                        ${parseFloat(s.balance).toFixed(2)}
+                        {formatCurrency(s.balance, s.currency)}
                       </td>
                       <td className="px-4 py-2">
                         <span className={`badge ${s.status === 'paid' ? 'bg-success' : 'bg-warning text-dark'}`}>
@@ -291,7 +302,7 @@ const Sales = () => {
                     </tr>
                     {expandedId === s.id && (
                       <tr key={`detail-${s.id}`} className="table-light">
-                        <td colSpan={9} className="px-4 py-3">
+                        <td colSpan={10} className="px-4 py-3">
                           {saleDetails[s.id] ? (
                             <table className="table table-sm mb-0">
                               <thead>

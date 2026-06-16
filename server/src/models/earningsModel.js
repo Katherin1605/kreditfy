@@ -13,25 +13,27 @@ pool.query(`
   )
 `).catch(err => console.error('[earnings] Error creando monthly_closings:', err));
 
-export const getMonthlySummary = async (year) => {
+export const getMonthlySummary = async (year, currency = '') => {
   const targetYear = parseInt(year) || new Date().getFullYear();
+  const cFilter = currency ? ' AND currency = $2' : '';
+  const params  = currency ? [targetYear, currency] : [targetYear];
 
   const [ingresosRes, gastosRes, closingsRes] = await Promise.all([
     pool.query(
       `SELECT EXTRACT(MONTH FROM payment_date)::int AS month,
               SUM(amount)::numeric                    AS ingresos
        FROM payments
-       WHERE EXTRACT(YEAR FROM payment_date) = $1
+       WHERE EXTRACT(YEAR FROM payment_date) = $1${cFilter}
        GROUP BY EXTRACT(MONTH FROM payment_date)`,
-      [targetYear]
+      params
     ),
     pool.query(
       `SELECT EXTRACT(MONTH FROM date)::int AS month,
               SUM(cost * quantity)::numeric  AS gastos
        FROM shopping
-       WHERE EXTRACT(YEAR FROM date) = $1
+       WHERE EXTRACT(YEAR FROM date) = $1${cFilter}
        GROUP BY EXTRACT(MONTH FROM date)`,
-      [targetYear]
+      params
     ),
     pool.query(
       `SELECT * FROM monthly_closings WHERE year = $1`,

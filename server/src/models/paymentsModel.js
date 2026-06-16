@@ -1,5 +1,9 @@
 import pool from "../../db/config.js";
 
+pool.query(`
+  ALTER TABLE payments ADD COLUMN IF NOT EXISTS currency VARCHAR(3) NOT NULL DEFAULT 'USD'
+`).catch(err => console.error('[payments] Error en migración:', err));
+
 export const getAllPayments = async () => {
   const result = await pool.query("SELECT * FROM payments ORDER BY id");
   return result.rows;
@@ -24,10 +28,18 @@ export const createPayment = async (data) => {
   try {
     await client.query("BEGIN");
 
+    // Obtener total y moneda de la venta
+    const saleResult = await client.query(
+      "SELECT total, currency FROM sales WHERE id = $1",
+      [sale_id]
+    );
+    const sale = saleResult.rows[0];
+    const currency = sale?.currency || 'USD';
+
     const paymentResult = await client.query(
-      `INSERT INTO payments (sale_id, amount, method, payment_date)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [sale_id, amount, method ?? null, payment_date || new Date().toISOString().split('T')[0]]
+      `INSERT INTO payments (sale_id, amount, method, payment_date, currency)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [sale_id, amount, method ?? null, payment_date || new Date().toISOString().split('T')[0], currency]
     );
     const payment = paymentResult.rows[0];
 
@@ -36,12 +48,6 @@ export const createPayment = async (data) => {
       [sale_id]
     );
     const totalPagado = parseFloat(sumResult.rows[0].total_pagado);
-
-    const saleResult = await client.query(
-      "SELECT total FROM sales WHERE id = $1",
-      [sale_id]
-    );
-    const sale = saleResult.rows[0];
 
     if (sale && totalPagado >= parseFloat(sale.total)) {
       await client.query(

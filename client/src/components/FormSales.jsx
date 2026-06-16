@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { CURRENCIES } from '../utils/currency';
 
-const FormSales = ({ customers, products, selectedCustomerId, setSelectedCustomerId, items, setItems, editingSale, cuotas, setCuotas, saleDate, setSaleDate, onSubmit, onClose }) => {
+const FormSales = ({ customers, products, selectedCustomerId, setSelectedCustomerId, items, setItems, editingSale, cuotas, setCuotas, saleDate, setSaleDate, currency, setCurrency, onSubmit, onClose }) => {
   const [clienteSearch, setClienteSearch] = useState('');
   const [productoSearch, setProductoSearch] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -97,6 +98,20 @@ const FormSales = ({ customers, products, selectedCustomerId, setSelectedCustome
             value={saleDate}
             onChange={e => setSaleDate(e.target.value)}
           />
+        </div>
+
+        <div className="col-md-3 text-start">
+          <label htmlFor="saleCurrency" className="form-label">Moneda *</label>
+          <select
+            className="form-select"
+            id="saleCurrency"
+            value={currency}
+            onChange={e => setCurrency(e.target.value)}
+          >
+            {CURRENCIES.map(c => (
+              <option key={c.code} value={c.code}>{c.label}</option>
+            ))}
+          </select>
         </div>
 
         <div className="col-md-3 text-start">

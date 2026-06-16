@@ -2,8 +2,8 @@ import * as earningsModel from "../models/earningsModel.js";
 
 export const getMonthlySummary = async (req, res) => {
   try {
-    const { year } = req.query;
-    const data = await earningsModel.getMonthlySummary(year);
+    const { year, currency = '' } = req.query;
+    const data = await earningsModel.getMonthlySummary(year, currency);
     res.json(data);
   } catch (error) {
     console.error(error);

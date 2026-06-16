@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { formatCurrency, CURRENCIES } from '../utils/currency';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const METRICS = [
@@ -22,11 +23,14 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [monthlyStats, setMonthlyStats] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currency, setCurrency] = useState('');
 
-  useEffect(() => {
+  const loadData = (cur = '') => {
+    setLoading(true);
+    const params = cur ? { currency: cur } : {};
     Promise.all([
-      axios.get('http://localhost:3000/dashboard/stats'),
-      axios.get('http://localhost:3000/dashboard/monthly-stats'),
+      axios.get('http://localhost:3000/dashboard/stats',         { params }),
+      axios.get('http://localhost:3000/dashboard/monthly-stats', { params }),
     ])
       .then(([statsRes, monthlyRes]) => {
         setStats(statsRes.data);
@@ -34,13 +38,17 @@ const Dashboard = () => {
       })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
-  }, []);
+  };
 
-  const fmt = (n) => `$${parseFloat(n || 0).toFixed(2)}`;
+  useEffect(() => {
+    loadData(currency);
+  }, [currency]);
+
+  const fmt = (n) => formatCurrency(n, currency || 'USD');
 
   const chartData = monthlyStats.map(m => ({
-    mes: formatMonth(m.month),
-    Ventas: parseFloat(m.total_ventas),
+    mes:     formatMonth(m.month),
+    Ventas:  parseFloat(m.total_ventas),
     Cobrado: parseFloat(m.total_cobrado),
   }));
 
@@ -64,11 +72,26 @@ const Dashboard = () => {
 
   return (
     <>
-      <div className="mb-4">
-        <h5 className="mb-0">Dashboard</h5>
-        <small className="text-muted">
-          Bienvenido, <strong>{currentAdmin?.name}</strong>
-        </small>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h5 className="mb-0">Dashboard</h5>
+          <small className="text-muted">
+            Bienvenido, <strong>{currentAdmin?.name}</strong>
+          </small>
+        </div>
+        <div className="d-flex align-items-center gap-2">
+          <label className="form-label mb-0 text-muted small">Moneda:</label>
+          <select
+            className="form-select form-select-sm dashboard-currency-select"
+            value={currency}
+            onChange={e => setCurrency(e.target.value)}
+          >
+            <option value="">Todas</option>
+            {CURRENCIES.map(c => (
+              <option key={c.code} value={c.code}>{c.code}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="row g-3 mb-4">
@@ -91,7 +114,9 @@ const Dashboard = () => {
 
       <div className="card border-0 shadow-sm mb-4">
         <div className="card-header dashboard-card-header">
-          <i className="bi bi-bar-chart me-2"></i>Ventas últimos 6 meses
+          <i className="bi bi-bar-chart me-2"></i>
+          Ventas últimos 6 meses
+          {currency && <span className="badge bg-light text-dark border ms-2">{currency}</span>}
         </div>
         <div className="card-body">
           {chartData.length === 0 ? (
@@ -102,9 +127,9 @@ const Dashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="mes" />
                 <YAxis />
-                <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                <Tooltip formatter={(value) => formatCurrency(value, currency || 'USD')} />
                 <Legend />
-                <Bar dataKey="Ventas" fill="#4e1da9" />
+                <Bar dataKey="Ventas"  fill="#4e1da9" />
                 <Bar dataKey="Cobrado" fill="#157347" />
               </BarChart>
             </ResponsiveContainer>
@@ -143,9 +168,9 @@ const Dashboard = () => {
                           <span className="badge bg-light text-dark border">#{s.id}</span>
                         </td>
                         <td className="px-3 py-2">{s.customer_name || '-'}</td>
-                        <td className="px-3 py-2">{fmt(s.total)}</td>
-                        <td className="px-3 py-2 text-success">{fmt(s.total_paid)}</td>
-                        <td className="px-3 py-2 fw-bold text-warning">{fmt(s.balance)}</td>
+                        <td className="px-3 py-2">{formatCurrency(s.total, s.currency)}</td>
+                        <td className="px-3 py-2 text-success">{formatCurrency(s.total_paid, s.currency)}</td>
+                        <td className="px-3 py-2 fw-bold text-warning">{formatCurrency(s.balance, s.currency)}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { formatCurrency } from '../utils/currency';
 import FormShopping from '../components/FormShopping';
 import TableSkeleton from '../components/TableSkeleton';
 import useConfirm from '../hooks/useConfirm';
@@ -10,7 +11,7 @@ const Shopping = () => {
   const [products, setProducts] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({ product_id: '', quantity: '', cost: '' });
+  const [formData, setFormData] = useState({ product_id: '', quantity: '', cost: '', currency: 'USD' });
   const { confirmModal, ask } = useConfirm();
 
   useEffect(() => {
@@ -31,7 +32,7 @@ const Shopping = () => {
   };
 
   const handleNew = () => {
-    setFormData({ product_id: '', quantity: '', cost: '' });
+    setFormData({ product_id: '', quantity: '', cost: '', currency: 'USD' });
     setShowForm(true);
   };
 
@@ -48,22 +49,13 @@ const Shopping = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.product_id) {
-      toast.error('Selecciona un producto');
-      return;
-    }
-    if (!formData.quantity || parseInt(formData.quantity) < 1) {
-      toast.error('Ingresa una cantidad válida');
-      return;
-    }
-    if (!formData.cost || parseFloat(formData.cost) < 0) {
-      toast.error('Ingresa un costo válido');
-      return;
-    }
+    if (!formData.product_id) { toast.error('Selecciona un producto'); return; }
+    if (!formData.quantity || parseInt(formData.quantity) < 1) { toast.error('Ingresa una cantidad válida'); return; }
+    if (!formData.cost || parseFloat(formData.cost) < 0) { toast.error('Ingresa un costo válido'); return; }
     axios.post('http://localhost:3000/shopping', formData)
       .then(() => {
         toast.success('Compra registrada');
-        setFormData({ product_id: '', quantity: '', cost: '' });
+        setFormData({ product_id: '', quantity: '', cost: '', currency: 'USD' });
         setShowForm(false);
         loadData();
       })
@@ -71,7 +63,7 @@ const Shopping = () => {
   };
 
   const resetForm = () => {
-    setFormData({ product_id: '', quantity: '', cost: '' });
+    setFormData({ product_id: '', quantity: '', cost: '', currency: 'USD' });
     setShowForm(false);
   };
 
@@ -103,6 +95,7 @@ const Shopping = () => {
                 <th className="px-4 py-3">Fecha</th>
                 <th className="px-4 py-3">Producto</th>
                 <th className="px-4 py-3">Cantidad</th>
+                <th className="px-4 py-3">Moneda</th>
                 <th className="px-4 py-3">Costo</th>
                 <th className="px-4 py-3">Ganancia</th>
                 <th className="px-4 py-3">Acciones</th>
@@ -110,26 +103,33 @@ const Shopping = () => {
             </thead>
             <tbody>
               {loading ? (
-                <TableSkeleton cols={6} />
+                <TableSkeleton cols={7} />
               ) : shopping.length === 0 ? (
                 <tr>
-                  <td className="text-center px-4 py-5 text-secondary" colSpan={6}>
+                  <td className="text-center px-4 py-5 text-secondary" colSpan={7}>
                     No hay compras registradas
                   </td>
                 </tr>
               ) : (
                 shopping.map(row => (
                   <tr key={row.id}>
-                    <td className="px-4 py-3">{new Date(row.date).toLocaleDateString()}</td>
+                    <td className="px-4 py-3">{new Date(row.date).toLocaleDateString('es-ES')}</td>
                     <td className="px-4 py-3">{products.find(p => p.id === row.product_id)?.name || '-'}</td>
                     <td className="px-4 py-3">{row.quantity}</td>
-                    <td className="px-4 py-3">${parseFloat(row.cost).toFixed(2)}</td>
+                    <td className="px-4 py-3">
+                      <span className="badge bg-light text-dark border">{row.currency || 'USD'}</span>
+                    </td>
+                    <td className="px-4 py-3">{formatCurrency(row.cost, row.currency)}</td>
                     <td className="px-4 py-3">
                       {(() => {
                         const product = products.find(p => p.id === row.product_id);
                         if (!product) return '-';
                         const ganancia = (parseFloat(product.price) - parseFloat(row.cost)) * row.quantity;
-                        return <span className={ganancia >= 0 ? 'text-success' : 'text-danger'}>${ganancia.toFixed(2)}</span>;
+                        return (
+                          <span className={ganancia >= 0 ? 'text-success' : 'text-danger'}>
+                            {formatCurrency(ganancia, row.currency)}
+                          </span>
+                        );
                       })()}
                     </td>
                     <td className="px-4 py-3">
