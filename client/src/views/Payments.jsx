@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { formatCurrency } from '../utils/currency';
+import { useExchangeRates } from '../context/ExchangeRatesContext';
+import AmountDisplay from '../components/AmountDisplay';
 import useConfirm from '../hooks/useConfirm';
 
 const Payments = () => {
@@ -13,6 +15,7 @@ const Payments = () => {
   const [showPayForm, setShowPayForm] = useState(false);
   const [payForm, setPayForm] = useState({ amount: '', method: '', payment_date: new Date().toISOString().split('T')[0] });
   const { confirmModal } = useConfirm();
+  const { rates } = useExchangeRates();
 
   useEffect(() => {
     loadSales();
@@ -53,7 +56,7 @@ const Payments = () => {
 
   const handleSubmitPago = (e) => {
     e.preventDefault();
-    const amount = parseFloat(payForm.amount);
+    const amount = parseFloat(payForm.amount.replace(/,/g, ''));
     const balance = parseFloat(selectedSale.balance);
     if (amount <= 0 || amount > balance) {
       toast.error('El monto debe ser mayor a 0 y no puede superar el saldo pendiente');
@@ -127,9 +130,9 @@ const Payments = () => {
                         <i className="bi bi-eye text-primary fs-5"></i>
                       </div>
                       <div className="d-flex justify-content-between mt-2 small">
-                        <span>Total: <strong>{formatCurrency(s.total, s.currency)}</strong></span>
+                        <span>Total: <strong><AmountDisplay amount={s.total} rates={rates} /></strong></span>
                         <span className="text-muted">{getCuotasPagadas(s)}/{s.cuotas} cuotas</span>
-                        <span className="text-warning fw-bold">Saldo: {formatCurrency(s.balance, s.currency)}</span>
+                        <span className="text-warning fw-bold">Saldo: <AmountDisplay amount={s.balance} rates={rates} /></span>
                       </div>
                     </div>
                   </div>
@@ -168,21 +171,21 @@ const Payments = () => {
                 {saleDetail?.details?.map(d => (
                   <div key={d.id} className="d-flex justify-content-between small mb-1">
                     <span>{d.product_name} × {d.quantity}</span>
-                    <span>{formatCurrency(d.quantity * parseFloat(d.price), selectedSale.currency)}</span>
+                    <AmountDisplay amount={d.quantity * parseFloat(d.price)} rates={rates} />
                   </div>
                 ))}
 
                 <hr />
                 <div className="d-flex justify-content-between mb-1">
                   <span>Total</span>
-                  <strong>{formatCurrency(selectedSale.total, selectedSale.currency)}</strong>
+                  <strong><AmountDisplay amount={selectedSale.total} rates={rates} /></strong>
                 </div>
                 <div className="d-flex justify-content-between mb-1">
                   <span className="text-muted small">Cuotas</span>
                   <span className="small">
                     {getCuotasPagadas(selectedSale)}/{selectedSale.cuotas} pagadas
                     &nbsp;·&nbsp;
-                    {formatCurrency(selectedSale.valor_cuota || 0, selectedSale.currency)}/c.
+                    {formatCurrency(selectedSale.valor_cuota || 0, 'BsF')}/c.
                   </span>
                 </div>
                 <div className="d-flex justify-content-between mb-1">
@@ -191,11 +194,11 @@ const Payments = () => {
                 </div>
                 <div className="d-flex justify-content-between mb-1 text-success">
                   <span>Pagado</span>
-                  <span>{formatCurrency(selectedSale.total_paid, selectedSale.currency)}</span>
+                  <AmountDisplay amount={selectedSale.total_paid} rates={rates} />
                 </div>
                 <div className="d-flex justify-content-between fw-bold text-warning">
                   <span>Saldo pendiente</span>
-                  <span>{formatCurrency(selectedSale.balance, selectedSale.currency)}</span>
+                  <AmountDisplay amount={selectedSale.balance} rates={rates} />
                 </div>
 
                 {payments.length > 0 && (
@@ -205,7 +208,7 @@ const Payments = () => {
                     {payments.map(p => (
                       <div key={p.id} className="bg-light rounded p-2 mb-2">
                         <div className="d-flex justify-content-between">
-                          <span className="text-success fw-bold">{formatCurrency(p.amount, selectedSale.currency)}</span>
+                          <AmountDisplay amount={p.amount} rates={rates} className="text-success fw-bold" />
                           <small className="text-muted">{new Date(p.payment_date).toLocaleDateString('es-ES')}</small>
                         </div>
                         {p.method && (
@@ -231,13 +234,29 @@ const Payments = () => {
                         <div className="mb-3">
                           <label className="form-label">Monto *</label>
                           <input
-                            type="number"
-                            step="0.01"
-                            min="0.01"
+                            type="text"
+                            inputMode="decimal"
                             className="form-control"
                             value={payForm.amount}
-                            onChange={e => setPayForm({ ...payForm, amount: e.target.value })}
-                            placeholder={`Sugerido: ${formatCurrency(selectedSale.valor_cuota || 0, selectedSale.currency)} · Máx: ${formatCurrency(selectedSale.balance, selectedSale.currency)}`}
+                            onChange={e => {
+                              // Permite dígitos, coma (separador de miles) y punto decimal
+                              const raw = e.target.value.replace(/,/g, '').replace(/[^0-9.]/g, '');
+                              setPayForm({ ...payForm, amount: raw });
+                            }}
+                            onBlur={() => {
+                              const num = parseFloat(payForm.amount);
+                              if (!isNaN(num) && num > 0) {
+                                const [int, dec = '00'] = num.toFixed(2).split('.');
+                                const formatted = int.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '.' + dec;
+                                setPayForm({ ...payForm, amount: formatted });
+                              }
+                            }}
+                            onFocus={e => {
+                              const raw = payForm.amount.replace(/,/g, '');
+                              setPayForm({ ...payForm, amount: raw });
+                              e.target.select();
+                            }}
+                            placeholder={`Sugerido: ${formatCurrency(selectedSale.valor_cuota || 0, 'BsF')} · Máx: ${formatCurrency(selectedSale.balance, 'BsF')}`}
                           />
                         </div>
                         <div className="mb-3">

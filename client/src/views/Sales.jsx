@@ -23,7 +23,6 @@ const Sales = () => {
   const [editingSale, setEditingSale] = useState(null);
   const [cuotas, setCuotas] = useState('1');
   const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
-  const [currency, setCurrency] = useState('BsF');
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
   const debounceRef = useRef(null);
@@ -100,7 +99,6 @@ const Sales = () => {
     setEditingSale(null);
     setCuotas('1');
     setSaleDate(new Date().toISOString().split('T')[0]);
-    setCurrency('BsF');
   };
 
   const handleSubmit = (e) => {
@@ -117,7 +115,7 @@ const Sales = () => {
       customer_id: parseInt(selectedCustomerId),
       cuotas: parseInt(cuotas) || 1,
       sale_date: saleDate,
-      currency,
+      currency: 'BsF',
       products: items.map(i => ({
         product_id: i.product_id,
         quantity: i.quantity,
@@ -158,7 +156,6 @@ const Sales = () => {
       })));
       setCuotas(detail.cuotas?.toString() || '1');
       setSaleDate(detail.sale_date ? detail.sale_date.split('T')[0] : new Date().toISOString().split('T')[0]);
-      setCurrency(detail.currency || 'USD');
       setShowForm(true);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Error al cargar la venta');
@@ -216,8 +213,6 @@ const Sales = () => {
           setCuotas={setCuotas}
           saleDate={saleDate}
           setSaleDate={setSaleDate}
-          currency={currency}
-          setCurrency={setCurrency}
           onSubmit={handleSubmit}
           onClose={resetForm}
         />
