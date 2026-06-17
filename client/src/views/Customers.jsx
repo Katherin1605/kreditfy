@@ -129,33 +129,33 @@ const Customers = () => {
       {confirmModal}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h5>Clientes</h5>
-        <button className="btn btn-primary" onClick={handleNew}>
-          <i className="bi bi-plus-lg me-1"></i> Nuevo Cliente
-        </button>
-      </div>
-
-      <div className="mb-3">
+      <div className="d-flex gap-2 align-items-center">
         <div className="input-group">
-          <span className="input-group-text bg-white">
+          <span className="input-group-text bg-white border-end-0">
             <i className="bi bi-search text-muted"></i>
           </span>
           <input
             type="text"
-            className="form-control"
+            className="form-control border-start-0"
             placeholder="Buscar por nombre o cédula..."
             value={search}
             onChange={handleSearchChange}
           />
           {search && (
             <button
-              className="btn btn-outline-secondary"
+              className="btn btn-primary text-nowrap"
               onClick={() => { setSearch(''); setPage(1); loadCustomers('', 1); }}
             >
-              <i className="bi bi-x-lg"></i>
+              <i className="bi bi-plus-lg me-1"></i>
             </button>
           )}
         </div>
+        <button className="btn btn-primary text-nowrap" onClick={handleNew}>
+          <i className="bi bi-plus-lg me-1"></i> Nuevo Cliente
+        </button>
+      </div>  
       </div>
+
 
       {showForm && (
         <FormCustomers
