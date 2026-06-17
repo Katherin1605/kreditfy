@@ -7,7 +7,7 @@ const Earnings = () => {
   const currentYear = new Date().getFullYear();
   const [years, setYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('BsF');
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState({ show: false, month: null, notas: '', cerrado: false });

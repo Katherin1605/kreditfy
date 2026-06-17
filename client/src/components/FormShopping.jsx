@@ -26,7 +26,18 @@ const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) =>
             ))}
           </select>
         </div>
-        <div className="col-md-4">
+
+        <div className="col-md-3">
+          <label className="form-label">Fecha *</label>
+          <input
+            type="date"
+            className="form-control"
+            name="date"
+            value={formData.date}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="col-md-3">
           <label className="form-label">Cantidad *</label>
           <input
             type="number"
@@ -37,8 +48,8 @@ const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) =>
             onChange={handleChange}
           />
         </div>
-        <div className="col-md-4">
-          <label className="form-label">Costo *</label>
+        <div className="col-md-3">
+          <label className="form-label">Costo (Bs.) *</label>
           <input
             type="number"
             step="0.01"
@@ -49,19 +60,21 @@ const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) =>
             onChange={handleChange}
           />
         </div>
-        <div className="col-md-4">
-          <label className="form-label">Moneda *</label>
+        <div className="col-md-3">
+          <label className="form-label">Tipo de moneda</label>
           <select
             className="form-select"
             name="currency"
-            value={formData.currency || 'USD'}
+            value={formData.currency || 'BsF'}
             onChange={handleChange}
           >
             {CURRENCIES.map(c => (
               <option key={c.code} value={c.code}>{c.label}</option>
             ))}
           </select>
+          <small className="text-muted">Ingresa el equivalente en Bs.</small>
         </div>
+
         <div className="col-12">
           <button type="submit" className="btn btn-success me-2">Guardar</button>
           <button type="button" className="btn btn-danger" onClick={onClose}>Cancelar</button>

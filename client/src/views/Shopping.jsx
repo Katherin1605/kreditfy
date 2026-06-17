@@ -11,7 +11,7 @@ const Shopping = () => {
   const [products, setProducts] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({ product_id: '', quantity: '', cost: '', currency: 'USD' });
+  const [formData, setFormData] = useState({ product_id: '', quantity: '', cost: '', currency: 'BsF', date: new Date().toISOString().split('T')[0] });
   const { confirmModal, ask } = useConfirm();
 
   useEffect(() => {
@@ -32,7 +32,7 @@ const Shopping = () => {
   };
 
   const handleNew = () => {
-    setFormData({ product_id: '', quantity: '', cost: '', currency: 'USD' });
+    setFormData({ product_id: '', quantity: '', cost: '', currency: 'BsF', date: new Date().toISOString().split('T')[0] });
     setShowForm(true);
   };
 
@@ -55,7 +55,7 @@ const Shopping = () => {
     axios.post('http://localhost:3000/shopping', formData)
       .then(() => {
         toast.success('Compra registrada');
-        setFormData({ product_id: '', quantity: '', cost: '', currency: 'USD' });
+        setFormData({ product_id: '', quantity: '', cost: '', currency: 'BsF', date: new Date().toISOString().split('T')[0] });
         setShowForm(false);
         loadData();
       })
@@ -63,7 +63,7 @@ const Shopping = () => {
   };
 
   const resetForm = () => {
-    setFormData({ product_id: '', quantity: '', cost: '', currency: 'USD' });
+    setFormData({ product_id: '', quantity: '', cost: '', currency: 'BsF', date: new Date().toISOString().split('T')[0] });
     setShowForm(false);
   };
 

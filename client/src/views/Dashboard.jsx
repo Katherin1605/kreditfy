@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { formatCurrency, CURRENCIES } from '../utils/currency';
+import { formatCurrency } from '../utils/currency';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const METRICS = [
   { key: 'totalVentas',      label: 'Total Ventas',      icon: 'bi-currency-dollar', iconClass: 'metric-icon-primary' },
   { key: 'totalCobrado',     label: 'Total Cobrado',     icon: 'bi-check-circle',    iconClass: 'metric-icon-success' },
   { key: 'saldoPendiente',   label: 'Saldo Pendiente',   icon: 'bi-clock-history',   iconClass: 'metric-icon-warning' },
+  { key: 'totalCompras',     label: 'Total Invertido',   icon: 'bi-cart-check',      iconClass: 'metric-icon-danger'  },
   { key: 'totalClientes',    label: 'Clientes',          icon: 'bi-people',          iconClass: 'metric-icon-info'    },
   { key: 'totalProductos',   label: 'Productos',         icon: 'bi-box-seam',        iconClass: 'metric-icon-purple'  },
-  { key: 'ventasPendientes', label: 'Ventas Pendientes', icon: 'bi-receipt',         iconClass: 'metric-icon-danger'  },
+  { key: 'ventasPendientes', label: 'Ventas Pendientes', icon: 'bi-receipt',         iconClass: 'metric-icon-warning2'},
 ];
 
 const formatMonth = (monthStr) => {
@@ -23,14 +24,11 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [monthlyStats, setMonthlyStats] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currency, setCurrency] = useState('');
 
-  const loadData = (cur = '') => {
-    setLoading(true);
-    const params = cur ? { currency: cur } : {};
+  useEffect(() => {
     Promise.all([
-      axios.get('http://localhost:3000/dashboard/stats',         { params }),
-      axios.get('http://localhost:3000/dashboard/monthly-stats', { params }),
+      axios.get('http://localhost:3000/dashboard/stats'),
+      axios.get('http://localhost:3000/dashboard/monthly-stats'),
     ])
       .then(([statsRes, monthlyRes]) => {
         setStats(statsRes.data);
@@ -38,13 +36,9 @@ const Dashboard = () => {
       })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
-  };
+  }, []);
 
-  useEffect(() => {
-    loadData(currency);
-  }, [currency]);
-
-  const fmt = (n) => formatCurrency(n, currency || 'USD');
+  const fmt = (n) => formatCurrency(n, 'BsF');
 
   const chartData = monthlyStats.map(m => ({
     mes:     formatMonth(m.month),
@@ -56,6 +50,7 @@ const Dashboard = () => {
     totalVentas:      fmt(stats.total_ventas),
     totalCobrado:     fmt(stats.total_cobrado),
     saldoPendiente:   fmt(stats.saldo_pendiente),
+    totalCompras:     fmt(stats.total_compras),
     totalClientes:    stats.total_clientes,
     totalProductos:   stats.total_productos,
     ventasPendientes: stats.ventas_pendientes,
@@ -72,31 +67,16 @@ const Dashboard = () => {
 
   return (
     <>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h5 className="mb-0">Dashboard</h5>
-          <small className="text-muted">
-            Bienvenido, <strong>{currentAdmin?.name}</strong>
-          </small>
-        </div>
-        <div className="d-flex align-items-center gap-2">
-          <label className="form-label mb-0 text-muted small">Moneda:</label>
-          <select
-            className="form-select form-select-sm dashboard-currency-select"
-            value={currency}
-            onChange={e => setCurrency(e.target.value)}
-          >
-            <option value="">Todas</option>
-            {CURRENCIES.map(c => (
-              <option key={c.code} value={c.code}>{c.code}</option>
-            ))}
-          </select>
-        </div>
+      <div className="mb-4">
+        <h5 className="mb-0">Dashboard</h5>
+        <small className="text-muted">
+          Bienvenido, <strong>{currentAdmin?.name}</strong>
+        </small>
       </div>
 
       <div className="row g-3 mb-4">
         {METRICS.map(m => (
-          <div key={m.key} className="col-6 col-md-4 col-lg-2">
+          <div key={m.key} className="col-6 col-md-4 col-lg-3">
             <div className="metric-card card h-100">
               <div className="card-body d-flex align-items-center gap-3 p-3">
                 <div className={`metric-icon ${m.iconClass}`}>
@@ -114,9 +94,7 @@ const Dashboard = () => {
 
       <div className="card border-0 shadow-sm mb-4">
         <div className="card-header dashboard-card-header">
-          <i className="bi bi-bar-chart me-2"></i>
-          Ventas últimos 6 meses
-          {currency && <span className="badge bg-light text-dark border ms-2">{currency}</span>}
+          <i className="bi bi-bar-chart me-2"></i>Ventas últimos 6 meses
         </div>
         <div className="card-body">
           {chartData.length === 0 ? (
@@ -126,8 +104,8 @@ const Dashboard = () => {
               <BarChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="mes" />
-                <YAxis />
-                <Tooltip formatter={(value) => formatCurrency(value, currency || 'USD')} />
+                <YAxis tickFormatter={(v) => `Bs. ${v.toLocaleString()}`} />
+                <Tooltip formatter={(value) => fmt(value)} />
                 <Legend />
                 <Bar dataKey="Ventas"  fill="#4e1da9" />
                 <Bar dataKey="Cobrado" fill="#157347" />
@@ -138,7 +116,6 @@ const Dashboard = () => {
       </div>
 
       <div className="row g-3">
-
         <div className="col-lg-7">
           <div className="card border-0 shadow-sm h-100">
             <div className="card-header dashboard-card-header">
@@ -168,9 +145,9 @@ const Dashboard = () => {
                           <span className="badge bg-light text-dark border">#{s.id}</span>
                         </td>
                         <td className="px-3 py-2">{s.customer_name || '-'}</td>
-                        <td className="px-3 py-2">{formatCurrency(s.total, s.currency)}</td>
-                        <td className="px-3 py-2 text-success">{formatCurrency(s.total_paid, s.currency)}</td>
-                        <td className="px-3 py-2 fw-bold text-warning">{formatCurrency(s.balance, s.currency)}</td>
+                        <td className="px-3 py-2">{fmt(s.total)}</td>
+                        <td className="px-3 py-2 text-success">{fmt(s.total_paid)}</td>
+                        <td className="px-3 py-2 fw-bold text-warning">{fmt(s.balance)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -210,7 +187,6 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-
       </div>
     </>
   );

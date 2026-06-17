@@ -21,7 +21,7 @@ const Sales = () => {
   const [editingSale, setEditingSale] = useState(null);
   const [cuotas, setCuotas] = useState('1');
   const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('BsF');
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
   const debounceRef = useRef(null);
@@ -97,7 +97,7 @@ const Sales = () => {
     setEditingSale(null);
     setCuotas('1');
     setSaleDate(new Date().toISOString().split('T')[0]);
-    setCurrency('USD');
+    setCurrency('BsF');
   };
 
   const handleSubmit = (e) => {

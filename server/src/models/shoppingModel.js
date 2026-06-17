@@ -23,10 +23,11 @@ export const getShoppingByProductId = async (product_id) => {
 };
 
 export const createShopping = async (data) => {
-  const { product_id, quantity, cost, currency = 'USD' } = data;
+  const { product_id, quantity, cost, currency = 'BsF', date } = data;
   const result = await pool.query(
-    `INSERT INTO shopping (product_id, quantity, cost, currency) VALUES ($1, $2, $3, $4) RETURNING *`,
-    [product_id, quantity, cost, currency]
+    `INSERT INTO shopping (product_id, quantity, cost, currency, date)
+     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+    [product_id, quantity, cost, currency, date || new Date().toISOString().split('T')[0]]
   );
   return result.rows[0];
 };

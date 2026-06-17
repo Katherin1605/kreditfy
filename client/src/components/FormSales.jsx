@@ -101,7 +101,7 @@ const FormSales = ({ customers, products, selectedCustomerId, setSelectedCustome
         </div>
 
         <div className="col-md-3 text-start">
-          <label htmlFor="saleCurrency" className="form-label">Moneda *</label>
+          <label htmlFor="saleCurrency" className="form-label">Tipo de moneda</label>
           <select
             className="form-select"
             id="saleCurrency"
@@ -112,6 +112,7 @@ const FormSales = ({ customers, products, selectedCustomerId, setSelectedCustome
               <option key={c.code} value={c.code}>{c.label}</option>
             ))}
           </select>
+          <small className="text-muted">Ingresa el equivalente en Bs.</small>
         </div>
 
         <div className="col-md-3 text-start">
