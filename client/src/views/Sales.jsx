@@ -115,7 +115,7 @@ const Sales = () => {
       customer_id: parseInt(selectedCustomerId),
       cuotas: parseInt(cuotas) || 1,
       sale_date: saleDate,
-      currency: 'BsF',
+      currency: 'USD',
       products: items.map(i => ({
         product_id: i.product_id,
         quantity: i.quantity,
@@ -256,14 +256,14 @@ const Sales = () => {
                       </td>
                       <td className="px-4 py-2">{s.customer_name || '-'}</td>
                       <td className="px-4 py-2">
-                        <span className="badge bg-light text-dark border">{s.currency || 'USD'}</span>
+                        <span className="badge bg-light text-dark border">USD</span>
                       </td>
                       <td className="px-4 py-2">
                         <AmountDisplay amount={s.total} rates={rates} />
                       </td>
                       <td className="px-4 py-2">
                         <span>{s.cuotas} cuotas</span><br />
-                        <small className="text-muted">{formatCurrency(s.valor_cuota || 0, 'BsF')}/c.</small>
+                        <small className="text-muted">{formatCurrency(s.valor_cuota || 0, 'USD')}/c.</small>
                       </td>
                       <td className="px-4 py-2 text-success">
                         <AmountDisplay amount={s.total_paid} rates={rates} />

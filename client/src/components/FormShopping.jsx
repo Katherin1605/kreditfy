@@ -47,7 +47,7 @@ const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) =>
           />
         </div>
         <div className="col-md-4">
-          <label className="form-label">Costo (Bs.) *</label>
+          <label className="form-label">Costo (USD) *</label>
           <input
             type="text"
             inputMode="decimal"

@@ -544,6 +544,10 @@
    Payments
    ========================================= */
 
+.skeleton-sale-card {
+  height: 80px;
+}
+
 .payment-sale-card {
   cursor: pointer;
   border: 2px solid transparent;

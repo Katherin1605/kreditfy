@@ -109,7 +109,7 @@ const Payments = () => {
               {loading ? (
                 <div className="d-flex flex-column gap-2">
                   {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="skeleton-card" style={{ height: '80px' }}></div>
+                    <div key={i} className="skeleton-card skeleton-sale-card"></div>
                   ))}
                 </div>
               ) : pendingSales.length === 0 ? (
@@ -162,7 +162,7 @@ const Payments = () => {
                   </div>
                   <div className="col-2">
                     <p className="text-muted mb-0 small">Moneda</p>
-                    <span className="badge bg-light text-dark border">{selectedSale.currency || 'USD'}</span>
+                    <span className="badge bg-light text-dark border">USD</span>
                   </div>
                 </div>
 
@@ -185,7 +185,7 @@ const Payments = () => {
                   <span className="small">
                     {getCuotasPagadas(selectedSale)}/{selectedSale.cuotas} pagadas
                     &nbsp;·&nbsp;
-                    {formatCurrency(selectedSale.valor_cuota || 0, 'BsF')}/c.
+                    {formatCurrency(selectedSale.valor_cuota || 0, 'USD')}/c.
                   </span>
                 </div>
                 <div className="d-flex justify-content-between mb-1">
@@ -256,7 +256,7 @@ const Payments = () => {
                               setPayForm({ ...payForm, amount: raw });
                               e.target.select();
                             }}
-                            placeholder={`Sugerido: ${formatCurrency(selectedSale.valor_cuota || 0, 'BsF')} · Máx: ${formatCurrency(selectedSale.balance, 'BsF')}`}
+                            placeholder={`Sugerido: ${formatCurrency(selectedSale.valor_cuota || 0, 'USD')} · Máx: ${formatCurrency(selectedSale.balance, 'USD')}`}
                           />
                         </div>
                         <div className="mb-3">

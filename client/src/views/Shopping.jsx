@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { formatCurrency } from '../utils/currency';
 import { useExchangeRates } from '../context/ExchangeRatesContext';
 import AmountDisplay from '../components/AmountDisplay';
 import FormShopping from '../components/FormShopping';
@@ -122,7 +121,7 @@ const Shopping = () => {
                     <td className="px-4 py-3">{products.find(p => p.id === row.product_id)?.name || '-'}</td>
                     <td className="px-4 py-3">{row.quantity}</td>
                     <td className="px-4 py-3">
-                      <span className="badge bg-light text-dark border">{row.currency || 'USD'}</span>
+                      <span className="badge bg-light text-dark border">USD</span>
                     </td>
                     <td className="px-4 py-3">
                       <AmountDisplay amount={row.cost} rates={rates} />

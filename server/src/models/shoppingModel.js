@@ -23,7 +23,7 @@ export const getShoppingByProductId = async (product_id) => {
 };
 
 export const createShopping = async (data) => {
-  const { product_id, quantity, cost, currency = 'BsF', date } = data;
+  const { product_id, quantity, cost, currency = 'USD', date } = data;
   const result = await pool.query(
     `INSERT INTO shopping (product_id, quantity, cost, currency, date)
      VALUES ($1, $2, $3, $4, $5) RETURNING *`,

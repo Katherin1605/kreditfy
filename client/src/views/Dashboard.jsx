@@ -41,7 +41,7 @@ const Dashboard = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const fmt = (n) => formatCurrency(n, 'BsF');
+  const fmt = (n) => formatCurrency(n, 'USD');
 
   const chartData = monthlyStats.map(m => ({
     mes:     formatMonth(m.month),
@@ -111,7 +111,7 @@ const Dashboard = () => {
               <BarChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="mes" />
-                <YAxis tickFormatter={(v) => `Bs. ${v.toLocaleString()}`} />
+                <YAxis tickFormatter={(v) => `$${v.toLocaleString()}`} />
                 <Tooltip formatter={(value) => fmt(value)} />
                 <Legend />
                 <Bar dataKey="Ventas"  fill="#4e1da9" />

@@ -23,7 +23,7 @@ const FormProducts = ({ formData, setFormData, editingProduct, onSubmit, onClose
           {errors?.name && <div className="invalid-feedback">{errors.name}</div>}
         </div>
         <div className="col-md-6">
-          <label htmlFor="price" className="form-label">Precio (Bs.) *</label>
+          <label htmlFor="price" className="form-label">Precio (USD) *</label>
           <input
             type="text"
             inputMode="decimal"
