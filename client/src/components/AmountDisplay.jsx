@@ -1,8 +1,11 @@
 import { formatCurrency } from '../utils/currency';
 
-const AmountDisplay = ({ amount, rates, className = '' }) => {
-  const n   = parseFloat(amount || 0);
-  const bsf = rates?.USD && n > 0 ? n * rates.USD : null;
+// storedRate: tasa guardada en el registro (usada para montos históricos)
+// rates: tasa del día desde contexto (fallback cuando no hay tasa guardada)
+const AmountDisplay = ({ amount, rates, storedRate, className = '' }) => {
+  const n            = parseFloat(amount || 0);
+  const effectiveRate = storedRate ? parseFloat(storedRate) : rates?.USD;
+  const bsf          = effectiveRate && n > 0 ? n * effectiveRate : null;
 
   return (
     <div className={className}>

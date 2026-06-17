@@ -36,10 +36,10 @@ export const getPaymentsBySaleId = async (req, res) => {
 
 export const createPayment = async (req, res) => {
   try {
-    const { sale_id, amount, method, payment_date } = req.body;
+    const { sale_id, amount, method, payment_date, exchange_rate } = req.body;
     if (!sale_id) return res.status(400).json({ error: "sale_id es obligatorio" });
     if (!amount) return res.status(400).json({ error: "El monto es obligatorio" });
-    const payment = await paymentModel.createPayment({ sale_id, amount, method, payment_date });
+    const payment = await paymentModel.createPayment({ sale_id, amount, method, payment_date, exchange_rate });
     res.status(201).json(payment);
 
     auditModel.createAuditLog({

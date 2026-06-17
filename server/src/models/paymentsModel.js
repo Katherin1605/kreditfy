@@ -1,7 +1,9 @@
 import pool from "../../db/config.js";
 
 pool.query(`
-  ALTER TABLE payments ADD COLUMN IF NOT EXISTS currency VARCHAR(3) NOT NULL DEFAULT 'USD'
+  ALTER TABLE payments
+    ADD COLUMN IF NOT EXISTS currency      VARCHAR(3)    NOT NULL DEFAULT 'USD',
+    ADD COLUMN IF NOT EXISTS exchange_rate NUMERIC(12,4) DEFAULT NULL
 `).catch(err => console.error('[payments] Error en migración:', err));
 
 export const getAllPayments = async () => {
@@ -23,7 +25,7 @@ export const getPaymentsBySaleId = async (sale_id) => {
 };
 
 export const createPayment = async (data) => {
-  const { sale_id, amount, method, payment_date } = data;
+  const { sale_id, amount, method, payment_date, exchange_rate = null } = data;
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -37,9 +39,9 @@ export const createPayment = async (data) => {
     const currency = sale?.currency || 'USD';
 
     const paymentResult = await client.query(
-      `INSERT INTO payments (sale_id, amount, method, payment_date, currency)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [sale_id, amount, method ?? null, payment_date || new Date().toISOString().split('T')[0], currency]
+      `INSERT INTO payments (sale_id, amount, method, payment_date, currency, exchange_rate)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [sale_id, amount, method ?? null, payment_date || new Date().toISOString().split('T')[0], currency, exchange_rate]
     );
     const payment = paymentResult.rows[0];
 

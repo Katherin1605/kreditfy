@@ -2,8 +2,9 @@ import pool from "../../db/config.js";
 
 pool.query(`
   ALTER TABLE sales
-    ADD COLUMN IF NOT EXISTS sale_date DATE        NOT NULL DEFAULT CURRENT_DATE,
-    ADD COLUMN IF NOT EXISTS currency  VARCHAR(3)  NOT NULL DEFAULT 'USD'
+    ADD COLUMN IF NOT EXISTS sale_date     DATE           NOT NULL DEFAULT CURRENT_DATE,
+    ADD COLUMN IF NOT EXISTS currency      VARCHAR(3)     NOT NULL DEFAULT 'USD',
+    ADD COLUMN IF NOT EXISTS exchange_rate NUMERIC(12,4)  DEFAULT NULL
 `).catch(err => console.error('[sales] Error en migración:', err));
 
 export const getAllSales = async ({ page = 1, limit = 15, q = '' } = {}) => {
@@ -29,7 +30,7 @@ export const getAllSales = async ({ page = 1, limit = 15, q = '' } = {}) => {
          s.id, s.customer_id, c.name AS customer_name,
          s.total, s.cuotas,
          ROUND(s.total / NULLIF(s.cuotas, 0), 2) AS valor_cuota,
-         s.status, s.currency, s.sale_date, s.created_at,
+         s.status, s.currency, s.exchange_rate, s.sale_date, s.created_at,
          COALESCE(SUM(p.amount), 0) AS total_paid,
          s.total - COALESCE(SUM(p.amount), 0) AS balance
        FROM sales s
@@ -95,7 +96,7 @@ export const createSaleWithDetails = async (saleData) => {
   try {
     await client.query("BEGIN");
 
-    const { customer_id, products, cuotas = 1, sale_date, currency = 'USD' } = saleData;
+    const { customer_id, products, cuotas = 1, sale_date, currency = 'USD', exchange_rate = null } = saleData;
 
     const total = products.reduce(
       (sum, p) => sum + p.quantity * p.price,
@@ -103,10 +104,10 @@ export const createSaleWithDetails = async (saleData) => {
     );
 
     const saleResult = await client.query(
-      `INSERT INTO sales (customer_id, total, cuotas, sale_date, currency)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO sales (customer_id, total, cuotas, sale_date, currency, exchange_rate)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [customer_id, total, cuotas, sale_date || new Date().toISOString().split('T')[0], currency]
+      [customer_id, total, cuotas, sale_date || new Date().toISOString().split('T')[0], currency, exchange_rate]
     );
 
     const sale = saleResult.rows[0];
@@ -165,7 +166,7 @@ export const updateSaleById = async (id, saleData) => {
   try {
     await client.query("BEGIN");
 
-    const { customer_id, products, cuotas = 1, sale_date, currency = 'USD' } = saleData;
+    const { customer_id, products, cuotas = 1, sale_date, currency = 'USD', exchange_rate = null } = saleData;
 
     // Restaurar stock de los detalles actuales
     const currentDetails = await client.query(
@@ -190,8 +191,8 @@ export const updateSaleById = async (id, saleData) => {
     );
 
     const saleResult = await client.query(
-      `UPDATE sales SET customer_id = $1, total = $2, cuotas = $3, sale_date = $4, currency = $5 WHERE id = $6 RETURNING *`,
-      [customer_id, total, cuotas, sale_date || new Date().toISOString().split('T')[0], currency, id]
+      `UPDATE sales SET customer_id = $1, total = $2, cuotas = $3, sale_date = $4, currency = $5, exchange_rate = $6 WHERE id = $7 RETURNING *`,
+      [customer_id, total, cuotas, sale_date || new Date().toISOString().split('T')[0], currency, exchange_rate, id]
     );
 
     const sale = saleResult.rows[0];

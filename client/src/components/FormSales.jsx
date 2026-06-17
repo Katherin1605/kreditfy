@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const FormSales = ({ customers, products, selectedCustomerId, setSelectedCustomerId, items, setItems, editingSale, cuotas, setCuotas, saleDate, setSaleDate, onSubmit, onClose }) => {
+const FormSales = ({ customers, products, selectedCustomerId, setSelectedCustomerId, items, setItems, editingSale, cuotas, setCuotas, saleDate, setSaleDate, exchangeRate, setExchangeRate, onSubmit, onClose }) => {
   const [clienteSearch, setClienteSearch] = useState('');
   const [productoSearch, setProductoSearch] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -96,6 +96,21 @@ const FormSales = ({ customers, products, selectedCustomerId, setSelectedCustome
             id="saleDate"
             value={saleDate}
             onChange={e => setSaleDate(e.target.value)}
+          />
+        </div>
+
+        <div className="col-md-3 text-start">
+          <label htmlFor="exchangeRate" className="form-label">
+            Tasa BCV <small className="text-muted">(Bs. por $1)</small>
+          </label>
+          <input
+            type="text"
+            inputMode="decimal"
+            className="form-control"
+            id="exchangeRate"
+            value={exchangeRate}
+            onChange={e => setExchangeRate(e.target.value.replace(/[^0-9.]/g, ''))}
+            placeholder="Ej: 596.78"
           />
         </div>
 
