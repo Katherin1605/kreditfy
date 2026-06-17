@@ -13,7 +13,7 @@ const Shopping = () => {
   const [products, setProducts] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({ product_id: '', quantity: '', cost: '', currency: 'BsF', date: new Date().toISOString().split('T')[0] });
+  const [formData, setFormData] = useState({ product_id: '', quantity: '', cost: '', date: new Date().toISOString().split('T')[0] });
   const { confirmModal, ask } = useConfirm();
   const { rates } = useExchangeRates();
 
@@ -35,7 +35,7 @@ const Shopping = () => {
   };
 
   const handleNew = () => {
-    setFormData({ product_id: '', quantity: '', cost: '', currency: 'BsF', date: new Date().toISOString().split('T')[0] });
+    setFormData({ product_id: '', quantity: '', cost: '', date: new Date().toISOString().split('T')[0] });
     setShowForm(true);
   };
 
@@ -54,11 +54,12 @@ const Shopping = () => {
     e.preventDefault();
     if (!formData.product_id) { toast.error('Selecciona un producto'); return; }
     if (!formData.quantity || parseInt(formData.quantity) < 1) { toast.error('Ingresa una cantidad válida'); return; }
-    if (!formData.cost || parseFloat(formData.cost) < 0) { toast.error('Ingresa un costo válido'); return; }
-    axios.post('http://localhost:3000/shopping', formData)
+    const costRaw = parseFloat(formData.cost.toString().replace(/,/g, ''));
+    if (isNaN(costRaw) || costRaw < 0) { toast.error('Ingresa un costo válido'); return; }
+    axios.post('http://localhost:3000/shopping', { ...formData, cost: costRaw })
       .then(() => {
         toast.success('Compra registrada');
-        setFormData({ product_id: '', quantity: '', cost: '', currency: 'BsF', date: new Date().toISOString().split('T')[0] });
+        setFormData({ product_id: '', quantity: '', cost: '', date: new Date().toISOString().split('T')[0] });
         setShowForm(false);
         loadData();
       })
@@ -66,7 +67,7 @@ const Shopping = () => {
   };
 
   const resetForm = () => {
-    setFormData({ product_id: '', quantity: '', cost: '', currency: 'BsF', date: new Date().toISOString().split('T')[0] });
+    setFormData({ product_id: '', quantity: '', cost: '', date: new Date().toISOString().split('T')[0] });
     setShowForm(false);
   };
 

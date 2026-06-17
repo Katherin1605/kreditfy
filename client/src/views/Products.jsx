@@ -60,12 +60,14 @@ const Products = () => {
     e.preventDefault();
     const errs = {};
     if (!formData.name.trim()) errs.name = 'El nombre es obligatorio';
-    if (!formData.price && formData.price !== 0) errs.price = 'El precio es obligatorio';
+    const priceRaw = parseFloat(formData.price.toString().replace(/,/g, ''));
+    if (!formData.price || isNaN(priceRaw)) errs.price = 'El precio es obligatorio';
     if (Object.keys(errs).length) { setFormErrors(errs); return; }
     setFormErrors({});
+    const cleanData = { ...formData, price: priceRaw };
     const request = editingProduct
-      ? axios.put(`http://localhost:3000/products/${editingProduct.id}`, formData)
-      : axios.post('http://localhost:3000/products', formData);
+      ? axios.put(`http://localhost:3000/products/${editingProduct.id}`, cleanData)
+      : axios.post('http://localhost:3000/products', cleanData);
     request
       .then(() => {
         toast.success(editingProduct ? 'Producto actualizado' : 'Producto creado');

@@ -23,16 +23,31 @@ const FormProducts = ({ formData, setFormData, editingProduct, onSubmit, onClose
           {errors?.name && <div className="invalid-feedback">{errors.name}</div>}
         </div>
         <div className="col-md-6">
-          <label htmlFor="price" className="form-label">Precio *</label>
+          <label htmlFor="price" className="form-label">Precio (Bs.) *</label>
           <input
-            type="number"
-            step="0.01"
-            min="0"
+            type="text"
+            inputMode="decimal"
             className={`form-control ${errors?.price ? 'is-invalid' : ''}`}
             id="price"
             name="price"
             value={formData.price}
-            onChange={handleChange}
+            onChange={e => {
+              const raw = e.target.value.replace(/,/g, '').replace(/[^0-9.]/g, '');
+              setFormData({ ...formData, price: raw });
+            }}
+            onBlur={() => {
+              const num = parseFloat(formData.price);
+              if (!isNaN(num) && num >= 0) {
+                const [int, dec = '00'] = num.toFixed(2).split('.');
+                const formatted = int.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '.' + dec;
+                setFormData({ ...formData, price: formatted });
+              }
+            }}
+            onFocus={e => {
+              const raw = formData.price.toString().replace(/,/g, '');
+              setFormData({ ...formData, price: raw });
+              e.target.select();
+            }}
           />
           {errors?.price && <div className="invalid-feedback">{errors.price}</div>}
         </div>

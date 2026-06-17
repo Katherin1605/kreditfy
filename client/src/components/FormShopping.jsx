@@ -1,5 +1,3 @@
-import { CURRENCIES } from '../utils/currency';
-
 const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -27,7 +25,7 @@ const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) =>
           </select>
         </div>
 
-        <div className="col-md-3">
+        <div className="col-md-4">
           <label className="form-label">Fecha *</label>
           <input
             type="date"
@@ -37,7 +35,7 @@ const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) =>
             onChange={handleChange}
           />
         </div>
-        <div className="col-md-3">
+        <div className="col-md-4">
           <label className="form-label">Cantidad *</label>
           <input
             type="number"
@@ -48,31 +46,32 @@ const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) =>
             onChange={handleChange}
           />
         </div>
-        <div className="col-md-3">
+        <div className="col-md-4">
           <label className="form-label">Costo (Bs.) *</label>
           <input
-            type="number"
-            step="0.01"
-            min="0"
+            type="text"
+            inputMode="decimal"
             className="form-control"
             name="cost"
             value={formData.cost}
-            onChange={handleChange}
+            onChange={e => {
+              const raw = e.target.value.replace(/,/g, '').replace(/[^0-9.]/g, '');
+              setFormData({ ...formData, cost: raw });
+            }}
+            onBlur={() => {
+              const num = parseFloat(formData.cost);
+              if (!isNaN(num) && num >= 0) {
+                const [int, dec = '00'] = num.toFixed(2).split('.');
+                const formatted = int.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '.' + dec;
+                setFormData({ ...formData, cost: formatted });
+              }
+            }}
+            onFocus={e => {
+              const raw = formData.cost.toString().replace(/,/g, '');
+              setFormData({ ...formData, cost: raw });
+              e.target.select();
+            }}
           />
-        </div>
-        <div className="col-md-3">
-          <label className="form-label">Tipo de moneda</label>
-          <select
-            className="form-select"
-            name="currency"
-            value={formData.currency || 'BsF'}
-            onChange={handleChange}
-          >
-            {CURRENCIES.map(c => (
-              <option key={c.code} value={c.code}>{c.label}</option>
-            ))}
-          </select>
-          <small className="text-muted">Ingresa el equivalente en Bs.</small>
         </div>
 
         <div className="col-12">
