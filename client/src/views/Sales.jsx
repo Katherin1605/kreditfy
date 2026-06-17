@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { formatCurrency } from '../utils/currency';
+import { useExchangeRates } from '../context/ExchangeRatesContext';
+import AmountDisplay from '../components/AmountDisplay';
 import FormSales from '../components/FormSales';
 import TableSkeleton from '../components/TableSkeleton';
 import Pagination from '../components/Pagination';
@@ -26,6 +28,7 @@ const Sales = () => {
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
   const debounceRef = useRef(null);
   const { confirmModal, ask } = useConfirm();
+  const { rates } = useExchangeRates();
 
   useEffect(() => {
     loadCatalogs();
@@ -260,16 +263,18 @@ const Sales = () => {
                       <td className="px-4 py-2">
                         <span className="badge bg-light text-dark border">{s.currency || 'USD'}</span>
                       </td>
-                      <td className="px-4 py-2">{formatCurrency(s.total, s.currency)}</td>
+                      <td className="px-4 py-2">
+                        <AmountDisplay amount={s.total} rates={rates} />
+                      </td>
                       <td className="px-4 py-2">
                         <span>{s.cuotas} cuotas</span><br />
-                        <small className="text-muted">{formatCurrency(s.valor_cuota || 0, s.currency)}/c.</small>
+                        <small className="text-muted">{formatCurrency(s.valor_cuota || 0, 'BsF')}/c.</small>
                       </td>
                       <td className="px-4 py-2 text-success">
-                        {formatCurrency(s.total_paid, s.currency)}
+                        <AmountDisplay amount={s.total_paid} rates={rates} />
                       </td>
                       <td className="px-4 py-2 text-warning">
-                        {formatCurrency(s.balance, s.currency)}
+                        <AmountDisplay amount={s.balance} rates={rates} />
                       </td>
                       <td className="px-4 py-2">
                         <span className={`badge ${s.status === 'paid' ? 'bg-success' : 'bg-warning text-dark'}`}>
@@ -318,8 +323,8 @@ const Sales = () => {
                                   <tr key={d.id}>
                                     <td>{d.product_name}</td>
                                     <td>{d.quantity}</td>
-                                    <td>${parseFloat(d.price).toFixed(2)}</td>
-                                    <td>${(d.quantity * parseFloat(d.price)).toFixed(2)}</td>
+                                    <td><AmountDisplay amount={d.price} rates={rates} /></td>
+                                    <td><AmountDisplay amount={d.quantity * parseFloat(d.price)} rates={rates} /></td>
                                   </tr>
                                 ))}
                               </tbody>

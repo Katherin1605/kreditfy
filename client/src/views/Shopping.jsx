@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { formatCurrency } from '../utils/currency';
+import { useExchangeRates } from '../context/ExchangeRatesContext';
+import AmountDisplay from '../components/AmountDisplay';
 import FormShopping from '../components/FormShopping';
 import TableSkeleton from '../components/TableSkeleton';
 import useConfirm from '../hooks/useConfirm';
@@ -13,6 +15,7 @@ const Shopping = () => {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({ product_id: '', quantity: '', cost: '', currency: 'BsF', date: new Date().toISOString().split('T')[0] });
   const { confirmModal, ask } = useConfirm();
+  const { rates } = useExchangeRates();
 
   useEffect(() => {
     loadData();
@@ -96,17 +99,18 @@ const Shopping = () => {
                 <th className="px-4 py-3">Producto</th>
                 <th className="px-4 py-3">Cantidad</th>
                 <th className="px-4 py-3">Moneda</th>
-                <th className="px-4 py-3">Costo</th>
+                <th className="px-4 py-3">Costo Unit.</th>
+                <th className="px-4 py-3">Total Costo</th>
                 <th className="px-4 py-3">Ganancia</th>
                 <th className="px-4 py-3">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <TableSkeleton cols={7} />
+                <TableSkeleton cols={8} />
               ) : shopping.length === 0 ? (
                 <tr>
-                  <td className="text-center px-4 py-5 text-secondary" colSpan={7}>
+                  <td className="text-center px-4 py-5 text-secondary" colSpan={8}>
                     No hay compras registradas
                   </td>
                 </tr>
@@ -119,7 +123,12 @@ const Shopping = () => {
                     <td className="px-4 py-3">
                       <span className="badge bg-light text-dark border">{row.currency || 'USD'}</span>
                     </td>
-                    <td className="px-4 py-3">{formatCurrency(row.cost, row.currency)}</td>
+                    <td className="px-4 py-3">
+                      <AmountDisplay amount={row.cost} rates={rates} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <AmountDisplay amount={parseFloat(row.cost) * row.quantity} rates={rates} />
+                    </td>
                     <td className="px-4 py-3">
                       {(() => {
                         const product = products.find(p => p.id === row.product_id);
@@ -127,7 +136,7 @@ const Shopping = () => {
                         const ganancia = (parseFloat(product.price) - parseFloat(row.cost)) * row.quantity;
                         return (
                           <span className={ganancia >= 0 ? 'text-success' : 'text-danger'}>
-                            {formatCurrency(ganancia, row.currency)}
+                            <AmountDisplay amount={ganancia} rates={rates} />
                           </span>
                         );
                       })()}

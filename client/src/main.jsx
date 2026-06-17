@@ -6,12 +6,15 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import './App.css'
 import App from './App.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
+import { ExchangeRatesProvider } from './context/ExchangeRatesContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
-      <App />
-      <Toaster position="top-right" toastOptions={{ duration: 3500 }} />
+      <ExchangeRatesProvider>
+        <App />
+        <Toaster position="top-right" toastOptions={{ duration: 3500 }} />
+      </ExchangeRatesProvider>
     </AuthProvider>
   </StrictMode>,
 )

@@ -481,6 +481,12 @@
   min-width: 90px;
 }
 
+.amount-equiv {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
 /* =========================================
    Audit log meta
    ========================================= */

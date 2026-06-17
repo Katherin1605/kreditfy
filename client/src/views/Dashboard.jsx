@@ -2,16 +2,18 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/currency';
+import { useExchangeRates } from '../context/ExchangeRatesContext';
+import AmountDisplay from '../components/AmountDisplay';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const METRICS = [
-  { key: 'totalVentas',      label: 'Total Ventas',      icon: 'bi-currency-dollar', iconClass: 'metric-icon-primary' },
-  { key: 'totalCobrado',     label: 'Total Cobrado',     icon: 'bi-check-circle',    iconClass: 'metric-icon-success' },
-  { key: 'saldoPendiente',   label: 'Saldo Pendiente',   icon: 'bi-clock-history',   iconClass: 'metric-icon-warning' },
-  { key: 'totalCompras',     label: 'Total Invertido',   icon: 'bi-cart-check',      iconClass: 'metric-icon-danger'  },
-  { key: 'totalClientes',    label: 'Clientes',          icon: 'bi-people',          iconClass: 'metric-icon-info'    },
-  { key: 'totalProductos',   label: 'Productos',         icon: 'bi-box-seam',        iconClass: 'metric-icon-purple'  },
-  { key: 'ventasPendientes', label: 'Ventas Pendientes', icon: 'bi-receipt',         iconClass: 'metric-icon-warning2'},
+  { key: 'totalVentas',      label: 'Total Ventas',      icon: 'bi-currency-dollar', iconClass: 'metric-icon-primary',  money: true  },
+  { key: 'totalCobrado',     label: 'Total Cobrado',     icon: 'bi-check-circle',    iconClass: 'metric-icon-success',  money: true  },
+  { key: 'saldoPendiente',   label: 'Saldo Pendiente',   icon: 'bi-clock-history',   iconClass: 'metric-icon-warning',  money: true  },
+  { key: 'totalCompras',     label: 'Total Invertido',   icon: 'bi-cart-check',      iconClass: 'metric-icon-danger',   money: true  },
+  { key: 'totalClientes',    label: 'Clientes',          icon: 'bi-people',          iconClass: 'metric-icon-info',     money: false },
+  { key: 'totalProductos',   label: 'Productos',         icon: 'bi-box-seam',        iconClass: 'metric-icon-purple',   money: false },
+  { key: 'ventasPendientes', label: 'Ventas Pendientes', icon: 'bi-receipt',         iconClass: 'metric-icon-warning2', money: false },
 ];
 
 const formatMonth = (monthStr) => {
@@ -21,6 +23,7 @@ const formatMonth = (monthStr) => {
 
 const Dashboard = () => {
   const { currentAdmin } = useAuth();
+  const { rates } = useExchangeRates();
   const [stats, setStats] = useState(null);
   const [monthlyStats, setMonthlyStats] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,11 +49,11 @@ const Dashboard = () => {
     Cobrado: parseFloat(m.total_cobrado),
   }));
 
-  const values = stats ? {
-    totalVentas:      fmt(stats.total_ventas),
-    totalCobrado:     fmt(stats.total_cobrado),
-    saldoPendiente:   fmt(stats.saldo_pendiente),
-    totalCompras:     fmt(stats.total_compras),
+  const rawValues = stats ? {
+    totalVentas:      stats.total_ventas,
+    totalCobrado:     stats.total_cobrado,
+    saldoPendiente:   stats.saldo_pendiente,
+    totalCompras:     stats.total_compras,
     totalClientes:    stats.total_clientes,
     totalProductos:   stats.total_productos,
     ventasPendientes: stats.ventas_pendientes,
@@ -84,7 +87,11 @@ const Dashboard = () => {
                 </div>
                 <div className="min-w-0">
                   <p className="metric-label">{m.label}</p>
-                  <p className="metric-value">{values[m.key]}</p>
+                  {m.money ? (
+                    <AmountDisplay amount={rawValues[m.key]} rates={rates} className="metric-value" />
+                  ) : (
+                    <p className="metric-value">{rawValues[m.key]}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -145,9 +152,9 @@ const Dashboard = () => {
                           <span className="badge bg-light text-dark border">#{s.id}</span>
                         </td>
                         <td className="px-3 py-2">{s.customer_name || '-'}</td>
-                        <td className="px-3 py-2">{fmt(s.total)}</td>
-                        <td className="px-3 py-2 text-success">{fmt(s.total_paid)}</td>
-                        <td className="px-3 py-2 fw-bold text-warning">{fmt(s.balance)}</td>
+                        <td className="px-3 py-2"><AmountDisplay amount={s.total}      rates={rates} /></td>
+                        <td className="px-3 py-2 text-success"><AmountDisplay amount={s.total_paid} rates={rates} /></td>
+                        <td className="px-3 py-2 fw-bold text-warning"><AmountDisplay amount={s.balance}    rates={rates} /></td>
                       </tr>
                     ))}
                   </tbody>
