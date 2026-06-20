@@ -6,6 +6,18 @@ import { useExchangeRates } from '../context/ExchangeRatesContext';
 import AmountDisplay from '../components/AmountDisplay';
 import useConfirm from '../hooks/useConfirm';
 
+const OVERDUE_DAYS = 30;
+
+const isOverdue = (sale) => {
+  const ref = sale.last_payment_date
+    ? new Date(sale.last_payment_date)
+    : new Date(sale.sale_date || sale.created_at);
+  const days = (Date.now() - ref.getTime()) / (1000 * 60 * 60 * 24);
+  return days > OVERDUE_DAYS;
+};
+
+const METHOD_LABELS = { cash: 'Efectivo', transfer: 'Transferencia', card: 'Tarjeta' };
+
 const Payments = () => {
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +90,7 @@ const Payments = () => {
         loadSales();
         setSaleDetail(detailRes.data);
         setPayments(paymentsRes.data);
-        setSelectedSale(detailRes.data);
+        setSelectedSale(prev => ({ ...prev, ...detailRes.data }));
         setShowPayForm(false);
         setPayForm({ amount: '', method: '', payment_date: new Date().toISOString().split('T')[0] });
         if (parseFloat(detailRes.data.balance) <= 0) handleCloseDetail();
@@ -92,6 +104,12 @@ const Payments = () => {
     const valorCuota = parseFloat(sale.valor_cuota);
     if (!valorCuota) return 0;
     return Math.floor(parseFloat(sale.total_paid) / valorCuota);
+  };
+
+  const getProgressColor = (pct) => {
+    if (pct >= 70) return 'bg-success';
+    if (pct >= 30) return 'bg-warning';
+    return 'bg-danger';
   };
 
   return (
@@ -115,28 +133,42 @@ const Payments = () => {
               ) : pendingSales.length === 0 ? (
                 <p className="text-muted text-center py-4">No hay ventas pendientes</p>
               ) : (
-                pendingSales.map(s => (
-                  <div
-                    key={s.id}
-                    className={`card mb-3 payment-sale-card ${selectedSale?.id === s.id ? 'payment-sale-card--active' : ''}`}
-                    onClick={() => handleSelectSale(s)}
-                  >
-                    <div className="card-body py-2">
-                      <div className="d-flex justify-content-between align-items-start">
-                        <div>
-                          <h6 className="mb-0">{s.customer_name}</h6>
-                          <small className="text-muted">{new Date(s.created_at).toLocaleDateString()}</small>
+                pendingSales.map(s => {
+                  const overdue = isOverdue(s);
+                  const cuotasPagadas = getCuotasPagadas(s);
+                  const pct = s.cuotas > 0 ? Math.round((cuotasPagadas / s.cuotas) * 100) : 0;
+                  return (
+                    <div
+                      key={s.id}
+                      className={`card mb-3 payment-sale-card ${selectedSale?.id === s.id ? 'payment-sale-card--active' : ''}`}
+                      onClick={() => handleSelectSale(s)}
+                    >
+                      <div className="card-body py-2">
+                        <div className="d-flex justify-content-between align-items-start">
+                          <div className="d-flex align-items-center gap-2">
+                            <h6 className="mb-0">{s.customer_name}</h6>
+                            {overdue && (
+                              <span className="badge bg-danger">Vencida</span>
+                            )}
+                          </div>
+                          <i className="bi bi-eye text-primary fs-5"></i>
                         </div>
-                        <i className="bi bi-eye text-primary fs-5"></i>
-                      </div>
-                      <div className="d-flex justify-content-between mt-2 small">
-                        <span>Total: <strong><AmountDisplay amount={s.total} rates={rates} /></strong></span>
-                        <span className="text-muted">{getCuotasPagadas(s)}/{s.cuotas} cuotas</span>
-                        <span className="text-warning fw-bold">Saldo: <AmountDisplay amount={s.balance} rates={rates} /></span>
+                        <small className="text-muted">{new Date(s.sale_date || s.created_at).toLocaleDateString('es-ES')}</small>
+                        <div className="d-flex justify-content-between mt-2 mb-1 small">
+                          <span>Total: <strong><AmountDisplay amount={s.total} rates={rates} /></strong></span>
+                          <span className="text-muted">{cuotasPagadas}/{s.cuotas} cuotas</span>
+                          <span className="text-warning fw-bold">Saldo: <AmountDisplay amount={s.balance} rates={rates} /></span>
+                        </div>
+                        <div className="progress" style={{ height: '5px' }}>
+                          <div
+                            className={`progress-bar ${getProgressColor(pct)}`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
@@ -146,7 +178,12 @@ const Payments = () => {
           {selectedSale ? (
             <div className="card">
               <div className="card-header dashboard-card-header d-flex justify-content-between align-items-center">
-                <strong>Detalle de Venta</strong>
+                <div className="d-flex align-items-center gap-2">
+                  <strong>Detalle de Venta</strong>
+                  {isOverdue(selectedSale) && (
+                    <span className="badge bg-danger">Vencida</span>
+                  )}
+                </div>
                 <button type="button" className="btn-close" onClick={handleCloseDetail} />
               </div>
               <div className="card-body">
@@ -188,6 +225,26 @@ const Payments = () => {
                     {formatCurrency(selectedSale.valor_cuota || 0, 'USD')}/c.
                   </span>
                 </div>
+
+                {selectedSale.cuotas > 1 && (() => {
+                  const cuotasPagadas = getCuotasPagadas(selectedSale);
+                  const pct = Math.round((cuotasPagadas / selectedSale.cuotas) * 100);
+                  return (
+                    <div className="mb-2">
+                      <div className="d-flex justify-content-between small text-muted mb-1">
+                        <span>Progreso de cuotas</span>
+                        <span>{pct}%</span>
+                      </div>
+                      <div className="progress" style={{ height: '8px' }}>
+                        <div
+                          className={`progress-bar ${getProgressColor(pct)}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="d-flex justify-content-between mb-1">
                   <span className="text-muted small">Cuotas restantes</span>
                   <span className="small">{selectedSale.cuotas - getCuotasPagadas(selectedSale)}</span>
@@ -205,19 +262,32 @@ const Payments = () => {
                   <>
                     <hr />
                     <p className="text-muted small mb-2">Historial de pagos</p>
-                    {payments.map(p => (
-                      <div key={p.id} className="bg-light rounded p-2 mb-2">
-                        <div className="d-flex justify-content-between">
-                          <AmountDisplay amount={p.amount} rates={rates} className="text-success fw-bold" />
-                          <small className="text-muted">{new Date(p.payment_date).toLocaleDateString('es-ES')}</small>
-                        </div>
-                        {p.method && (
-                          <small className="text-muted">
-                            Método: {{ cash: 'Efectivo', transfer: 'Transferencia', card: 'Tarjeta' }[p.method] || p.method}
-                          </small>
-                        )}
-                      </div>
-                    ))}
+                    <div className="table-responsive">
+                      <table className="table table-sm table-hover mb-0">
+                        <thead className="table-light">
+                          <tr>
+                            <th className="small">Fecha</th>
+                            <th className="small">Monto</th>
+                            <th className="small">Método</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {payments.map(p => (
+                            <tr key={p.id}>
+                              <td className="small text-muted">
+                                {new Date(p.payment_date || p.created_at).toLocaleDateString('es-ES')}
+                              </td>
+                              <td>
+                                <AmountDisplay amount={p.amount} rates={rates} className="text-success fw-bold small" />
+                              </td>
+                              <td className="small text-muted">
+                                {METHOD_LABELS[p.method] || p.method || '—'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </>
                 )}
 
@@ -239,7 +309,6 @@ const Payments = () => {
                             className="form-control"
                             value={payForm.amount}
                             onChange={e => {
-                              // Permite dígitos, coma (separador de miles) y punto decimal
                               const raw = e.target.value.replace(/,/g, '').replace(/[^0-9.]/g, '');
                               setPayForm({ ...payForm, amount: raw });
                             }}

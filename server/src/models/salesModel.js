@@ -32,7 +32,8 @@ export const getAllSales = async ({ page = 1, limit = 15, q = '' } = {}) => {
          ROUND(s.total / NULLIF(s.cuotas, 0), 2) AS valor_cuota,
          s.status, s.currency, s.exchange_rate, s.sale_date, s.created_at,
          COALESCE(SUM(p.amount), 0) AS total_paid,
-         s.total - COALESCE(SUM(p.amount), 0) AS balance
+         s.total - COALESCE(SUM(p.amount), 0) AS balance,
+         MAX(p.payment_date) AS last_payment_date
        FROM sales s
        LEFT JOIN customers c ON s.customer_id = c.id
        LEFT JOIN payments p ON s.id = p.sale_id
