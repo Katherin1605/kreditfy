@@ -183,6 +183,29 @@
   line-height: 1.2;
 }
 
+.metric-trend {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-top: 3px;
+  gap: 1px;
+}
+
+.metric-trend i {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.metric-trend-down { color: #157347; }
+.metric-trend-up   { color: #b02a37; }
+
+.metric-trend-label {
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: 3px;
+}
+
 .metric-value {
   font-weight: 700;
   font-size: 1rem;

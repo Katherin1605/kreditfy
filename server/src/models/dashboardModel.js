@@ -1,7 +1,7 @@
 import pool from "../../db/config.js";
 
 export const getStats = async () => {
-  const [metricsRes, pendingSalesRes, lowStockRes] = await Promise.all([
+  const [metricsRes, pendingSalesRes, lowStockRes, trendRes] = await Promise.all([
     pool.query(`
       SELECT
         COALESCE(SUM(s.total), 0)::numeric                                AS total_ventas,
@@ -37,10 +37,23 @@ export const getStats = async () => {
       WHERE stock <= 5
       ORDER BY stock ASC, name ASC
     `),
+    pool.query(`
+      SELECT
+        COALESCE(SUM(GREATEST(s.total - COALESCE(prev_paid.total_paid, 0), 0)), 0)::numeric AS saldo_mes_anterior
+      FROM sales s
+      LEFT JOIN (
+        SELECT sale_id, SUM(amount) AS total_paid
+        FROM payments
+        WHERE payment_date < DATE_TRUNC('month', NOW())
+        GROUP BY sale_id
+      ) prev_paid ON s.id = prev_paid.sale_id
+      WHERE COALESCE(s.sale_date, s.created_at::date) < DATE_TRUNC('month', NOW())
+    `),
   ]);
 
   return {
     ...metricsRes.rows[0],
+    saldo_mes_anterior: trendRes.rows[0].saldo_mes_anterior,
     pending_sales:      pendingSalesRes.rows,
     low_stock_products: lowStockRes.rows,
   };

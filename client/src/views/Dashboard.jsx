@@ -59,11 +59,26 @@ const Dashboard = () => {
     ventasPendientes: stats.ventas_pendientes,
   } : {};
 
+  const saldoAnterior = stats ? parseFloat(stats.saldo_mes_anterior) : 0;
+  const saldoActual   = stats ? parseFloat(stats.saldo_pendiente)    : 0;
+  const trendPct = saldoAnterior > 0
+    ? ((saldoActual - saldoAnterior) / saldoAnterior) * 100
+    : null;
+
   if (loading) {
     return (
       <div className="text-center py-5 text-muted">
         <div className="spinner-border text-primary mb-3" role="status"></div>
         <p>Cargando dashboard...</p>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="text-center py-5 text-danger">
+        <i className="bi bi-exclamation-circle fs-3 d-block mb-2"></i>
+        <p>Error al cargar el dashboard. Intenta recargar la página.</p>
       </div>
     );
   }
@@ -91,6 +106,13 @@ const Dashboard = () => {
                     <AmountDisplay amount={rawValues[m.key]} rates={rates} className="metric-value" />
                   ) : (
                     <p className="metric-value">{rawValues[m.key]}</p>
+                  )}
+                  {m.key === 'saldoPendiente' && trendPct !== null && (
+                    <span className={`metric-trend ${trendPct <= 0 ? 'metric-trend-down' : 'metric-trend-up'}`}>
+                      <i className={`bi ${trendPct <= 0 ? 'bi-arrow-down-short' : 'bi-arrow-up-short'}`}></i>
+                      {Math.abs(trendPct).toFixed(1)}%
+                      <span className="metric-trend-label">vs mes ant.</span>
+                    </span>
                   )}
                 </div>
               </div>
