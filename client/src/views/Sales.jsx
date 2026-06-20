@@ -111,8 +111,7 @@ const Sales = () => {
     setSaleDate(new Date().toISOString().split('T')[0]);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     if (!selectedCustomerId) {
       toast.error('Selecciona un cliente para continuar');
       return;

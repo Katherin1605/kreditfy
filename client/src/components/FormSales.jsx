@@ -104,7 +104,7 @@ const FormSales = ({
         ))}
       </div>
 
-      <form onSubmit={onSubmit} noValidate>
+      <div>
         <div className="card-body">
 
           {/* ── Paso 1: Cliente ── */}
@@ -350,14 +350,14 @@ const FormSales = ({
                 Siguiente<i className="bi bi-arrow-right ms-1"></i>
               </button>
             ) : (
-              <button type="submit" className="btn btn-success">
+              <button type="button" className="btn btn-success" onClick={onSubmit}>
                 <i className="bi bi-check-lg me-1"></i>
                 {editingSale ? 'Actualizar Venta' : 'Guardar Venta'}
               </button>
             )}
           </div>
         </div>
-      </form>
+      </div>
     </div>
   );
 };
