@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import Pagination from '../components/Pagination';
 
 const ACTION_LABELS = { CREATE: 'Crear', UPDATE: 'Editar', DELETE: 'Eliminar' };
@@ -24,6 +25,7 @@ const Audit = () => {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
@@ -78,13 +80,70 @@ const Audit = () => {
     setPage(newPage);
   };
 
+  const handleExportCSV = async () => {
+    setExporting(true);
+    try {
+      const params = { page: 1, limit: 99999 };
+      if (search)       params.q       = search;
+      if (filterTable)  params.table   = filterTable;
+      if (filterAction) params.action  = filterAction;
+      if (dateFrom)     params.date_from = dateFrom;
+      if (dateTo)       params.date_to   = dateTo;
+
+      const res  = await axios.get('http://localhost:3000/audit', { params });
+      const data = Array.isArray(res.data) ? res.data : (res.data.data || []);
+
+      const escape = (v) => {
+        const s = v === null || v === undefined ? '' : String(v);
+        return s.includes(';') || s.includes('"') || s.includes('\n')
+          ? `"${s.replace(/"/g, '""')}"`
+          : s;
+      };
+
+      const headers = ['Fecha', 'Acción', 'Módulo', 'ID Registro', 'Descripción', 'Administrador'];
+      const rows = data.map(log => [
+        new Date(log.created_at).toLocaleString('es-ES'),
+        ACTION_LABELS[log.action] || log.action,
+        TABLE_LABELS[log.table_name] || log.table_name,
+        log.record_id ?? '',
+        log.description ?? '',
+        log.admin_name || 'Sistema',
+      ]);
+
+      const csv  = [headers, ...rows].map(r => r.map(escape).join(';')).join('\r\n');
+      const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `auditoria_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`${data.length} registros exportados`);
+    } catch {
+      toast.error('Error al exportar el CSV');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h5>Registro de Auditoría</h5>
-        <span className="text-muted small">
-          {pagination.total} registros
-        </span>
+        <div className="d-flex align-items-center gap-3">
+          <span className="text-muted small">{pagination.total} registros</span>
+          <button
+            className="btn btn-sm btn-outline-success"
+            onClick={handleExportCSV}
+            disabled={exporting || pagination.total === 0}
+            title="Exportar registros filtrados a CSV"
+          >
+            {exporting
+              ? <><span className="spinner-border spinner-border-sm me-1" role="status"></span>Exportando...</>
+              : <><i className="bi bi-file-earmark-spreadsheet me-1"></i>Exportar CSV</>
+            }
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded shadow p-3 mb-3">
