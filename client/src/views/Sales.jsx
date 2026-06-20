@@ -27,6 +27,7 @@ const Sales = () => {
   const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
+  const [exporting, setExporting] = useState(false);
   const debounceRef = useRef(null);
   const { confirmModal, ask } = useConfirm();
   const { rates } = useExchangeRates();
@@ -171,6 +172,52 @@ const Sales = () => {
     }
   };
 
+  const handleExportCSV = async () => {
+    setExporting(true);
+    try {
+      const params = { page: 1, limit: 99999 };
+      if (search)   params.q         = search;
+      if (dateFrom) params.date_from = dateFrom;
+      if (dateTo)   params.date_to   = dateTo;
+      const res  = await axios.get('http://localhost:3000/sales', { params });
+      const data = Array.isArray(res.data) ? res.data : (res.data.data || []);
+
+      const escape = (v) => {
+        const s = v === null || v === undefined ? '' : String(v);
+        return s.includes(';') || s.includes('"') || s.includes('\n')
+          ? `"${s.replace(/"/g, '""')}"` : s;
+      };
+
+      const fmt = (n) => parseFloat(n || 0).toFixed(2);
+      const headers = ['#ID', 'Fecha', 'Cliente', 'Total (USD)', 'Cuotas', 'Valor Cuota (USD)', 'Pagado (USD)', 'Saldo (USD)', 'Estado'];
+      const rows = data.map(s => [
+        s.id,
+        new Date(s.sale_date || s.created_at).toLocaleDateString('es-ES'),
+        s.customer_name,
+        fmt(s.total),
+        s.cuotas,
+        fmt(s.valor_cuota),
+        fmt(s.total_paid),
+        fmt(s.balance),
+        s.status === 'paid' ? 'Pagado' : 'Pendiente',
+      ]);
+
+      const csv  = [headers, ...rows].map(r => r.map(escape).join(';')).join('\r\n');
+      const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `ventas_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`${data.length} ventas exportadas`);
+    } catch {
+      toast.error('Error al exportar el CSV');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const handleDelete = async (saleId) => {
     const ok = await ask('¿Eliminar esta venta? El stock de los productos será restaurado.');
     if (!ok) return;
@@ -202,6 +249,17 @@ const Sales = () => {
               onChange={e => setSearch(e.target.value)}
             />
           </div>
+          <button
+            className="btn btn-outline-success text-nowrap"
+            onClick={handleExportCSV}
+            disabled={exporting || pagination.total === 0}
+            title="Exportar ventas a CSV"
+          >
+            {exporting
+              ? <><span className="spinner-border spinner-border-sm me-1" role="status"></span>Exportando...</>
+              : <><i className="bi bi-file-earmark-spreadsheet me-1"></i>Exportar CSV</>
+            }
+          </button>
           <button className="btn btn-primary text-nowrap" onClick={() => setShowForm(true)}>
             <i className="bi bi-plus-lg me-1"></i>
             Nueva Venta

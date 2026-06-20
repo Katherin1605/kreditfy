@@ -100,6 +100,32 @@ export const updateCustomer = async (req, res) => {
   }
 };
 
+// POST /customers/import
+export const importCustomers = async (req, res) => {
+  try {
+    const { customers } = req.body;
+    if (!Array.isArray(customers) || customers.length === 0) {
+      return res.status(400).json({ error: 'No se enviaron clientes para importar' });
+    }
+    const invalid = customers.filter(c => !c.name?.trim() || !c.identity_card?.trim());
+    if (invalid.length > 0) {
+      return res.status(400).json({ error: `${invalid.length} fila(s) sin nombre o cédula` });
+    }
+    const result = await customerModel.importCustomers(customers);
+    res.json(result);
+    auditModel.createAuditLog({
+      admin_id: req.admin?.id || null,
+      action: 'CREATE',
+      table_name: 'customers',
+      record_id: null,
+      description: `Importó ${result.inserted} clientes desde CSV (${result.skipped} duplicados omitidos)`,
+    }).catch(() => {});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al importar clientes' });
+  }
+};
+
 // DELETE /customers/:id
 export const deleteCustomer = async (req, res) => {
   try {

@@ -5,6 +5,7 @@ import {
   getCustomerById,
   updateCustomer,
   deleteCustomer,
+  importCustomers,
 } from "../src/controllers/customersController.js";
 import { authenticateToken } from "../src/middleware/authMiddleware.js";
 
@@ -12,6 +13,7 @@ const router = Router();
 
 router.get("/customers", authenticateToken, getCustomers);
 router.get("/customers/:id", authenticateToken, getCustomerById);
+router.post("/customers/import", authenticateToken, importCustomers);
 router.post("/customers", authenticateToken, createCustomer);
 router.put("/customers/:id", authenticateToken, updateCustomer);
 router.delete("/customers/:id", authenticateToken, deleteCustomer);
