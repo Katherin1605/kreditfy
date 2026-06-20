@@ -27,6 +27,7 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [monthlyStats, setMonthlyStats] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [salesTab, setSalesTab] = useState('pending');
 
   useEffect(() => {
     Promise.all([
@@ -147,40 +148,100 @@ const Dashboard = () => {
       <div className="row g-3">
         <div className="col-lg-7">
           <div className="card border-0 shadow-sm h-100">
-            <div className="card-header dashboard-card-header">
-              <i className="bi bi-clock-history me-2"></i>Pagos Pendientes
+            <div className="card-header dashboard-card-header p-0 border-bottom-0">
+              <ul className="nav nav-tabs dashboard-sales-tabs">
+                <li className="nav-item">
+                  <button
+                    className={`nav-link dashboard-sales-tab-btn ${salesTab === 'pending' ? 'active' : ''}`}
+                    onClick={() => setSalesTab('pending')}
+                  >
+                    <i className="bi bi-clock-history me-1"></i>
+                    Pendientes
+                    {stats.pending_sales.length > 0 && (
+                      <span className="badge bg-warning text-dark ms-1">{stats.pending_sales.length}</span>
+                    )}
+                  </button>
+                </li>
+                <li className="nav-item">
+                  <button
+                    className={`nav-link dashboard-sales-tab-btn ${salesTab === 'paid' ? 'active' : ''}`}
+                    onClick={() => setSalesTab('paid')}
+                  >
+                    <i className="bi bi-check-circle me-1"></i>
+                    Pagadas
+                  </button>
+                </li>
+              </ul>
             </div>
             <div className="card-body p-0">
-              {stats.pending_sales.length === 0 ? (
-                <div className="text-center py-4 text-muted">
-                  <i className="bi bi-check-circle fs-3 text-success d-block mb-2"></i>
-                  No hay pagos pendientes
-                </div>
-              ) : (
-                <table className="table table-hover dashboard-table mb-0">
-                  <thead>
-                    <tr>
-                      <th className="px-3 py-2">#</th>
-                      <th className="px-3 py-2">Cliente</th>
-                      <th className="px-3 py-2">Total</th>
-                      <th className="px-3 py-2">Cobrado</th>
-                      <th className="px-3 py-2">Saldo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stats.pending_sales.map(s => (
-                      <tr key={s.id}>
-                        <td className="px-3 py-2">
-                          <span className="badge bg-light text-dark border">#{s.id}</span>
-                        </td>
-                        <td className="px-3 py-2">{s.customer_name || '-'}</td>
-                        <td className="px-3 py-2"><AmountDisplay amount={s.total}      rates={rates} /></td>
-                        <td className="px-3 py-2 text-success"><AmountDisplay amount={s.total_paid} rates={rates} /></td>
-                        <td className="px-3 py-2 fw-bold text-warning"><AmountDisplay amount={s.balance}    rates={rates} /></td>
+              {salesTab === 'pending' ? (
+                stats.pending_sales.length === 0 ? (
+                  <div className="text-center py-4 text-muted">
+                    <i className="bi bi-check-circle fs-3 text-success d-block mb-2"></i>
+                    No hay pagos pendientes
+                  </div>
+                ) : (
+                  <table className="table table-hover dashboard-table mb-0">
+                    <thead>
+                      <tr>
+                        <th className="px-3 py-2">#</th>
+                        <th className="px-3 py-2">Cliente</th>
+                        <th className="px-3 py-2">Total</th>
+                        <th className="px-3 py-2">Cobrado</th>
+                        <th className="px-3 py-2">Saldo</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {stats.pending_sales.map(s => (
+                        <tr key={s.id}>
+                          <td className="px-3 py-2">
+                            <span className="badge bg-light text-dark border">#{s.id}</span>
+                          </td>
+                          <td className="px-3 py-2">{s.customer_name || '-'}</td>
+                          <td className="px-3 py-2"><AmountDisplay amount={s.total}      rates={rates} /></td>
+                          <td className="px-3 py-2 text-success"><AmountDisplay amount={s.total_paid} rates={rates} /></td>
+                          <td className="px-3 py-2 fw-bold text-warning"><AmountDisplay amount={s.balance} rates={rates} /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )
+              ) : (
+                stats.recently_paid_sales.length === 0 ? (
+                  <div className="text-center py-4 text-muted">
+                    <i className="bi bi-receipt fs-3 d-block mb-2"></i>
+                    No hay ventas pagadas aún
+                  </div>
+                ) : (
+                  <table className="table table-hover dashboard-table mb-0">
+                    <thead>
+                      <tr>
+                        <th className="px-3 py-2">#</th>
+                        <th className="px-3 py-2">Cliente</th>
+                        <th className="px-3 py-2">Total</th>
+                        <th className="px-3 py-2">Último pago</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stats.recently_paid_sales.map(s => (
+                        <tr key={s.id}>
+                          <td className="px-3 py-2">
+                            <span className="badge bg-light text-dark border">#{s.id}</span>
+                          </td>
+                          <td className="px-3 py-2">{s.customer_name || '-'}</td>
+                          <td className="px-3 py-2 text-success fw-bold">
+                            <AmountDisplay amount={s.total} rates={rates} />
+                          </td>
+                          <td className="px-3 py-2 text-muted">
+                            {s.last_payment_date
+                              ? new Date(s.last_payment_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
+                              : '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )
               )}
             </div>
           </div>

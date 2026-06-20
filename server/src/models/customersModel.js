@@ -15,7 +15,7 @@ export const getAllCustomers = async ({ search = '', page = 1, limit = 20 } = {}
   const [countRes, dataRes] = await Promise.all([
     pool.query(`SELECT COUNT(*) FROM customers ${where}`, params),
     pool.query(
-      `SELECT * FROM customers ${where} ORDER BY name LIMIT $${idx} OFFSET $${idx + 1}`,
+      `SELECT * FROM customers ${where} ORDER BY LOWER(name) LIMIT $${idx} OFFSET $${idx + 1}`,
       [...params, parseInt(limit), offset]
     ),
   ]);

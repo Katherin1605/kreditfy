@@ -1,7 +1,7 @@
 import pool from "../../db/config.js";
 
 export const getStats = async () => {
-  const [metricsRes, pendingSalesRes, lowStockRes, trendRes] = await Promise.all([
+  const [metricsRes, pendingSalesRes, lowStockRes, recentPaidRes, trendRes] = await Promise.all([
     pool.query(`
       SELECT
         COALESCE(SUM(s.total), 0)::numeric                                AS total_ventas,
@@ -39,6 +39,20 @@ export const getStats = async () => {
     `),
     pool.query(`
       SELECT
+        s.id, c.name AS customer_name,
+        s.total,
+        COALESCE(SUM(p.amount), 0)::numeric AS total_paid,
+        MAX(p.payment_date)                 AS last_payment_date
+      FROM sales s
+      LEFT JOIN customers c ON s.customer_id = c.id
+      LEFT JOIN payments  p ON s.id = p.sale_id
+      WHERE s.status = 'paid'
+      GROUP BY s.id, c.name, s.total, s.created_at
+      ORDER BY MAX(p.payment_date) DESC NULLS LAST, s.created_at DESC
+      LIMIT 8
+    `),
+    pool.query(`
+      SELECT
         COALESCE(SUM(GREATEST(s.total - COALESCE(prev_paid.total_paid, 0), 0)), 0)::numeric AS saldo_mes_anterior
       FROM sales s
       LEFT JOIN (
@@ -53,9 +67,10 @@ export const getStats = async () => {
 
   return {
     ...metricsRes.rows[0],
-    saldo_mes_anterior: trendRes.rows[0].saldo_mes_anterior,
-    pending_sales:      pendingSalesRes.rows,
-    low_stock_products: lowStockRes.rows,
+    saldo_mes_anterior:  trendRes.rows[0].saldo_mes_anterior,
+    pending_sales:       pendingSalesRes.rows,
+    recently_paid_sales: recentPaidRes.rows,
+    low_stock_products:  lowStockRes.rows,
   };
 };
 

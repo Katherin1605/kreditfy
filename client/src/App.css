@@ -220,6 +220,35 @@
   color: var(--text-heading);
 }
 
+.dashboard-sales-tabs {
+  background-color: var(--bg-section);
+  border-bottom: 1px solid var(--secondary-bg);
+  padding: 0 0.5rem;
+}
+
+.dashboard-sales-tab-btn {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 0.6rem 0.9rem;
+  background: none;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.dashboard-sales-tab-btn:hover {
+  color: var(--text-heading);
+}
+
+.dashboard-sales-tab-btn.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+  background: none;
+}
+
 .dashboard-table th {
   font-size: 0.8rem;
   background-color: var(--bg-section);
