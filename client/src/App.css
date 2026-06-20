@@ -249,6 +249,104 @@
   background: none;
 }
 
+/* =========================================
+   Form Stepper (FormSales)
+   ========================================= */
+
+.form-stepper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1.5rem 3rem;
+  border-bottom: 1px solid var(--secondary-bg);
+}
+
+.form-stepper-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80px;
+}
+
+.form-stepper-line {
+  flex: 1;
+  height: 2px;
+  background-color: var(--secondary-bg);
+  margin-top: 17px;
+  min-width: 40px;
+  max-width: 120px;
+  transition: background-color 0.3s;
+}
+
+.form-stepper-line.done {
+  background-color: #157347;
+}
+
+.form-stepper-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 2px solid var(--secondary-bg);
+  color: var(--text-muted);
+  background-color: var(--bg-card);
+  transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+}
+
+.form-stepper-circle.active {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.form-stepper-circle.done {
+  border-color: #157347;
+  background-color: #157347;
+  color: #fff;
+}
+
+.form-stepper-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 6px;
+  white-space: nowrap;
+}
+
+.form-stepper-label.active {
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+.form-stepper-summary-box {
+  background-color: var(--bg-section);
+  border-radius: var(--border-radius);
+  padding: 0.75rem 1rem;
+  height: 100%;
+}
+
+.form-stepper-summary-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.form-stepper-summary-value {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0;
+  color: var(--text-heading);
+}
+
+.form-stepper-summary-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 0;
+}
+
 .dashboard-table th {
   font-size: 0.8rem;
   background-color: var(--bg-section);
