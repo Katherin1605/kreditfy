@@ -21,19 +21,23 @@ const Audit = () => {
   const [search, setSearch] = useState('');
   const [filterTable, setFilterTable] = useState('');
   const [filterAction, setFilterAction] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
   const debounceRef = useRef(null);
 
-  const loadLogs = (q, table, action, p) => {
+  const loadLogs = (q, table, action, p, from = '', to = '') => {
     setLoading(true);
     setError('');
     const params = { page: p, limit: 15 };
     if (q) params.q = q;
     if (table) params.table = table;
     if (action) params.action = action;
+    if (from) params.date_from = from;
+    if (to) params.date_to = to;
 
     axios.get('http://localhost:3000/audit', { params })
       .then(res => {
@@ -54,21 +58,21 @@ const Audit = () => {
   };
 
   useEffect(() => {
-    loadLogs(search, filterTable, filterAction, page);
+    loadLogs(search, filterTable, filterAction, page, dateFrom, dateTo);
   }, [page]);
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setPage(1);
-      loadLogs(search, filterTable, filterAction, 1);
+      loadLogs(search, filterTable, filterAction, 1, dateFrom, dateTo);
     }, 350);
   }, [search]);
 
   useEffect(() => {
     setPage(1);
-    loadLogs(search, filterTable, filterAction, 1);
-  }, [filterTable, filterAction]);
+    loadLogs(search, filterTable, filterAction, 1, dateFrom, dateTo);
+  }, [filterTable, filterAction, dateFrom, dateTo]);
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
@@ -84,7 +88,7 @@ const Audit = () => {
       </div>
 
       <div className="bg-white rounded shadow p-3 mb-3">
-        <div className="row g-2">
+        <div className="row g-2 mb-2">
           <div className="col-md-5">
             <div className="input-group">
               <span className="input-group-text bg-white border-end-0">
@@ -123,6 +127,38 @@ const Audit = () => {
               <option value="DELETE">Eliminar</option>
             </select>
           </div>
+        </div>
+        <div className="row g-2 align-items-end">
+          <div className="col-auto">
+            <label className="form-label small text-muted mb-1">Desde</label>
+            <input
+              type="date"
+              className="form-control form-control-sm"
+              value={dateFrom}
+              max={dateTo || undefined}
+              onChange={e => setDateFrom(e.target.value)}
+            />
+          </div>
+          <div className="col-auto">
+            <label className="form-label small text-muted mb-1">Hasta</label>
+            <input
+              type="date"
+              className="form-control form-control-sm"
+              value={dateTo}
+              min={dateFrom || undefined}
+              onChange={e => setDateTo(e.target.value)}
+            />
+          </div>
+          {(dateFrom || dateTo) && (
+            <div className="col-auto">
+              <button
+                className="btn btn-sm btn-outline-secondary"
+                onClick={() => { setDateFrom(''); setDateTo(''); }}
+              >
+                <i className="bi bi-x-lg me-1"></i>Limpiar fechas
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

@@ -7,17 +7,34 @@ pool.query(`
     ADD COLUMN IF NOT EXISTS exchange_rate NUMERIC(12,4)  DEFAULT NULL
 `).catch(err => console.error('[sales] Error en migración:', err));
 
-export const getAllSales = async ({ page = 1, limit = 15, q = '' } = {}) => {
+export const getAllSales = async ({ page = 1, limit = 15, q = '', date_from = '', date_to = '', status = '' } = {}) => {
   const offset = (parseInt(page) - 1) * parseInt(limit);
   const params = [];
-  let where = '';
+  const conditions = [];
   let idx = 1;
 
   if (q) {
-    where = `WHERE (c.name ILIKE $${idx} OR CAST(s.id AS TEXT) LIKE $${idx})`;
+    conditions.push(`(c.name ILIKE $${idx} OR CAST(s.id AS TEXT) LIKE $${idx})`);
     params.push(`%${q}%`);
     idx++;
   }
+  if (date_from) {
+    conditions.push(`s.sale_date >= $${idx}`);
+    params.push(date_from);
+    idx++;
+  }
+  if (date_to) {
+    conditions.push(`s.sale_date <= $${idx}`);
+    params.push(date_to);
+    idx++;
+  }
+  if (status) {
+    conditions.push(`s.status = $${idx}`);
+    params.push(status);
+    idx++;
+  }
+
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
   const [countRes, dataRes] = await Promise.all([
     pool.query(

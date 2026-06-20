@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { formatCurrency } from '../utils/currency';
 import { useExchangeRates } from '../context/ExchangeRatesContext';
 import AmountDisplay from '../components/AmountDisplay';
+import Pagination from '../components/Pagination';
 import useConfirm from '../hooks/useConfirm';
 
 const OVERDUE_DAYS = 30;
+const LIMIT = 10;
 
 const isOverdue = (sale) => {
   const ref = sale.last_payment_date
@@ -20,25 +22,54 @@ const METHOD_LABELS = { cash: 'Efectivo', transfer: 'Transferencia', card: 'Tarj
 
 const Payments = () => {
   const [sales, setSales] = useState([]);
+  const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [selectedSale, setSelectedSale] = useState(null);
   const [saleDetail, setSaleDetail] = useState(null);
   const [payments, setPayments] = useState([]);
   const [showPayForm, setShowPayForm] = useState(false);
   const [payForm, setPayForm] = useState({ amount: '', method: '', payment_date: new Date().toISOString().split('T')[0] });
+  const debounceRef = useRef(null);
   const { confirmModal } = useConfirm();
   const { rates } = useExchangeRates();
 
   useEffect(() => {
-    loadSales();
-  }, []);
+    loadSales(search, page, dateFrom, dateTo);
+  }, [page]);
 
-  const loadSales = () => {
+  useEffect(() => {
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setPage(1);
+      loadSales(search, 1, dateFrom, dateTo);
+    }, 350);
+  }, [search]);
+
+  useEffect(() => {
+    setPage(1);
+    loadSales(search, 1, dateFrom, dateTo);
+  }, [dateFrom, dateTo]);
+
+  const loadSales = (q = '', p = 1, from = '', to = '') => {
     setLoading(true);
-    axios.get('http://localhost:3000/sales', { params: { limit: 500 } })
+    const params = { page: p, limit: LIMIT, status: 'pending' };
+    if (q) params.q = q;
+    if (from) params.date_from = from;
+    if (to) params.date_to = to;
+    axios.get('http://localhost:3000/sales', { params })
       .then(res => {
         const data = res.data;
-        setSales(Array.isArray(data) ? data : (data.data || []));
+        if (Array.isArray(data)) {
+          setSales(data);
+          setPagination({ total: data.length, totalPages: 1 });
+        } else {
+          setSales(data.data || []);
+          setPagination({ total: data.total || 0, totalPages: data.totalPages || 1 });
+        }
       })
       .catch(err => toast.error(err.response?.data?.error || 'Error al cargar las ventas'))
       .finally(() => setLoading(false));
@@ -87,7 +118,7 @@ const Payments = () => {
       ]))
       .then(([detailRes, paymentsRes]) => {
         toast.success('Pago registrado');
-        loadSales();
+        loadSales(search, page, dateFrom, dateTo);
         setSaleDetail(detailRes.data);
         setPayments(paymentsRes.data);
         setSelectedSale(prev => ({ ...prev, ...detailRes.data }));
@@ -97,8 +128,6 @@ const Payments = () => {
       })
       .catch(err => toast.error(err.response?.data?.error || 'Error al registrar el pago'));
   };
-
-  const pendingSales = sales.filter(s => s.status !== 'paid');
 
   const getCuotasPagadas = (sale) => {
     const valorCuota = parseFloat(sale.valor_cuota);
@@ -112,6 +141,8 @@ const Payments = () => {
     return 'bg-danger';
   };
 
+  const hasFilters = search || dateFrom || dateTo;
+
   return (
     <>
       {confirmModal}
@@ -120,20 +151,70 @@ const Payments = () => {
 
         <div className="col-lg-5">
           <div className="card">
-            <div className="card-header dashboard-card-header">
+            <div className="card-header dashboard-card-header d-flex justify-content-between align-items-center">
               <strong>Ventas Pendientes</strong>
+              <span className="badge bg-secondary">{pagination.total}</span>
             </div>
+
+            <div className="card-body border-bottom pb-3 pt-3 px-3">
+              <div className="input-group input-group-sm mb-2">
+                <span className="input-group-text bg-white border-end-0">
+                  <i className="bi bi-search text-muted"></i>
+                </span>
+                <input
+                  type="text"
+                  className="form-control form-control-sm border-start-0"
+                  placeholder="Buscar por cliente..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                />
+              </div>
+              <div className="d-flex gap-2 align-items-end">
+                <div className="flex-fill">
+                  <label className="form-label small text-muted mb-1">Desde</label>
+                  <input
+                    type="date"
+                    className="form-control form-control-sm"
+                    value={dateFrom}
+                    max={dateTo || undefined}
+                    onChange={e => setDateFrom(e.target.value)}
+                  />
+                </div>
+                <div className="flex-fill">
+                  <label className="form-label small text-muted mb-1">Hasta</label>
+                  <input
+                    type="date"
+                    className="form-control form-control-sm"
+                    value={dateTo}
+                    min={dateFrom || undefined}
+                    onChange={e => setDateTo(e.target.value)}
+                  />
+                </div>
+                {hasFilters && (
+                  <button
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={() => { setSearch(''); setDateFrom(''); setDateTo(''); }}
+                    title="Limpiar filtros"
+                  >
+                    <i className="bi bi-x-lg"></i>
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="card-body p-3">
               {loading ? (
                 <div className="d-flex flex-column gap-2">
-                  {Array.from({ length: 3 }).map((_, i) => (
+                  {Array.from({ length: 4 }).map((_, i) => (
                     <div key={i} className="skeleton-card skeleton-sale-card"></div>
                   ))}
                 </div>
-              ) : pendingSales.length === 0 ? (
-                <p className="text-muted text-center py-4">No hay ventas pendientes</p>
+              ) : sales.length === 0 ? (
+                <p className="text-muted text-center py-4">
+                  {hasFilters ? 'Sin resultados para ese filtro' : 'No hay ventas pendientes'}
+                </p>
               ) : (
-                pendingSales.map(s => {
+                sales.map(s => {
                   const overdue = isOverdue(s);
                   const cuotasPagadas = getCuotasPagadas(s);
                   const pct = s.cuotas > 0 ? Math.round((cuotasPagadas / s.cuotas) * 100) : 0;
@@ -147,9 +228,7 @@ const Payments = () => {
                         <div className="d-flex justify-content-between align-items-start">
                           <div className="d-flex align-items-center gap-2">
                             <h6 className="mb-0">{s.customer_name}</h6>
-                            {overdue && (
-                              <span className="badge bg-danger">Vencida</span>
-                            )}
+                            {overdue && <span className="badge bg-danger">Vencida</span>}
                           </div>
                           <i className="bi bi-eye text-primary fs-5"></i>
                         </div>
@@ -160,10 +239,7 @@ const Payments = () => {
                           <span className="text-warning fw-bold">Saldo: <AmountDisplay amount={s.balance} rates={rates} /></span>
                         </div>
                         <div className="progress" style={{ height: '5px' }}>
-                          <div
-                            className={`progress-bar ${getProgressColor(pct)}`}
-                            style={{ width: `${pct}%` }}
-                          />
+                          <div className={`progress-bar ${getProgressColor(pct)}`} style={{ width: `${pct}%` }} />
                         </div>
                       </div>
                     </div>
@@ -171,6 +247,13 @@ const Payments = () => {
                 })
               )}
             </div>
+
+            <Pagination
+              page={page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              onPageChange={setPage}
+            />
           </div>
         </div>
 
@@ -236,10 +319,7 @@ const Payments = () => {
                         <span>{pct}%</span>
                       </div>
                       <div className="progress" style={{ height: '8px' }}>
-                        <div
-                          className={`progress-bar ${getProgressColor(pct)}`}
-                          style={{ width: `${pct}%` }}
-                        />
+                        <div className={`progress-bar ${getProgressColor(pct)}`} style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                   );

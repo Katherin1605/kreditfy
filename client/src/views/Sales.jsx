@@ -14,6 +14,8 @@ const Sales = () => {
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
@@ -34,16 +36,21 @@ const Sales = () => {
   }, []);
 
   useEffect(() => {
-    loadSales(search, page);
+    loadSales(search, page, dateFrom, dateTo);
   }, [page]);
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setPage(1);
-      loadSales(search, 1);
+      loadSales(search, 1, dateFrom, dateTo);
     }, 350);
   }, [search]);
+
+  useEffect(() => {
+    setPage(1);
+    loadSales(search, 1, dateFrom, dateTo);
+  }, [dateFrom, dateTo]);
 
   const loadCatalogs = () => {
     Promise.all([
@@ -58,10 +65,12 @@ const Sales = () => {
       .catch(err => console.error(err));
   };
 
-  const loadSales = (q = '', p = 1) => {
+  const loadSales = (q = '', p = 1, from = '', to = '') => {
     setLoading(true);
     const params = { page: p, limit: 15 };
     if (q) params.q = q;
+    if (from) params.date_from = from;
+    if (to) params.date_to = to;
     axios.get('http://localhost:3000/sales', { params })
       .then(res => {
         const data = res.data;
@@ -127,7 +136,7 @@ const Sales = () => {
         .then(() => {
           toast.success('Venta actualizada');
           resetForm();
-          loadSales(search, page);
+          loadSales(search, page, dateFrom, dateTo);
         })
         .catch(err => toast.error(err.response?.data?.error || 'Error al actualizar la venta'));
     } else {
@@ -135,7 +144,7 @@ const Sales = () => {
         .then(() => {
           toast.success('Venta creada');
           resetForm();
-          loadSales(search, page);
+          loadSales(search, page, dateFrom, dateTo);
         })
         .catch(err => toast.error(err.response?.data?.error || 'Error al crear la venta'));
     }
@@ -168,7 +177,7 @@ const Sales = () => {
     axios.delete(`http://localhost:3000/sales/${saleId}`)
       .then(() => {
         toast.success('Venta eliminada');
-        loadSales(search, page);
+        loadSales(search, page, dateFrom, dateTo);
       })
       .catch(err => toast.error(err.response?.data?.error || 'Error al eliminar la venta'));
   };
@@ -197,6 +206,49 @@ const Sales = () => {
             <i className="bi bi-plus-lg me-1"></i>
             Nueva Venta
           </button>
+        </div>
+      </div>
+
+      <div className="bg-white rounded shadow-sm p-3 mb-3">
+        <div className="row g-2 align-items-end">
+          <div className="col-auto">
+            <label className="form-label small text-muted mb-1">Desde</label>
+            <input
+              type="date"
+              className="form-control form-control-sm"
+              value={dateFrom}
+              max={dateTo || undefined}
+              onChange={e => setDateFrom(e.target.value)}
+            />
+          </div>
+          <div className="col-auto">
+            <label className="form-label small text-muted mb-1">Hasta</label>
+            <input
+              type="date"
+              className="form-control form-control-sm"
+              value={dateTo}
+              min={dateFrom || undefined}
+              onChange={e => setDateTo(e.target.value)}
+            />
+          </div>
+          {(dateFrom || dateTo) && (
+            <div className="col-auto">
+              <button
+                className="btn btn-sm btn-outline-secondary"
+                onClick={() => { setDateFrom(''); setDateTo(''); }}
+              >
+                <i className="bi bi-x-lg me-1"></i>Limpiar fechas
+              </button>
+            </div>
+          )}
+          {(dateFrom || dateTo) && (
+            <div className="col-auto ms-auto">
+              <small className="text-muted">
+                <i className="bi bi-funnel me-1"></i>
+                Filtrando por rango de fechas
+              </small>
+            </div>
+          )}
         </div>
       </div>
 

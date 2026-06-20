@@ -1,6 +1,6 @@
 import pool from "../../db/config.js";
 
-export const getAllAuditLogs = async ({ page = 1, limit = 15, q = '', table = '', action = '' } = {}) => {
+export const getAllAuditLogs = async ({ page = 1, limit = 15, q = '', table = '', action = '', date_from = '', date_to = '' } = {}) => {
   const offset = (parseInt(page) - 1) * parseInt(limit);
   const conditions = [];
   const params = [];
@@ -19,6 +19,16 @@ export const getAllAuditLogs = async ({ page = 1, limit = 15, q = '', table = ''
   if (action) {
     conditions.push(`al.action = $${idx}`);
     params.push(action);
+    idx++;
+  }
+  if (date_from) {
+    conditions.push(`al.created_at::date >= $${idx}`);
+    params.push(date_from);
+    idx++;
+  }
+  if (date_to) {
+    conditions.push(`al.created_at::date <= $${idx}`);
+    params.push(date_to);
     idx++;
   }
 
