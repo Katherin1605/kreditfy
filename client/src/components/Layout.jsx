@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import useConfirm from '../hooks/useConfirm';
 import { useAuth } from '../context/AuthContext';
@@ -19,6 +19,11 @@ const NAV_ITEMS = [
 const Layout = () => {
   const { currentAdmin, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const currentNavItem = NAV_ITEMS.find(
+    item => item.to !== '/' && location.pathname === item.to
+  );
   const { confirmModal, ask } = useConfirm();
 
   const savedCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
@@ -137,6 +142,19 @@ const Layout = () => {
       </button>
 
       <main className={mainClass} style={{ padding: '1.5rem 2rem' }}>
+        {currentNavItem && (
+          <nav aria-label="breadcrumb" className="layout-breadcrumb">
+            <ol className="breadcrumb">
+              <li className="breadcrumb-item">
+                <NavLink to="/">Dashboard</NavLink>
+              </li>
+              <li className="breadcrumb-item active" aria-current="page">
+                <i className={`bi ${currentNavItem.icon} me-1`}></i>
+                {currentNavItem.label}
+              </li>
+            </ol>
+          </nav>
+        )}
         <Outlet />
       </main>
     </>
