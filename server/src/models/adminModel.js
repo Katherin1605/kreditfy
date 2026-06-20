@@ -1,6 +1,12 @@
 import pool from "../../db/config.js";
 import bcrypt from "bcryptjs";
 
+pool.query(`
+  UPDATE admins
+  SET permissions = array_append(permissions, 'earnings')
+  WHERE NOT ('earnings' = ANY(permissions))
+`).catch(err => console.error('[admins] Error en migración de permisos:', err));
+
 export const getAllAdmins = async () => {
   const result = await pool.query(
     "SELECT id, name, email, role, active, permissions, created_at FROM admins ORDER BY id"

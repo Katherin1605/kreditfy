@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { formatCurrency, CURRENCIES } from '../utils/currency';
+import AmountDisplay from '../components/AmountDisplay';
+import { useExchangeRates } from '../context/ExchangeRatesContext';
 
 const Earnings = () => {
   const currentYear = new Date().getFullYear();
   const [years, setYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [currency, setCurrency] = useState('USD');
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState({ show: false, month: null, notas: '', cerrado: false });
   const [saving, setSaving] = useState(false);
+  const { rates } = useExchangeRates();
 
   useEffect(() => {
     axios.get('http://localhost:3000/earnings/years')
@@ -27,20 +28,16 @@ const Earnings = () => {
   }, []);
 
   useEffect(() => {
-    loadEarnings(selectedYear, currency);
-  }, [selectedYear, currency]);
+    loadEarnings(selectedYear);
+  }, [selectedYear]);
 
-  const loadEarnings = (year, cur) => {
+  const loadEarnings = (year) => {
     setLoading(true);
-    const params = { year };
-    if (cur) params.currency = cur;
-    axios.get('http://localhost:3000/earnings/monthly', { params })
+    axios.get('http://localhost:3000/earnings/monthly', { params: { year, currency: 'USD' } })
       .then(res => setRows(res.data))
       .catch(err => toast.error(err.response?.data?.error || 'Error al cargar cobros'))
       .finally(() => setLoading(false));
   };
-
-  const fmt = (val) => formatCurrency(val, currency);
 
   const openModal = (row) => {
     setModal({ show: true, month: row.month, notas: row.notas || '', cerrado: !!row.cerrado });
@@ -59,7 +56,7 @@ const Earnings = () => {
       });
       toast.success('Cierre guardado');
       closeModal();
-      loadEarnings(selectedYear, currency);
+      loadEarnings(selectedYear);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Error al guardar');
     } finally {
@@ -86,16 +83,6 @@ const Earnings = () => {
           <small className="text-muted">Resumen financiero por mes</small>
         </div>
         <div className="d-flex gap-2 align-items-center">
-          <label className="form-label mb-0 text-muted small">Moneda:</label>
-          <select
-            className="form-select form-select-sm dashboard-currency-select"
-            value={currency}
-            onChange={e => setCurrency(e.target.value)}
-          >
-            {CURRENCIES.map(c => (
-              <option key={c.code} value={c.code}>{c.code}</option>
-            ))}
-          </select>
           <label className="form-label mb-0 text-muted small">Año:</label>
           <select
             className="form-select form-select-sm dashboard-currency-select"
@@ -144,11 +131,21 @@ const Earnings = () => {
                   return (
                     <tr key={row.month} className={!hasData ? 'earnings-empty-row' : ''}>
                       <td className="px-4 py-2 fw-semibold">{row.month_name}</td>
-                      <td className="px-4 py-2 text-success">{hasData ? fmt(row.ingresos) : '—'}</td>
-                      <td className="px-4 py-2 text-danger">{hasData ? fmt(row.gastos) : '—'}</td>
-                      <td className="px-4 py-2 fw-semibold">{hasData ? fmt(row.ganancia) : '—'}</td>
-                      <td className="px-4 py-2">{hasData ? fmt(row.socio_1) : '—'}</td>
-                      <td className="px-4 py-2">{hasData ? fmt(row.socio_2) : '—'}</td>
+                      <td className="px-4 py-2 text-success">
+                        {hasData ? <AmountDisplay amount={row.ingresos} rates={rates} /> : '—'}
+                      </td>
+                      <td className="px-4 py-2 text-danger">
+                        {hasData ? <AmountDisplay amount={row.gastos} rates={rates} /> : '—'}
+                      </td>
+                      <td className="px-4 py-2 fw-semibold">
+                        {hasData ? <AmountDisplay amount={row.ganancia} rates={rates} /> : '—'}
+                      </td>
+                      <td className="px-4 py-2">
+                        {hasData ? <AmountDisplay amount={row.socio_1} rates={rates} /> : '—'}
+                      </td>
+                      <td className="px-4 py-2">
+                        {hasData ? <AmountDisplay amount={row.socio_2} rates={rates} /> : '—'}
+                      </td>
                       <td className="px-4 py-2">
                         <span className={`badge ${row.cerrado ? 'bg-success' : 'bg-secondary'}`}>
                           {row.cerrado ? 'Cerrado' : 'Abierto'}
@@ -172,11 +169,11 @@ const Earnings = () => {
               <tfoot className="earnings-tfoot">
                 <tr>
                   <td className="px-4 py-2 fw-bold">Totales {selectedYear}</td>
-                  <td className="px-4 py-2 fw-bold text-success">{fmt(totals.ingresos)}</td>
-                  <td className="px-4 py-2 fw-bold text-danger">{fmt(totals.gastos)}</td>
-                  <td className="px-4 py-2 fw-bold">{fmt(totals.ganancia)}</td>
-                  <td className="px-4 py-2 fw-bold">{fmt(totals.socio_1)}</td>
-                  <td className="px-4 py-2 fw-bold">{fmt(totals.socio_2)}</td>
+                  <td className="px-4 py-2 fw-bold text-success"><AmountDisplay amount={totals.ingresos} rates={rates} /></td>
+                  <td className="px-4 py-2 fw-bold text-danger"><AmountDisplay amount={totals.gastos} rates={rates} /></td>
+                  <td className="px-4 py-2 fw-bold"><AmountDisplay amount={totals.ganancia} rates={rates} /></td>
+                  <td className="px-4 py-2 fw-bold"><AmountDisplay amount={totals.socio_1} rates={rates} /></td>
+                  <td className="px-4 py-2 fw-bold"><AmountDisplay amount={totals.socio_2} rates={rates} /></td>
                   <td className="px-4 py-2"></td>
                   <td className="px-4 py-2"></td>
                 </tr>

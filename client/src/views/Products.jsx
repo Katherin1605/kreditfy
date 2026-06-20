@@ -3,6 +3,8 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import FormProducts from '../components/FormProducts';
 import TableSkeleton from '../components/TableSkeleton';
+import AmountDisplay from '../components/AmountDisplay';
+import { useExchangeRates } from '../context/ExchangeRatesContext';
 import useConfirm from '../hooks/useConfirm';
 
 const Products = () => {
@@ -14,6 +16,7 @@ const Products = () => {
   const [formData, setFormData] = useState({ name: '', price: '', description: '', stock: '' });
   const [formErrors, setFormErrors] = useState({});
   const { confirmModal, ask } = useConfirm();
+  const { rates } = useExchangeRates();
 
   useEffect(() => {
     loadProducts();
@@ -161,7 +164,7 @@ const Products = () => {
                   <tr key={p.id}>
                     <td className="px-4 py-2">{p.name}</td>
                     <td className="px-4 py-2">{p.description || '-'}</td>
-                    <td className="px-4 py-2">${parseFloat(p.price).toFixed(2)}</td>
+                    <td className="px-4 py-2"><AmountDisplay amount={p.price} rates={rates} /></td>
                     <td className="px-4 py-2">{p.stock}</td>
                     <td className="px-4 py-2">
                       <button className="btn btn-sm btn-outline-primary me-1" onClick={() => handleEdit(p)}>

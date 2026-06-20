@@ -11,6 +11,7 @@ const AVAILABLE_VIEWS = [
   { key: 'sales', label: 'Ventas' },
   { key: 'payments', label: 'Pagos' },
   { key: 'audit', label: 'Auditoría' },
+  { key: 'earnings', label: 'Cobros' },
 ];
 
 const Admin = () => {
