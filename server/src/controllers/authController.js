@@ -11,6 +11,7 @@ const buildPayload = (admin) => ({
   email:       admin.email,
   role:        admin.role,
   permissions: admin.permissions || [],
+  tenant_id:   admin.tenant_id ?? null,
 });
 
 export const login = async (req, res) => {

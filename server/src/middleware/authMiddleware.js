@@ -17,3 +17,10 @@ export const requireSuperAdmin = (req, res, next) => {
   }
   next();
 };
+
+export const requirePlatformAdmin = (req, res, next) => {
+  if (req.admin?.role !== 'platform_admin') {
+    return res.status(403).json({ error: 'Acceso restringido a platform admin' });
+  }
+  next();
+};
