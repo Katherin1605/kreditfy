@@ -45,7 +45,7 @@ const Login = () => {
               <div className="icon-circle d-inline-flex mb-3 shadow-sm">
                 <i className="bi bi-box-arrow-in-right fs-2" aria-hidden></i>
               </div>
-              <h1>Sistema de Ventas a Crédito</h1>
+              <h1>Kreditfy</h1>
               <p>Ingresa tus credenciales para acceder al sistema</p>
             </div>
             <form onSubmit={handleSubmit}>

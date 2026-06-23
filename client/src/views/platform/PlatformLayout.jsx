@@ -15,7 +15,7 @@ const PlatformLayout = () => {
       <nav className="navbar navbar-dark bg-dark px-4">
         <span className="navbar-brand fw-bold">
           <i className="bi bi-grid-3x3-gap-fill me-2"></i>
-          CrediSuite — Platform Admin
+          Kreditfy — Plataforma Administrativa
         </span>
         <div className="d-flex align-items-center gap-3">
           <span className="text-white-50 small">{currentAdmin?.name}</span>
