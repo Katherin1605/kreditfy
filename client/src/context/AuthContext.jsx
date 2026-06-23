@@ -3,6 +3,10 @@ import axios from 'axios';
 
 const AuthContext = createContext(null);
 
+const decodeJWT = (token) => {
+  try { return JSON.parse(atob(token.split('.')[1])); } catch { return null; }
+};
+
 export const AuthProvider = ({ children }) => {
   const [currentAdmin, setCurrentAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -25,7 +29,13 @@ export const AuthProvider = ({ children }) => {
     const stored = localStorage.getItem('admin');
     const token  = localStorage.getItem('token');
     if (stored && token) {
-      setCurrentAdmin(JSON.parse(stored));
+      const adminData = JSON.parse(stored);
+      // Patch tenant_id from token if the stored object predates multi-tenant
+      if (adminData.tenant_id === undefined) {
+        const decoded = decodeJWT(token);
+        if (decoded) adminData.tenant_id = decoded.tenant_id ?? null;
+      }
+      setCurrentAdmin(adminData);
       applyToken(token);
     }
     setLoading(false);

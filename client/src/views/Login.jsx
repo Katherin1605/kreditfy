@@ -8,7 +8,9 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (currentAdmin) navigate('/', { replace: true });
+    if (currentAdmin) {
+      navigate(currentAdmin.role === 'platform_admin' ? '/platform' : '/', { replace: true });
+    }
   }, [currentAdmin, navigate]);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
@@ -26,7 +28,7 @@ const Login = () => {
     try {
       const res = await axios.post('http://localhost:3000/auth/login', formData);
       login(res.data.admin, res.data.token, res.data.refreshToken);
-      navigate('/');
+      navigate(res.data.admin.role === 'platform_admin' ? '/platform' : '/');
     } catch (err) {
       setError(err.response?.data?.error || 'Error al iniciar sesión');
     } finally {
