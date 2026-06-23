@@ -13,6 +13,8 @@ import Audit from "./views/Audit";
 import Earnings from "./views/Earnings";
 import PlatformLayout from "./views/platform/PlatformLayout";
 import PlatformDashboard from "./views/platform/PlatformDashboard";
+import PlatformTenants from "./views/platform/PlatformTenants";
+import PlatformTenantDetail from "./views/platform/PlatformTenantDetail";
 
 const SUPERADMIN_VIEWS = ['admin', 'audit', 'earnings'];
 
@@ -42,6 +44,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/platform" element={<PlatformRoute element={<PlatformLayout />} />}>
           <Route index element={<PlatformDashboard />} />
+          <Route path="tenants" element={<PlatformTenants />} />
+          <Route path="tenants/:id" element={<PlatformTenantDetail />} />
         </Route>
         <Route path="/" element={<ProtectedRoute element={<Layout />} />}>
           <Route index element={<Dashboard />} />

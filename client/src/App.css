@@ -578,6 +578,29 @@
   min-height: 100vh;
   background-color: var(--bg-page);
   transition: margin-left var(--transition);
+  padding: 1.5rem 2rem;
+}
+
+/* =========================================
+   Platform layout extras
+   ========================================= */
+
+.sidebar-user-name {
+  max-width: 140px;
+}
+
+.badge-platform-role {
+  font-size: 0.65rem;
+}
+
+.sidebar-toggle-btn.is-expanded { left: 226px; }
+.sidebar-toggle-btn.is-collapsed { left: 46px; }
+
+.mobile-hamburger {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1100;
 }
 
 .layout-main.collapsed {
