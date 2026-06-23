@@ -75,7 +75,7 @@ const Layout = () => {
           <div className="sidebar-brand-icon">
             <i className="bi bi-bag-heart"></i>
           </div>
-          <span className="sidebar-brand-text">CrediShoping</span>
+          <span className="sidebar-brand-text">{currentAdmin?.tenant_name || 'CrediShoping'}</span>
         </div>
 
         <nav className="sidebar-nav">

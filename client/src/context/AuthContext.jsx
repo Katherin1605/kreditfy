@@ -30,10 +30,13 @@ export const AuthProvider = ({ children }) => {
     const token  = localStorage.getItem('token');
     if (stored && token) {
       const adminData = JSON.parse(stored);
-      // Patch tenant_id from token if the stored object predates multi-tenant
-      if (adminData.tenant_id === undefined) {
+      // Patch tenant_id / tenant_name from token if the stored object predates these fields
+      if (adminData.tenant_id === undefined || adminData.tenant_name === undefined) {
         const decoded = decodeJWT(token);
-        if (decoded) adminData.tenant_id = decoded.tenant_id ?? null;
+        if (decoded) {
+          adminData.tenant_id   = decoded.tenant_id   ?? null;
+          adminData.tenant_name = decoded.tenant_name ?? null;
+        }
       }
       setCurrentAdmin(adminData);
       applyToken(token);
