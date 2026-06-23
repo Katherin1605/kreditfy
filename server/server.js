@@ -12,6 +12,7 @@ import auditRoutes from './routes/auditRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import earningsRoutes from './routes/earningsRoutes.js';
 import exchangeRatesRoutes from './routes/exchangeRatesRoutes.js';
+import platformRoutes from './routes/platformRoutes.js';
 
 
 const PORT = process.env.PORT;
@@ -32,6 +33,7 @@ app.use(auditRoutes);
 app.use(dashboardRoutes);
 app.use(earningsRoutes);
 app.use(exchangeRatesRoutes);
+app.use(platformRoutes);
 
 
 // Routes

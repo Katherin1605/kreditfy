@@ -3,7 +3,7 @@ import * as auditModel from "../models/auditModel.js";
 
 export const getAllShopping = async (req, res) => {
   try {
-    const data = await shoppingModel.getAllShopping();
+    const data = await shoppingModel.getAllShopping(req.tenantId);
     res.json(data);
   } catch (error) {
     console.error(error);
@@ -13,8 +13,7 @@ export const getAllShopping = async (req, res) => {
 
 export const getShoppingById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const shopping = await shoppingModel.getShoppingById(id);
+    const shopping = await shoppingModel.getShoppingById(req.params.id, req.tenantId);
     if (!shopping) return res.status(404).json({ error: "Compra no encontrada" });
     res.json(shopping);
   } catch (error) {
@@ -25,8 +24,7 @@ export const getShoppingById = async (req, res) => {
 
 export const getShoppingByProductId = async (req, res) => {
   try {
-    const { product_id } = req.params;
-    const data = await shoppingModel.getShoppingByProductId(product_id);
+    const data = await shoppingModel.getShoppingByProductId(req.params.product_id, req.tenantId);
     res.json(data);
   } catch (error) {
     console.error(error);
@@ -40,15 +38,15 @@ export const createShopping = async (req, res) => {
     if (!product_id || quantity === undefined || quantity === null || cost === undefined || cost === null) {
       return res.status(400).json({ error: "product_id, quantity y cost son obligatorios" });
     }
-    const newShopping = await shoppingModel.createShopping(req.body);
+    const newShopping = await shoppingModel.createShopping(req.body, req.tenantId);
     res.status(201).json(newShopping);
-
     auditModel.createAuditLog({
       admin_id: req.admin?.id || null,
       action: 'CREATE',
       table_name: 'shopping',
       record_id: newShopping.id,
       description: `Registró compra de ${newShopping.quantity} unidades (producto ID ${newShopping.product_id})`,
+      tenant_id: req.tenantId,
     }).catch(() => {});
   } catch (error) {
     console.error(error);
@@ -59,18 +57,17 @@ export const createShopping = async (req, res) => {
 
 export const deleteShopping = async (req, res) => {
   try {
-    const { id } = req.params;
-    const existing = await shoppingModel.getShoppingById(id);
+    const existing = await shoppingModel.getShoppingById(req.params.id, req.tenantId);
     if (!existing) return res.status(404).json({ error: "Compra no encontrada" });
-    await shoppingModel.deleteShopping(id);
+    await shoppingModel.deleteShopping(req.params.id, req.tenantId);
     res.json({ message: "Compra eliminada correctamente" });
-
     auditModel.createAuditLog({
       admin_id: req.admin?.id || null,
       action: 'DELETE',
       table_name: 'shopping',
       record_id: parseInt(req.params.id),
       description: `Eliminó compra ID ${req.params.id}`,
+      tenant_id: req.tenantId,
     }).catch(() => {});
   } catch (error) {
     console.error(error);

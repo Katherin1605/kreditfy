@@ -2,7 +2,7 @@ import * as dashboardModel from "../models/dashboardModel.js";
 
 export const getStats = async (req, res) => {
   try {
-    const stats = await dashboardModel.getStats();
+    const stats = await dashboardModel.getStats(req.tenantId);
     res.json(stats);
   } catch (error) {
     console.error(error);
@@ -12,7 +12,7 @@ export const getStats = async (req, res) => {
 
 export const getMonthlyStats = async (req, res) => {
   try {
-    const data = await dashboardModel.getMonthlyStats();
+    const data = await dashboardModel.getMonthlyStats(req.tenantId);
     res.json(data);
   } catch (error) {
     console.error(error);

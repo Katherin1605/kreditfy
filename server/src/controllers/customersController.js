@@ -1,12 +1,11 @@
 import * as customerModel from "../models/customersModel.js";
 import * as auditModel from "../models/auditModel.js";
 
-// GET /customers?q=texto&page=1&limit=20
 export const getCustomers = async (req, res) => {
   try {
     const search = (req.query.q || '').trim();
     const { page = 1, limit = 20 } = req.query;
-    const result = await customerModel.getAllCustomers({ search, page, limit });
+    const result = await customerModel.getAllCustomers({ search, page, limit, tenantId: req.tenantId });
     res.json(result);
   } catch (error) {
     console.error(error);
@@ -14,49 +13,33 @@ export const getCustomers = async (req, res) => {
   }
 };
 
-// POST /customers
 export const createCustomer = async (req, res) => {
   try {
     const { identity_card, name } = req.body;
-
-    // Validación simple
     if (!identity_card || !name) {
       return res.status(400).json({ error: "Cédula y nombre son obligatorios" });
     }
-
-    const newCustomer = await customerModel.createCustomer(req.body);
-
+    const newCustomer = await customerModel.createCustomer(req.body, req.tenantId);
     res.status(201).json(newCustomer);
-
     auditModel.createAuditLog({
       admin_id: req.admin?.id || null,
       action: 'CREATE',
       table_name: 'customers',
       record_id: newCustomer.id,
       description: `Creó cliente: ${newCustomer.name}`,
+      tenant_id: req.tenantId,
     }).catch(() => {});
   } catch (error) {
     console.error(error);
-
-    // Manejo de error por duplicado (cedula unique)
-    if (error.code === "23505") {
-      return res.status(400).json({ error: "La cédula ya existe" });
-    }
-
+    if (error.code === "23505") return res.status(400).json({ error: "La cédula ya existe" });
     res.status(500).json({ error: "Error al crear cliente" });
   }
 };
 
-// GET /customers/:id
 export const getCustomerById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const customer = await customerModel.getCustomerById(id);
-
-    if (!customer) {
-      return res.status(404).json({ error: "Cliente no encontrado" });
-    }
-
+    const customer = await customerModel.getCustomerById(req.params.id, req.tenantId);
+    if (!customer) return res.status(404).json({ error: "Cliente no encontrado" });
     res.json(customer);
   } catch (error) {
     console.error(error);
@@ -64,43 +47,30 @@ export const getCustomerById = async (req, res) => {
   }
 };
 
-// PUT /customers/:id
 export const updateCustomer = async (req, res) => {
   try {
-    const { id } = req.params;
     const { identity_card, name } = req.body;
-
     if (!identity_card || !name) {
       return res.status(400).json({ error: "Cédula y nombre son obligatorios" });
     }
-
-    const updated = await customerModel.updateCustomer(id, req.body);
-
-    if (!updated) {
-      return res.status(404).json({ error: "Cliente no encontrado" });
-    }
-
+    const updated = await customerModel.updateCustomer(req.params.id, req.body, req.tenantId);
+    if (!updated) return res.status(404).json({ error: "Cliente no encontrado" });
     res.json(updated);
-
     auditModel.createAuditLog({
       admin_id: req.admin?.id || null,
       action: 'UPDATE',
       table_name: 'customers',
       record_id: parseInt(req.params.id),
       description: `Actualizó cliente ID ${req.params.id}`,
+      tenant_id: req.tenantId,
     }).catch(() => {});
   } catch (error) {
     console.error(error);
-
-    if (error.code === "23505") {
-      return res.status(400).json({ error: "La cédula ya existe" });
-    }
-
+    if (error.code === "23505") return res.status(400).json({ error: "La cédula ya existe" });
     res.status(500).json({ error: "Error al actualizar el cliente" });
   }
 };
 
-// POST /customers/import
 export const importCustomers = async (req, res) => {
   try {
     const { customers } = req.body;
@@ -111,7 +81,7 @@ export const importCustomers = async (req, res) => {
     if (invalid.length > 0) {
       return res.status(400).json({ error: `${invalid.length} fila(s) sin nombre o cédula` });
     }
-    const result = await customerModel.importCustomers(customers);
+    const result = await customerModel.importCustomers(customers, req.tenantId);
     res.json(result);
     auditModel.createAuditLog({
       admin_id: req.admin?.id || null,
@@ -119,6 +89,7 @@ export const importCustomers = async (req, res) => {
       table_name: 'customers',
       record_id: null,
       description: `Importó ${result.inserted} clientes desde CSV (${result.skipped} duplicados omitidos)`,
+      tenant_id: req.tenantId,
     }).catch(() => {});
   } catch (error) {
     console.error(error);
@@ -126,25 +97,19 @@ export const importCustomers = async (req, res) => {
   }
 };
 
-// DELETE /customers/:id
 export const deleteCustomer = async (req, res) => {
   try {
-    const { id } = req.params;
-    const existing = await customerModel.getCustomerById(id);
-
-    if (!existing) {
-      return res.status(404).json({ error: "Cliente no encontrado" });
-    }
-
-    await customerModel.deleteCustomer(id);
+    const existing = await customerModel.getCustomerById(req.params.id, req.tenantId);
+    if (!existing) return res.status(404).json({ error: "Cliente no encontrado" });
+    await customerModel.deleteCustomer(req.params.id, req.tenantId);
     res.json({ message: "Cliente eliminado correctamente" });
-
     auditModel.createAuditLog({
       admin_id: req.admin?.id || null,
       action: 'DELETE',
       table_name: 'customers',
       record_id: parseInt(req.params.id),
       description: `Eliminó cliente ID ${req.params.id}`,
+      tenant_id: req.tenantId,
     }).catch(() => {});
   } catch (error) {
     console.error(error);

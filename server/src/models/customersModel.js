@@ -1,16 +1,22 @@
 import pool from "../../db/config.js";
 
-export const getAllCustomers = async ({ search = '', page = 1, limit = 20 } = {}) => {
+export const getAllCustomers = async ({ search = '', page = 1, limit = 20, tenantId } = {}) => {
   const offset = (parseInt(page) - 1) * parseInt(limit);
   const params = [];
-  let where = '';
+  const conditions = [];
   let idx = 1;
 
+  if (tenantId != null) {
+    conditions.push(`tenant_id = $${idx++}`);
+    params.push(tenantId);
+  }
   if (search) {
-    where = `WHERE name ILIKE $${idx} OR identity_card ILIKE $${idx}`;
+    conditions.push(`(name ILIKE $${idx} OR identity_card ILIKE $${idx})`);
     params.push(`%${search}%`);
     idx++;
   }
+
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
   const [countRes, dataRes] = await Promise.all([
     pool.query(`SELECT COUNT(*) FROM customers ${where}`, params),
@@ -30,37 +36,44 @@ export const getAllCustomers = async ({ search = '', page = 1, limit = 20 } = {}
   };
 };
 
-export const getCustomerById = async (id) => {
-  const result = await pool.query("SELECT * FROM customers WHERE id = $1", [id]);
+export const getCustomerById = async (id, tenantId) => {
+  const params = [id];
+  let where = 'WHERE id = $1';
+  if (tenantId != null) { where += ' AND tenant_id = $2'; params.push(tenantId); }
+  const result = await pool.query(`SELECT * FROM customers ${where}`, params);
   return result.rows[0];
 };
 
-export const createCustomer = async (customer) => {
+export const createCustomer = async (customer, tenantId) => {
   const { identity_card, name, phone, address } = customer;
   const result = await pool.query(
-    `INSERT INTO customers (identity_card, name, phone, address)
-     VALUES ($1, $2, $3, $4) RETURNING *`,
-    [identity_card, name, phone, address]
+    `INSERT INTO customers (identity_card, name, phone, address, tenant_id)
+     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+    [identity_card, name, phone, address, tenantId]
   );
   return result.rows[0];
 };
 
-export const updateCustomer = async (id, customer) => {
+export const updateCustomer = async (id, customer, tenantId) => {
   const { identity_card, name, phone, address } = customer;
+  const params = [identity_card, name, phone, address, id];
+  let where = 'WHERE id = $5';
+  if (tenantId != null) { where += ' AND tenant_id = $6'; params.push(tenantId); }
   const result = await pool.query(
-    `UPDATE customers
-     SET identity_card = $1, name = $2, phone = $3, address = $4
-     WHERE id = $5 RETURNING *`,
-    [identity_card, name, phone, address, id]
+    `UPDATE customers SET identity_card = $1, name = $2, phone = $3, address = $4 ${where} RETURNING *`,
+    params
   );
   return result.rows[0];
 };
 
-export const deleteCustomer = async (id) => {
-  await pool.query("DELETE FROM customers WHERE id = $1", [id]);
+export const deleteCustomer = async (id, tenantId) => {
+  const params = [id];
+  let where = 'WHERE id = $1';
+  if (tenantId != null) { where += ' AND tenant_id = $2'; params.push(tenantId); }
+  await pool.query(`DELETE FROM customers ${where}`, params);
 };
 
-export const importCustomers = async (customers) => {
+export const importCustomers = async (customers, tenantId) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -68,10 +81,10 @@ export const importCustomers = async (customers) => {
     let skipped  = 0;
     for (const c of customers) {
       const res = await client.query(
-        `INSERT INTO customers (name, identity_card, phone, address)
-         VALUES ($1, $2, $3, $4)
+        `INSERT INTO customers (name, identity_card, phone, address, tenant_id)
+         VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (identity_card) DO NOTHING`,
-        [c.name.trim(), c.identity_card.trim(), c.phone || null, c.address || null]
+        [c.name.trim(), c.identity_card.trim(), c.phone || null, c.address || null, tenantId]
       );
       if (res.rowCount > 0) inserted++;
       else skipped++;

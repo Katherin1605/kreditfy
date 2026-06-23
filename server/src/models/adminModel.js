@@ -7,75 +7,88 @@ pool.query(`
   WHERE NOT ('earnings' = ANY(permissions))
 `).catch(err => console.error('[admins] Error en migración de permisos:', err));
 
-export const getAllAdmins = async () => {
+export const getAllAdmins = async (tenantId) => {
+  const params = [];
+  let where = '';
+  if (tenantId != null) { where = 'WHERE tenant_id = $1'; params.push(tenantId); }
   const result = await pool.query(
-    "SELECT id, name, email, role, active, permissions, created_at FROM admins ORDER BY id"
+    `SELECT id, name, email, role, active, permissions, tenant_id, created_at FROM admins ${where} ORDER BY id`,
+    params
   );
   return result.rows;
 };
 
-export const getAdminById = async (id) => {
+export const getAdminById = async (id, tenantId) => {
+  const params = [id];
+  let where = 'WHERE id = $1';
+  if (tenantId != null) { where += ' AND tenant_id = $2'; params.push(tenantId); }
   const result = await pool.query(
-    "SELECT id, name, email, role, active, permissions, created_at FROM admins WHERE id = $1",
-    [id]
+    `SELECT id, name, email, role, active, permissions, tenant_id, created_at FROM admins ${where}`,
+    params
   );
   return result.rows[0];
 };
 
-export const createAdmin = async (data) => {
+export const createAdmin = async (data, tenantId) => {
   const { name, email, password, role } = data;
   const hashedPassword = await bcrypt.hash(password, 10);
   const result = await pool.query(
-    `INSERT INTO admins (name, email, password, role)
-     VALUES ($1, $2, $3, $4)
-     RETURNING id, name, email, role, active, permissions, created_at`,
-    [name, email, hashedPassword, role || "admin"]
+    `INSERT INTO admins (name, email, password, role, tenant_id)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id, name, email, role, active, permissions, tenant_id, created_at`,
+    [name, email, hashedPassword, role || 'admin', tenantId ?? null]
   );
   return result.rows[0];
 };
 
-export const updateAdmin = async (id, data) => {
+export const updateAdmin = async (id, data, tenantId) => {
   const { name, email, role, password } = data;
-  let result;
-  if (password) {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    result = await pool.query(
-      `UPDATE admins
-       SET name = $1, email = $2, role = $3, password = $4
-       WHERE id = $5
-       RETURNING id, name, email, role, active, permissions, created_at`,
-      [name, email, role, hashedPassword, id]
-    );
-  } else {
-    result = await pool.query(
-      `UPDATE admins
-       SET name = $1, email = $2, role = $3
-       WHERE id = $4
-       RETURNING id, name, email, role, active, permissions, created_at`,
-      [name, email, role, id]
-    );
-  }
-  return result.rows[0];
-};
+  const params = password
+    ? [name, email, role, await bcrypt.hash(password, 10), id]
+    : [name, email, role, id];
+  const idIdx = password ? 5 : 4;
+  let where = `WHERE id = $${idIdx}`;
+  if (tenantId != null) { where += ` AND tenant_id = $${idIdx + 1}`; params.push(tenantId); }
 
-export const deleteAdmin = async (id) => {
-  await pool.query("DELETE FROM admins WHERE id = $1", [id]);
-};
+  const setClause = password
+    ? 'SET name = $1, email = $2, role = $3, password = $4'
+    : 'SET name = $1, email = $2, role = $3';
 
-export const updateAdminActive = async (id, active) => {
   const result = await pool.query(
-    `UPDATE admins SET active = $1 WHERE id = $2
-     RETURNING id, name, email, role, active, permissions, created_at`,
-    [active, id]
+    `UPDATE admins ${setClause} ${where}
+     RETURNING id, name, email, role, active, permissions, tenant_id, created_at`,
+    params
   );
   return result.rows[0];
 };
 
-export const updateAdminPermissions = async (id, permissions) => {
+export const deleteAdmin = async (id, tenantId) => {
+  const params = [id];
+  let where = 'WHERE id = $1';
+  if (tenantId != null) { where += ' AND tenant_id = $2'; params.push(tenantId); }
+  await pool.query(`DELETE FROM admins ${where}`, params);
+};
+
+export const updateAdminActive = async (id, active, tenantId) => {
+  const params = [active, id];
+  let where = 'WHERE id = $2';
+  if (tenantId != null) { where += ' AND tenant_id = $3'; params.push(tenantId); }
   const result = await pool.query(
-    `UPDATE admins SET permissions = $1 WHERE id = $2
-     RETURNING id, name, email, role, active, permissions, created_at`,
-    [permissions, id]
+    `UPDATE admins SET active = $1 ${where}
+     RETURNING id, name, email, role, active, permissions, tenant_id, created_at`,
+    params
+  );
+  return result.rows[0];
+};
+
+export const updateAdminPermissions = async (id, permissions, tenantId) => {
+  const params = [permissions, id];
+  let where = 'WHERE id = $2';
+  if (tenantId != null) { where += ' AND tenant_id = $3'; params.push(tenantId); }
+  const result = await pool.query(
+    `UPDATE admins SET permissions = $1 ${where}
+     RETURNING id, name, email, role, active, permissions, tenant_id, created_at`,
+    params
   );
   return result.rows[0];
 };

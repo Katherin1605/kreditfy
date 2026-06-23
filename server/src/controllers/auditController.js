@@ -3,7 +3,7 @@ import * as auditModel from "../models/auditModel.js";
 export const getAllAuditLogs = async (req, res) => {
   try {
     const { page = 1, limit = 15, q = '', table = '', action = '', date_from = '', date_to = '' } = req.query;
-    const data = await auditModel.getAllAuditLogs({ page, limit, q, table, action, date_from, date_to });
+    const data = await auditModel.getAllAuditLogs({ page, limit, q, table, action, date_from, date_to, tenantId: req.tenantId });
     res.json(data);
   } catch (error) {
     console.error(error);
@@ -13,8 +13,7 @@ export const getAllAuditLogs = async (req, res) => {
 
 export const getAuditLogById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const data = await auditModel.getAuditLogById(id);
+    const data = await auditModel.getAuditLogById(req.params.id, req.tenantId);
     if (!data) return res.status(404).json({ error: "Registro de auditoría no encontrado" });
     res.json(data);
   } catch (error) {
@@ -25,8 +24,7 @@ export const getAuditLogById = async (req, res) => {
 
 export const getAuditLogsByAdmin = async (req, res) => {
   try {
-    const { admin_id } = req.params;
-    const data = await auditModel.getAuditLogsByAdmin(admin_id);
+    const data = await auditModel.getAuditLogsByAdmin(req.params.admin_id, req.tenantId);
     res.json(data);
   } catch (error) {
     console.error(error);
@@ -36,8 +34,7 @@ export const getAuditLogsByAdmin = async (req, res) => {
 
 export const getAuditLogsByTable = async (req, res) => {
   try {
-    const { table_name } = req.params;
-    const data = await auditModel.getAuditLogsByTable(table_name);
+    const data = await auditModel.getAuditLogsByTable(req.params.table_name, req.tenantId);
     res.json(data);
   } catch (error) {
     console.error(error);
@@ -50,7 +47,7 @@ export const createAuditLog = async (req, res) => {
     const { action, table_name } = req.body;
     if (!action) return res.status(400).json({ error: "El campo action es obligatorio" });
     if (!table_name) return res.status(400).json({ error: "El campo table_name es obligatorio" });
-    const result = await auditModel.createAuditLog(req.body);
+    const result = await auditModel.createAuditLog({ ...req.body, tenant_id: req.tenantId });
     res.status(201).json(result);
   } catch (error) {
     console.error(error);

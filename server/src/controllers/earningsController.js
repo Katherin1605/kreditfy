@@ -3,7 +3,7 @@ import * as earningsModel from "../models/earningsModel.js";
 export const getMonthlySummary = async (req, res) => {
   try {
     const { year, currency = '' } = req.query;
-    const data = await earningsModel.getMonthlySummary(year, currency);
+    const data = await earningsModel.getMonthlySummary(year, currency, req.tenantId);
     res.json(data);
   } catch (error) {
     console.error(error);
@@ -18,7 +18,8 @@ export const updateClosing = async (req, res) => {
     const result = await earningsModel.upsertClosing(
       parseInt(year),
       parseInt(month),
-      { notas, cerrado }
+      { notas, cerrado },
+      req.tenantId
     );
     res.json(result);
   } catch (error) {
@@ -29,7 +30,7 @@ export const updateClosing = async (req, res) => {
 
 export const getAvailableYears = async (req, res) => {
   try {
-    const years = await earningsModel.getAvailableYears();
+    const years = await earningsModel.getAvailableYears(req.tenantId);
     res.json(years);
   } catch (error) {
     console.error(error);

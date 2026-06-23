@@ -1,6 +1,11 @@
 import pool from "../../db/config.js";
 
-export const getStats = async () => {
+export const getStats = async (tenantId) => {
+  const p = tenantId != null ? [tenantId] : [];
+  const tf = tenantId != null ? 'WHERE s.tenant_id = $1' : '';
+  const tf2 = tenantId != null ? 'AND s.tenant_id = $1' : '';
+  const cf = tenantId != null ? 'WHERE tenant_id = $1' : '';
+
   const [metricsRes, pendingSalesRes, lowStockRes, recentPaidRes, trendRes] = await Promise.all([
     pool.query(`
       SELECT
@@ -8,15 +13,17 @@ export const getStats = async () => {
         COALESCE(SUM(COALESCE(paid.total_paid, 0)), 0)::numeric           AS total_cobrado,
         COALESCE(SUM(s.total - COALESCE(paid.total_paid, 0)), 0)::numeric AS saldo_pendiente,
         COUNT(*) FILTER (WHERE s.status != 'paid')                        AS ventas_pendientes,
-        (SELECT COUNT(*) FROM customers)                                   AS total_clientes,
-        (SELECT COUNT(*) FROM products)                                    AS total_productos,
-        (SELECT COALESCE(SUM(cost * quantity), 0) FROM shopping)::numeric AS total_compras
+        (SELECT COUNT(*) FROM customers ${cf})::bigint                     AS total_clientes,
+        (SELECT COUNT(*) FROM products ${cf})::bigint                      AS total_productos,
+        (SELECT COALESCE(SUM(cost * quantity), 0) FROM shopping ${cf})::numeric AS total_compras
       FROM sales s
       LEFT JOIN (
         SELECT sale_id, SUM(amount) AS total_paid
         FROM payments GROUP BY sale_id
       ) paid ON s.id = paid.sale_id
-    `),
+      ${tf}
+    `, p),
+
     pool.query(`
       SELECT
         s.id, c.name AS customer_name, s.currency,
@@ -26,17 +33,18 @@ export const getStats = async () => {
       FROM sales s
       LEFT JOIN customers c ON s.customer_id = c.id
       LEFT JOIN payments  p ON s.id = p.sale_id
-      WHERE s.status != 'paid'
+      WHERE s.status != 'paid' ${tf2}
       GROUP BY s.id, c.name, s.total, s.created_at
       ORDER BY s.created_at DESC
       LIMIT 8
-    `),
+    `, p),
+
     pool.query(`
-      SELECT id, name, stock
-      FROM products
-      WHERE stock <= 5
+      SELECT id, name, stock FROM products
+      WHERE stock <= 5 ${tf2 ? tf2.replace('s.tenant_id', 'tenant_id') : ''}
       ORDER BY stock ASC, name ASC
-    `),
+    `, p),
+
     pool.query(`
       SELECT
         s.id, c.name AS customer_name,
@@ -46,11 +54,12 @@ export const getStats = async () => {
       FROM sales s
       LEFT JOIN customers c ON s.customer_id = c.id
       LEFT JOIN payments  p ON s.id = p.sale_id
-      WHERE s.status = 'paid'
+      WHERE s.status = 'paid' ${tf2}
       GROUP BY s.id, c.name, s.total, s.created_at
       ORDER BY MAX(p.payment_date) DESC NULLS LAST, s.created_at DESC
       LIMIT 8
-    `),
+    `, p),
+
     pool.query(`
       SELECT
         COALESCE(SUM(GREATEST(s.total - COALESCE(prev_paid.total_paid, 0), 0)), 0)::numeric AS saldo_mes_anterior
@@ -61,8 +70,8 @@ export const getStats = async () => {
         WHERE payment_date < DATE_TRUNC('month', NOW())
         GROUP BY sale_id
       ) prev_paid ON s.id = prev_paid.sale_id
-      WHERE COALESCE(s.sale_date, s.created_at::date) < DATE_TRUNC('month', NOW())
-    `),
+      WHERE COALESCE(s.sale_date, s.created_at::date) < DATE_TRUNC('month', NOW()) ${tf2}
+    `, p),
   ]);
 
   return {
@@ -74,7 +83,14 @@ export const getStats = async () => {
   };
 };
 
-export const getMonthlyStats = async () => {
+export const getMonthlyStats = async (tenantId) => {
+  const params = [];
+  let tenantFilter = '';
+  if (tenantId != null) {
+    tenantFilter = 'AND s.tenant_id = $1';
+    params.push(tenantId);
+  }
+
   const result = await pool.query(`
     SELECT
       DATE_TRUNC('month', s.sale_date)               AS month,
@@ -86,9 +102,9 @@ export const getMonthlyStats = async () => {
       SELECT sale_id, SUM(amount) AS total_paid
       FROM payments GROUP BY sale_id
     ) paid ON s.id = paid.sale_id
-    WHERE s.sale_date >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+    WHERE s.sale_date >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months' ${tenantFilter}
     GROUP BY DATE_TRUNC('month', s.sale_date)
     ORDER BY month ASC
-  `);
+  `, params);
   return result.rows;
 };
