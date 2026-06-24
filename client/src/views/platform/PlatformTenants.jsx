@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
-const EMPTY_FORM = { name: '', slug: '', currency: 'USD' };
+const EMPTY_FORM = { name: '', slug: '', currency: 'USD', logo_url: '' };
 
 const PlatformTenants = () => {
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -24,32 +25,62 @@ const PlatformTenants = () => {
 
   const handleField = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(EMPTY_FORM);
+    setError('');
+    setShowForm(true);
+  };
+
+  const openEdit = (tenant) => {
+    setEditingId(tenant.id);
+    setForm({
+      name:     tenant.name,
+      slug:     tenant.slug,
+      currency: tenant.currency,
+      logo_url: tenant.logo_url || '',
+    });
+    setError('');
+    setShowForm(true);
+  };
+
+  const cancelForm = () => { setShowForm(false); setEditingId(null); setError(''); setForm(EMPTY_FORM); };
+
   const handleSubmit = async () => {
     if (!form.name || !form.slug) { setError('Nombre y slug son obligatorios'); return; }
     setSaving(true);
     setError('');
     try {
-      await axios.post('http://localhost:3000/platform/tenants', form);
-      setForm(EMPTY_FORM);
-      setShowForm(false);
+      if (editingId) {
+        const tenant = tenants.find(t => t.id === editingId);
+        await axios.put(`http://localhost:3000/platform/tenants/${editingId}`, {
+          ...form,
+          logo_url: form.logo_url || null,
+          active: tenant.active,
+        });
+      } else {
+        await axios.post('http://localhost:3000/platform/tenants', {
+          ...form,
+          logo_url: form.logo_url || null,
+        });
+      }
+      cancelForm();
       load();
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al crear tenant');
+      setError(err.response?.data?.error || 'Error al guardar tenant');
     } finally {
       setSaving(false);
     }
   };
 
-  const cancelForm = () => { setShowForm(false); setError(''); setForm(EMPTY_FORM); };
-
   const toggleActive = async (tenant) => {
     try {
       await axios.put(`http://localhost:3000/platform/tenants/${tenant.id}`, {
-        name: tenant.name,
-        slug: tenant.slug,
+        name:     tenant.name,
+        slug:     tenant.slug,
         currency: tenant.currency,
         logo_url: tenant.logo_url,
-        active: !tenant.active,
+        active:   !tenant.active,
       });
       load();
     } catch {}
@@ -59,7 +90,7 @@ const PlatformTenants = () => {
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0">Tenants</h2>
-        <button className="btn btn-primary btn-sm" onClick={() => setShowForm(p => !p)}>
+        <button className="btn btn-primary btn-sm" onClick={openCreate}>
           <i className="bi bi-plus-lg me-1"></i>Nuevo tenant
         </button>
       </div>
@@ -67,7 +98,7 @@ const PlatformTenants = () => {
       {showForm && (
         <div className="card mb-4">
           <div className="card-body">
-            <h6 className="card-title mb-3">Nuevo tenant</h6>
+            <h6 className="card-title mb-3">{editingId ? 'Editar tenant' : 'Nuevo tenant'}</h6>
             {error && <div className="alert alert-danger py-2 small">{error}</div>}
             <div className="row g-3">
               <div className="col-md-4">
@@ -80,7 +111,7 @@ const PlatformTenants = () => {
                   placeholder="Ej: Farmacia López"
                 />
               </div>
-              <div className="col-md-4">
+              <div className="col-md-3">
                 <label className="form-label small fw-semibold">Slug</label>
                 <input
                   className="form-control form-control-sm"
@@ -104,7 +135,27 @@ const PlatformTenants = () => {
                   <option>EUR</option>
                 </select>
               </div>
-              <div className="col-md-2 d-flex align-items-end gap-2">
+              <div className="col-md-3">
+                <label className="form-label small fw-semibold">URL del logo <span className="text-muted fw-normal">(opcional)</span></label>
+                <div className="d-flex gap-2 align-items-center">
+                  <input
+                    className="form-control form-control-sm"
+                    name="logo_url"
+                    value={form.logo_url}
+                    onChange={handleField}
+                    placeholder="https://..."
+                  />
+                  {form.logo_url && (
+                    <img
+                      src={form.logo_url}
+                      alt="preview"
+                      className="sidebar-brand-logo flex-shrink-0"
+                      onError={e => { e.target.style.display = 'none'; }}
+                    />
+                  )}
+                </div>
+              </div>
+              <div className="col-12 d-flex gap-2">
                 <button className="btn btn-primary btn-sm" onClick={handleSubmit} disabled={saving}>
                   {saving ? 'Guardando…' : 'Guardar'}
                 </button>
@@ -142,7 +193,19 @@ const PlatformTenants = () => {
                 ) : tenants.map(t => (
                   <tr key={t.id}>
                     <td className="text-muted small">{t.id}</td>
-                    <td className="fw-semibold">{t.name}</td>
+                    <td>
+                      <div className="d-flex align-items-center gap-2">
+                        {t.logo_url && (
+                          <img
+                            src={t.logo_url}
+                            alt="logo"
+                            className="sidebar-brand-logo flex-shrink-0"
+                            onError={e => { e.target.style.display = 'none'; }}
+                          />
+                        )}
+                        <span className="fw-semibold">{t.name}</span>
+                      </div>
+                    </td>
                     <td><code className="small">{t.slug}</code></td>
                     <td>{t.currency}</td>
                     <td>
@@ -155,6 +218,13 @@ const PlatformTenants = () => {
                     </td>
                     <td className="text-end">
                       <div className="d-flex gap-2 justify-content-end">
+                        <button
+                          className="btn btn-sm btn-outline-secondary"
+                          onClick={() => openEdit(t)}
+                          title="Editar"
+                        >
+                          <i className="bi bi-pencil"></i>
+                        </button>
                         <button
                           className={`btn btn-sm ${t.active ? 'btn-outline-warning' : 'btn-outline-success'}`}
                           onClick={() => toggleActive(t)}
