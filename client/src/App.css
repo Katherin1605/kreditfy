@@ -439,6 +439,18 @@
   flex-shrink: 0;
 }
 
+.sidebar-brand-icon.has-logo {
+  background: transparent;
+  border: 1px solid #dee2e6;
+}
+
+.sidebar-brand-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
 .sidebar-brand-text {
   font-weight: 700;
   font-size: 1rem;

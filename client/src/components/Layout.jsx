@@ -72,8 +72,11 @@ const Layout = () => {
 
       <aside className={sidebarClass}>
         <div className="sidebar-brand">
-          <div className="sidebar-brand-icon">
-            <i className="bi bi-bag-heart"></i>
+          <div className={`sidebar-brand-icon${currentAdmin?.tenant_logo ? ' has-logo' : ''}`}>
+            {currentAdmin?.tenant_logo
+              ? <img src={currentAdmin.tenant_logo} alt="logo" className="sidebar-brand-logo" />
+              : <i className="bi bi-bag-heart"></i>
+            }
           </div>
           <span className="sidebar-brand-text">{currentAdmin?.tenant_name || 'CrediShoping'}</span>
         </div>

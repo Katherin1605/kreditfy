@@ -2,7 +2,7 @@ import pool from "../../db/config.js";
 
 export const findAdminByEmail = async (email) => {
   const result = await pool.query(
-    `SELECT a.*, t.name AS tenant_name
+    `SELECT a.*, t.name AS tenant_name, t.logo_url AS tenant_logo
      FROM admins a
      LEFT JOIN tenants t ON t.id = a.tenant_id
      WHERE a.email = $1 AND a.active = TRUE`,
@@ -13,7 +13,7 @@ export const findAdminByEmail = async (email) => {
 
 export const findAdminById = async (id) => {
   const result = await pool.query(
-    `SELECT a.*, t.name AS tenant_name
+    `SELECT a.*, t.name AS tenant_name, t.logo_url AS tenant_logo
      FROM admins a
      LEFT JOIN tenants t ON t.id = a.tenant_id
      WHERE a.id = $1 AND a.active = TRUE`,
