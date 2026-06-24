@@ -83,6 +83,16 @@ export const toggleTenantAdmin = async (req, res) => {
   }
 };
 
+export const getTenantsBreakdown = async (req, res) => {
+  try {
+    const rows = await platformModel.getTenantsBreakdown();
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener desglose por tenant' });
+  }
+};
+
 export const getPlatformStats = async (req, res) => {
   try {
     const stats = await platformModel.getPlatformStats();

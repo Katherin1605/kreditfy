@@ -44,6 +44,48 @@ export const toggleAdminActive = async (adminId, tenantId) => {
   return result.rows[0];
 };
 
+export const getTenantsBreakdown = async () => {
+  const result = await pool.query(`
+    WITH payment_totals AS (
+      SELECT s.tenant_id, COALESCE(SUM(p.amount), 0) AS total_paid
+      FROM sales s
+      LEFT JOIN payments p ON p.sale_id = s.id
+      WHERE s.status = 'pending'
+      GROUP BY s.tenant_id
+    ),
+    sale_totals AS (
+      SELECT tenant_id,
+        COUNT(*)::int                                                    AS total_sales,
+        COALESCE(SUM(total), 0)::numeric                                 AS total_revenue,
+        COUNT(*) FILTER (WHERE status = 'pending')::int                  AS pending_sales,
+        COALESCE(SUM(total) FILTER (WHERE status = 'pending'), 0)::numeric AS pending_total
+      FROM sales
+      GROUP BY tenant_id
+    ),
+    customer_totals AS (
+      SELECT tenant_id, COUNT(*)::int AS total_customers
+      FROM customers
+      GROUP BY tenant_id
+    )
+    SELECT
+      t.id,
+      t.name,
+      t.slug,
+      t.active,
+      COALESCE(ct.total_customers, 0)                        AS total_customers,
+      COALESCE(st.total_sales, 0)                            AS total_sales,
+      COALESCE(st.total_revenue, 0)                          AS total_revenue,
+      COALESCE(st.pending_sales, 0)                          AS pending_sales,
+      GREATEST(COALESCE(st.pending_total, 0) - COALESCE(pt.total_paid, 0), 0) AS pending_balance
+    FROM tenants t
+    LEFT JOIN customer_totals ct ON ct.tenant_id = t.id
+    LEFT JOIN sale_totals      st ON st.tenant_id = t.id
+    LEFT JOIN payment_totals   pt ON pt.tenant_id = t.id
+    ORDER BY t.id
+  `);
+  return result.rows;
+};
+
 export const getPlatformStats = async () => {
   const result = await pool.query(`
     SELECT
