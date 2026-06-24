@@ -12,6 +12,7 @@ const PlatformTenantDetail = () => {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_ADMIN);
   const [saving, setSaving] = useState(false);
+  const [togglingAdmin, setTogglingAdmin] = useState(null);
   const [error, setError] = useState('');
 
   const load = () => {
@@ -64,6 +65,15 @@ const PlatformTenantDetail = () => {
   };
 
   const cancelForm = () => { setShowForm(false); setError(''); setForm(EMPTY_ADMIN); };
+
+  const handleToggleAdmin = async (adminId) => {
+    setTogglingAdmin(adminId);
+    try {
+      await axios.put(`http://localhost:3000/platform/tenants/${id}/admins/${adminId}/toggle`);
+      load();
+    } catch {}
+    finally { setTogglingAdmin(null); }
+  };
 
   if (loading) return <p className="text-muted">Cargando…</p>;
   if (!tenant) return <p className="text-danger">Tenant no encontrado.</p>;
@@ -184,12 +194,13 @@ const PlatformTenantDetail = () => {
                 <th>Rol</th>
                 <th>Estado</th>
                 <th>Creado</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
               {admins.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center text-muted py-4">Sin administradores</td>
+                  <td colSpan={6} className="text-center text-muted py-4">Sin administradores</td>
                 </tr>
               ) : admins.map(a => (
                 <tr key={a.id}>
@@ -207,6 +218,16 @@ const PlatformTenantDetail = () => {
                   </td>
                   <td className="text-muted small">
                     {new Date(a.created_at).toLocaleDateString('es-VE')}
+                  </td>
+                  <td>
+                    <button
+                      className={`btn btn-sm ${a.active ? 'btn-outline-warning' : 'btn-outline-success'}`}
+                      onClick={() => handleToggleAdmin(a.id)}
+                      disabled={togglingAdmin === a.id}
+                    >
+                      <i className={`bi ${a.active ? 'bi-pause-circle' : 'bi-play-circle'} me-1`}></i>
+                      {togglingAdmin === a.id ? '…' : a.active ? 'Desactivar' : 'Activar'}
+                    </button>
                   </td>
                 </tr>
               ))}

@@ -36,6 +36,14 @@ export const getAdminsByTenant = async (tenantId) => {
   return result.rows;
 };
 
+export const toggleAdminActive = async (adminId, tenantId) => {
+  const result = await pool.query(
+    `UPDATE admins SET active = NOT active WHERE id = $1 AND tenant_id = $2 RETURNING id, active`,
+    [adminId, tenantId]
+  );
+  return result.rows[0];
+};
+
 export const getPlatformStats = async () => {
   const result = await pool.query(`
     SELECT

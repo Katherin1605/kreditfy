@@ -72,6 +72,17 @@ export const createTenantAdmin = async (req, res) => {
   }
 };
 
+export const toggleTenantAdmin = async (req, res) => {
+  try {
+    const admin = await platformModel.toggleAdminActive(req.params.adminId, req.params.id);
+    if (!admin) return res.status(404).json({ error: 'Administrador no encontrado' });
+    res.json(admin);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cambiar estado del administrador' });
+  }
+};
+
 export const getPlatformStats = async (req, res) => {
   try {
     const stats = await platformModel.getPlatformStats();
