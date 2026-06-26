@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
@@ -90,9 +90,14 @@ const Login = () => {
                 </div>
               </div>
               {error && <div className="alert alert-danger py-2">{error}</div>}
-              <button type="submit" className="btn-primary w-100 py-2 mb-4" disabled={loading}>
+              <button type="submit" className="btn-primary w-100 py-2 mb-3" disabled={loading}>
                 {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
               </button>
+              <div className="text-center">
+                <Link to="/forgot-password" className="text-muted small">
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </div>
             </form>
           </div>
         </div>

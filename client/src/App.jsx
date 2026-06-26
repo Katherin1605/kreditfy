@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import Layout from "./components/Layout";
 import Login from "./views/Login";
+import ForgotPassword from "./views/ForgotPassword";
+import ResetPassword from "./views/ResetPassword";
 import Dashboard from "./views/Dashboard";
 import Customers from "./views/Customers";
 import Products from "./views/Products";
@@ -41,7 +43,9 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/login"            element={<Login />} />
+        <Route path="/forgot-password"  element={<ForgotPassword />} />
+        <Route path="/reset-password"   element={<ResetPassword />} />
         <Route path="/platform" element={<PlatformRoute element={<PlatformLayout />} />}>
           <Route index element={<PlatformDashboard />} />
           <Route path="tenants" element={<PlatformTenants />} />
