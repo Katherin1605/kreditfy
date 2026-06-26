@@ -136,6 +136,17 @@ export const uploadTenantLogo = async (req, res) => {
   }
 };
 
+export const approveTenant = async (req, res) => {
+  try {
+    const tenant = await platformModel.approveTenant(req.params.id);
+    if (!tenant) return res.status(404).json({ error: 'Tenant no encontrado' });
+    res.json(tenant);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al aprobar el tenant' });
+  }
+};
+
 export const toggleTenantAdmin = async (req, res) => {
   try {
     const admin = await platformModel.toggleAdminActive(req.params.adminId, req.params.id);

@@ -103,8 +103,16 @@ const PlatformTenants = () => {
         slug:     tenant.slug,
         currency: tenant.currency,
         logo_url: tenant.logo_url,
+        plan:     tenant.plan,
         active:   !tenant.active,
       });
+      load();
+    } catch {}
+  };
+
+  const handleApprove = async (tenantId) => {
+    try {
+      await axios.post(`http://localhost:3000/platform/tenants/${tenantId}/approve`);
       load();
     } catch {}
   };
@@ -268,9 +276,12 @@ const PlatformTenants = () => {
                       </span>
                     </td>
                     <td>
-                      <span className={`badge ${t.active ? 'bg-success' : 'bg-secondary'}`}>
-                        {t.active ? 'Activo' : 'Inactivo'}
-                      </span>
+                      {t.pending_review
+                        ? <span className="badge bg-warning text-dark">Pendiente</span>
+                        : <span className={`badge ${t.active ? 'bg-success' : 'bg-secondary'}`}>
+                            {t.active ? 'Activo' : 'Inactivo'}
+                          </span>
+                      }
                     </td>
                     <td className="text-muted small">
                       {new Date(t.created_at).toLocaleDateString('es-VE')}
@@ -284,13 +295,23 @@ const PlatformTenants = () => {
                         >
                           <i className="bi bi-pencil"></i>
                         </button>
-                        <button
-                          className={`btn btn-sm ${t.active ? 'btn-outline-warning' : 'btn-outline-success'}`}
-                          onClick={() => toggleActive(t)}
-                          title={t.active ? 'Desactivar' : 'Activar'}
-                        >
-                          <i className={`bi ${t.active ? 'bi-pause-circle' : 'bi-play-circle'}`}></i>
-                        </button>
+                        {t.pending_review ? (
+                          <button
+                            className="btn btn-sm btn-outline-success"
+                            onClick={() => handleApprove(t.id)}
+                            title="Aprobar y activar"
+                          >
+                            <i className="bi bi-check-circle"></i>
+                          </button>
+                        ) : (
+                          <button
+                            className={`btn btn-sm ${t.active ? 'btn-outline-warning' : 'btn-outline-success'}`}
+                            onClick={() => toggleActive(t)}
+                            title={t.active ? 'Desactivar' : 'Activar'}
+                          >
+                            <i className={`bi ${t.active ? 'bi-pause-circle' : 'bi-play-circle'}`}></i>
+                          </button>
+                        )}
                         <Link
                           to={`/platform/tenants/${t.id}`}
                           className="btn btn-sm btn-outline-primary"

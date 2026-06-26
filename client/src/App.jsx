@@ -4,6 +4,7 @@ import Layout from "./components/Layout";
 import Login from "./views/Login";
 import ForgotPassword from "./views/ForgotPassword";
 import ResetPassword from "./views/ResetPassword";
+import Register from "./views/Register";
 import Dashboard from "./views/Dashboard";
 import Customers from "./views/Customers";
 import Products from "./views/Products";
@@ -47,6 +48,7 @@ function App() {
         <Route path="/login"            element={<Login />} />
         <Route path="/forgot-password"  element={<ForgotPassword />} />
         <Route path="/reset-password"   element={<ResetPassword />} />
+        <Route path="/register"         element={<Register />} />
         <Route path="/platform" element={<PlatformRoute element={<PlatformLayout />} />}>
           <Route index element={<PlatformDashboard />} />
           <Route path="tenants" element={<PlatformTenants />} />

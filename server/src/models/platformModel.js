@@ -16,6 +16,7 @@ const initPlans = async () => {
     ON CONFLICT (plan) DO NOTHING
   `);
   await pool.query(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS plan VARCHAR(20) NOT NULL DEFAULT 'basic'`);
+  await pool.query(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS pending_review BOOLEAN NOT NULL DEFAULT FALSE`);
 };
 initPlans().catch(err => console.error('Error inicializando plan_configs:', err));
 
@@ -68,6 +69,37 @@ export const createTenant = async ({ name, slug, currency = 'USD', logo_url = nu
     [name, slug, currency, logo_url, plan]
   );
   return result.rows[0];
+};
+
+export const createTenantPending = async ({ name, slug, currency = 'USD' }) => {
+  const result = await pool.query(
+    `INSERT INTO tenants (name, slug, currency, active, pending_review, plan)
+     VALUES ($1, $2, $3, FALSE, TRUE, 'basic') RETURNING *`,
+    [name, slug, currency]
+  );
+  return result.rows[0];
+};
+
+export const approveTenant = async (tenantId) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const tenantRes = await client.query(
+      `UPDATE tenants SET active = TRUE, pending_review = FALSE WHERE id = $1 RETURNING *`,
+      [tenantId]
+    );
+    await client.query(
+      `UPDATE admins SET active = TRUE WHERE tenant_id = $1`,
+      [tenantId]
+    );
+    await client.query('COMMIT');
+    return tenantRes.rows[0];
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 };
 
 export const updateTenant = async (id, { name, slug, currency, logo_url, active, plan }) => {
@@ -157,11 +189,12 @@ export const getTenantsBreakdown = async () => {
 export const getPlatformStats = async () => {
   const result = await pool.query(`
     SELECT
-      (SELECT COUNT(*) FROM tenants WHERE active = TRUE)::int   AS active_tenants,
-      (SELECT COUNT(*) FROM tenants)::int                        AS total_tenants,
-      (SELECT COUNT(*) FROM sales)::int                          AS total_sales,
-      (SELECT COUNT(*) FROM customers)::int                      AS total_customers,
-      (SELECT COALESCE(SUM(total), 0) FROM sales)::numeric       AS total_revenue
+      (SELECT COUNT(*) FROM tenants WHERE active = TRUE)::int          AS active_tenants,
+      (SELECT COUNT(*) FROM tenants)::int                               AS total_tenants,
+      (SELECT COUNT(*) FROM tenants WHERE pending_review = TRUE)::int   AS pending_tenants,
+      (SELECT COUNT(*) FROM sales)::int                                 AS total_sales,
+      (SELECT COUNT(*) FROM customers)::int                             AS total_customers,
+      (SELECT COALESCE(SUM(total), 0) FROM sales)::numeric              AS total_revenue
   `);
   return result.rows[0];
 };

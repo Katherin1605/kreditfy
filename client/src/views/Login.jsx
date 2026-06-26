@@ -93,9 +93,12 @@ const Login = () => {
               <button type="submit" className="btn-primary w-100 py-2 mb-3" disabled={loading}>
                 {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
               </button>
-              <div className="text-center">
+              <div className="text-center d-flex justify-content-between">
                 <Link to="/forgot-password" className="text-muted small">
                   ¿Olvidaste tu contraseña?
+                </Link>
+                <Link to="/register" className="text-muted small">
+                  Registrar empresa
                 </Link>
               </div>
             </form>

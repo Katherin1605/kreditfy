@@ -43,7 +43,17 @@ const PlatformDashboard = () => {
 
   return (
     <div>
-      <h2 className="mb-4">Panel de Plataforma</h2>
+      <h2 className="mb-4">Panel de Control</h2>
+
+      {stats?.pending_tenants > 0 && (
+        <div className="alert alert-warning d-flex align-items-center gap-2 mb-4">
+          <i className="bi bi-hourglass-split fs-5"></i>
+          <div>
+            <strong>{stats.pending_tenants} empresa{stats.pending_tenants > 1 ? 's' : ''} pendiente{stats.pending_tenants > 1 ? 's' : ''} de aprobación.</strong>
+            {' '}<Link to="/platform/tenants" className="alert-link">Ir a Tenants</Link> para revisar y aprobar.
+          </div>
+        </div>
+      )}
 
       {stats ? (
         <div className="row g-3 mb-4">

@@ -29,14 +29,14 @@ export const getAdminById = async (id, tenantId) => {
   return result.rows[0];
 };
 
-export const createAdmin = async (data, tenantId) => {
+export const createAdmin = async (data, tenantId, active = true) => {
   const { name, email, password, role } = data;
   const hashedPassword = await bcrypt.hash(password, 10);
   const result = await pool.query(
-    `INSERT INTO admins (name, email, password, role, tenant_id)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO admins (name, email, password, role, active, tenant_id)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING id, name, email, role, active, permissions, tenant_id, created_at`,
-    [name, email, hashedPassword, role || 'admin', tenantId ?? null]
+    [name, email, hashedPassword, role || 'admin', active, tenantId ?? null]
   );
   return result.rows[0];
 };

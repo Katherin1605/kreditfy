@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import {
   getPlanConfigs, updatePlanConfig,
-  getTenants, getTenantById, createTenant, updateTenant,
+  getTenants, getTenantById, createTenant, updateTenant, approveTenant,
   getTenantAdmins, createTenantAdmin, toggleTenantAdmin, resetTenantAdminPassword,
   uploadTenantLogo, getPlatformStats, getTenantsBreakdown,
   getBackupInfo, triggerFullBackup, downloadTenantBackup,
@@ -22,6 +22,7 @@ router.get('/platform/tenants',                 authenticateToken, requirePlatfo
 router.post('/platform/tenants',                authenticateToken, requirePlatformAdmin, createTenant);
 router.get('/platform/tenants/:id',             authenticateToken, requirePlatformAdmin, getTenantById);
 router.put('/platform/tenants/:id',             authenticateToken, requirePlatformAdmin, updateTenant);
+router.post('/platform/tenants/:id/approve',    authenticateToken, requirePlatformAdmin, approveTenant);
 router.get('/platform/tenants/:id/admins',                    authenticateToken, requirePlatformAdmin, getTenantAdmins);
 router.post('/platform/tenants/:id/admins',                   authenticateToken, requirePlatformAdmin, createTenantAdmin);
 router.put('/platform/tenants/:id/admins/:adminId/toggle',          authenticateToken, requirePlatformAdmin, toggleTenantAdmin);
