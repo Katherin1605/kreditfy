@@ -14,9 +14,11 @@ pool.query(`
 
 export const findAdminByEmail = async (email) => {
   const result = await pool.query(
-    `SELECT a.*, t.name AS tenant_name, t.logo_url AS tenant_logo
+    `SELECT a.*, t.name AS tenant_name, t.logo_url AS tenant_logo, t.plan AS tenant_plan,
+            pc.modules AS plan_modules
      FROM admins a
      LEFT JOIN tenants t ON t.id = a.tenant_id
+     LEFT JOIN plan_configs pc ON pc.plan = t.plan
      WHERE a.email = $1 AND a.active = TRUE`,
     [email]
   );
@@ -57,9 +59,11 @@ export const updateAdminPassword = async (adminId, hashedPassword) => {
 
 export const findAdminById = async (id) => {
   const result = await pool.query(
-    `SELECT a.*, t.name AS tenant_name, t.logo_url AS tenant_logo
+    `SELECT a.*, t.name AS tenant_name, t.logo_url AS tenant_logo, t.plan AS tenant_plan,
+            pc.modules AS plan_modules
      FROM admins a
      LEFT JOIN tenants t ON t.id = a.tenant_id
+     LEFT JOIN plan_configs pc ON pc.plan = t.plan
      WHERE a.id = $1 AND a.active = TRUE`,
     [id]
   );

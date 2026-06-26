@@ -31,12 +31,14 @@ export const AuthProvider = ({ children }) => {
     if (stored && token) {
       const adminData = JSON.parse(stored);
       // Patch tenant fields from token if the stored object predates them
-      if (adminData.tenant_id === undefined || adminData.tenant_name === undefined || adminData.tenant_logo === undefined) {
+      if (adminData.tenant_id === undefined || adminData.tenant_name === undefined ||
+          adminData.tenant_logo === undefined || adminData.plan_modules === undefined) {
         const decoded = decodeJWT(token);
         if (decoded) {
-          adminData.tenant_id   = decoded.tenant_id   ?? null;
-          adminData.tenant_name = decoded.tenant_name ?? null;
-          adminData.tenant_logo = decoded.tenant_logo ?? null;
+          adminData.tenant_id    = decoded.tenant_id    ?? null;
+          adminData.tenant_name  = decoded.tenant_name  ?? null;
+          adminData.tenant_logo  = decoded.tenant_logo  ?? null;
+          adminData.plan_modules = decoded.plan_modules ?? null;
         }
       }
       setCurrentAdmin(adminData);

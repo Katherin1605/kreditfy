@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 const NAV_ITEMS = [
   { to: '/platform', label: 'Dashboard', icon: 'bi-columns-gap', end: true },
   { to: '/platform/tenants', label: 'Tenants', icon: 'bi-building' },
+  { to: '/platform/plans', label: 'Planes', icon: 'bi-stars' },
 ];
 
 const PlatformLayout = () => {

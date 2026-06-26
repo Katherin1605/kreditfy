@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+  getPlanConfigs, updatePlanConfig,
   getTenants, getTenantById, createTenant, updateTenant,
   getTenantAdmins, createTenantAdmin, toggleTenantAdmin, resetTenantAdminPassword,
   uploadTenantLogo, getPlatformStats, getTenantsBreakdown,
@@ -10,6 +11,8 @@ import { uploadLogo } from '../src/utils/upload.js';
 const router = Router();
 
 router.get('/platform/stats',                   authenticateToken, requirePlatformAdmin, getPlatformStats);
+router.get('/platform/plan-configs',            authenticateToken, requirePlatformAdmin, getPlanConfigs);
+router.put('/platform/plan-configs/:plan',      authenticateToken, requirePlatformAdmin, updatePlanConfig);
 router.get('/platform/breakdown',               authenticateToken, requirePlatformAdmin, getTenantsBreakdown);
 router.get('/platform/tenants',                 authenticateToken, requirePlatformAdmin, getTenants);
 router.post('/platform/tenants',                authenticateToken, requirePlatformAdmin, createTenant);

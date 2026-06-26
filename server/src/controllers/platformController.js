@@ -2,6 +2,30 @@ import bcrypt from "bcryptjs";
 import * as platformModel from "../models/platformModel.js";
 import * as adminModel from "../models/adminModel.js";
 
+export const getPlanConfigs = async (req, res) => {
+  try {
+    const configs = await platformModel.getPlanConfigs();
+    res.json(configs);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener configuración de planes' });
+  }
+};
+
+export const updatePlanConfig = async (req, res) => {
+  try {
+    const { plan } = req.params;
+    const { max_admins, modules } = req.body;
+    if (!Array.isArray(modules)) return res.status(400).json({ error: 'modules debe ser un array' });
+    const config = await platformModel.updatePlanConfig(plan, { max_admins: parseInt(max_admins), modules });
+    if (!config) return res.status(404).json({ error: 'Plan no encontrado' });
+    res.json(config);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al actualizar plan' });
+  }
+};
+
 export const getTenants = async (req, res) => {
   try {
     const tenants = await platformModel.getAllTenants();
@@ -63,6 +87,16 @@ export const createTenantAdmin = async (req, res) => {
     const { name, email, password, role = 'superadmin' } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Nombre, email y contraseña son obligatorios' });
+    }
+    const tenantInfo = await platformModel.getTenantWithPlan(req.params.id);
+    if (!tenantInfo) return res.status(404).json({ error: 'Tenant no encontrado' });
+    if (tenantInfo.plan_max_admins !== -1) {
+      const count = await platformModel.getAdminCount(req.params.id);
+      if (count >= tenantInfo.plan_max_admins) {
+        return res.status(400).json({
+          error: `El plan ${tenantInfo.plan} permite máximo ${tenantInfo.plan_max_admins} administrador(es)`
+        });
+      }
     }
     const admin = await adminModel.createAdmin({ name, email, password, role }, parseInt(req.params.id));
     res.status(201).json(admin);

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
-const EMPTY_FORM = { name: '', slug: '', currency: 'USD', logo_url: '' };
+const EMPTY_FORM = { name: '', slug: '', currency: 'USD', logo_url: '', plan: 'basic' };
 
 const PlatformTenants = () => {
   const [tenants, setTenants] = useState([]);
@@ -40,6 +40,7 @@ const PlatformTenants = () => {
       slug:     tenant.slug,
       currency: tenant.currency,
       logo_url: tenant.logo_url || '',
+      plan:     tenant.plan || 'basic',
     });
     setError('');
     setShowForm(true);
@@ -157,7 +158,19 @@ const PlatformTenants = () => {
                   <option>EUR</option>
                 </select>
               </div>
-              <div className="col-md-3">
+              <div className="col-md-1">
+                <label className="form-label small fw-semibold">Plan</label>
+                <select
+                  className="form-select form-select-sm"
+                  name="plan"
+                  value={form.plan}
+                  onChange={handleField}
+                >
+                  <option value="basic">Basic</option>
+                  <option value="pro">Pro</option>
+                </select>
+              </div>
+              <div className="col-md-2">
                 <label className="form-label small fw-semibold">
                   Logo <span className="text-muted fw-normal">(opcional)</span>
                 </label>
@@ -220,6 +233,7 @@ const PlatformTenants = () => {
                   <th>Nombre</th>
                   <th>Slug</th>
                   <th>Moneda</th>
+                  <th>Plan</th>
                   <th>Estado</th>
                   <th>Creado</th>
                   <th></th>
@@ -228,7 +242,7 @@ const PlatformTenants = () => {
               <tbody>
                 {tenants.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center text-muted py-4">Sin tenants registrados</td>
+                    <td colSpan={8} className="text-center text-muted py-4">Sin tenants registrados</td>
                   </tr>
                 ) : tenants.map(t => (
                   <tr key={t.id}>
@@ -248,6 +262,11 @@ const PlatformTenants = () => {
                     </td>
                     <td><code className="small">{t.slug}</code></td>
                     <td>{t.currency}</td>
+                    <td>
+                      <span className={`badge ${t.plan === 'pro' ? 'bg-primary' : 'bg-secondary'}`}>
+                        {t.plan ?? 'basic'}
+                      </span>
+                    </td>
                     <td>
                       <span className={`badge ${t.active ? 'bg-success' : 'bg-secondary'}`}>
                         {t.active ? 'Activo' : 'Inactivo'}

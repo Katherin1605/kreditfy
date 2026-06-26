@@ -16,6 +16,7 @@ const buildPayload = (admin) => ({
   tenant_id:   admin.tenant_id   ?? null,
   tenant_name: admin.tenant_name ?? null,
   tenant_logo: admin.tenant_logo ?? null,
+  plan_modules: admin.plan_modules ?? null,
 });
 
 export const login = async (req, res) => {
