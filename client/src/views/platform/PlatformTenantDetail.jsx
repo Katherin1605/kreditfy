@@ -12,6 +12,7 @@ const PlatformTenantDetail = () => {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_ADMIN);
   const [saving, setSaving] = useState(false);
+  const [downloadingBackup, setDownloadingBackup] = useState(false);
   const [togglingAdmin, setTogglingAdmin] = useState(null);
   const [resetingAdmin, setResetingAdmin] = useState(null);
   const [resetForm, setResetForm] = useState({ password: '', confirm: '' });
@@ -69,6 +70,25 @@ const PlatformTenantDetail = () => {
   };
 
   const cancelForm = () => { setShowForm(false); setError(''); setForm(EMPTY_ADMIN); };
+
+  const handleDownloadBackup = async () => {
+    setDownloadingBackup(true);
+    try {
+      const res = await axios.get(
+        `http://localhost:3000/platform/tenants/${id}/backup`,
+        { responseType: 'blob' }
+      );
+      const url      = URL.createObjectURL(new Blob([res.data], { type: 'application/sql' }));
+      const date     = new Date().toISOString().slice(0, 10);
+      const filename = `backup_${tenant.slug}_${date}.sql`;
+      const a        = document.createElement('a');
+      a.href         = url;
+      a.download     = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {}
+    finally { setDownloadingBackup(false); }
+  };
 
   const openResetAdmin = (admin) => {
     setResetingAdmin(admin);
@@ -133,13 +153,24 @@ const PlatformTenantDetail = () => {
               </span>
             </div>
           </div>
-          <button
-            className={`btn btn-sm ${tenant.active ? 'btn-outline-warning' : 'btn-outline-success'}`}
-            onClick={toggleTenantActive}
-          >
-            <i className={`bi ${tenant.active ? 'bi-pause-circle' : 'bi-play-circle'} me-1`}></i>
-            {tenant.active ? 'Desactivar' : 'Activar'}
-          </button>
+          <div className="d-flex gap-2">
+            <button
+              className="btn btn-sm btn-outline-secondary"
+              onClick={handleDownloadBackup}
+              disabled={downloadingBackup}
+              title="Descargar backup SQL de este tenant"
+            >
+              <i className="bi bi-download me-1"></i>
+              {downloadingBackup ? 'Generando…' : 'Backup SQL'}
+            </button>
+            <button
+              className={`btn btn-sm ${tenant.active ? 'btn-outline-warning' : 'btn-outline-success'}`}
+              onClick={toggleTenantActive}
+            >
+              <i className={`bi ${tenant.active ? 'bi-pause-circle' : 'bi-play-circle'} me-1`}></i>
+              {tenant.active ? 'Desactivar' : 'Activar'}
+            </button>
+          </div>
         </div>
       </div>
 

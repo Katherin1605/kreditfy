@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import * as platformModel from "../models/platformModel.js";
 import * as adminModel from "../models/adminModel.js";
+import { runFullBackup, getLastBackupInfo, generateTenantDump } from "../utils/backup.js";
 
 export const getPlanConfigs = async (req, res) => {
   try {
@@ -153,6 +154,44 @@ export const getTenantsBreakdown = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener desglose por tenant' });
+  }
+};
+
+export const getBackupInfo = async (req, res) => {
+  try {
+    const info = await getLastBackupInfo();
+    res.json(info);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener estado del backup' });
+  }
+};
+
+export const triggerFullBackup = async (req, res) => {
+  try {
+    const result = await runFullBackup();
+    res.json({ message: 'Backup completado', ...result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al ejecutar backup. Verifica que pg_dump esté instalado.' });
+  }
+};
+
+export const downloadTenantBackup = async (req, res) => {
+  try {
+    const tenant = await platformModel.getTenantById(req.params.id);
+    if (!tenant) return res.status(404).json({ error: 'Tenant no encontrado' });
+
+    const sql      = await generateTenantDump(req.params.id, tenant.name);
+    const date     = new Date().toISOString().slice(0, 10);
+    const filename = `backup_${tenant.slug}_${date}.sql`;
+
+    res.setHeader('Content-Type', 'application/sql; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(sql);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al generar el backup del tenant' });
   }
 };
 

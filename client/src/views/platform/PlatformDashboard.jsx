@@ -2,11 +2,22 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
+const fmtDate = (d) => d
+  ? new Date(d).toLocaleString('es-VE', { dateStyle: 'medium', timeStyle: 'short' })
+  : '—';
+
 const fmt = (n) => Number(n).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const PlatformDashboard = () => {
-  const [stats, setStats] = useState(null);
+  const [stats, setStats]       = useState(null);
   const [breakdown, setBreakdown] = useState([]);
+  const [backupInfo, setBackupInfo] = useState(undefined);
+  const [triggering, setTriggering] = useState(false);
+
+  const loadBackupInfo = () =>
+    axios.get('http://localhost:3000/platform/backup-info')
+      .then(res => setBackupInfo(res.data))
+      .catch(() => setBackupInfo(null));
 
   useEffect(() => {
     Promise.all([
@@ -18,7 +29,17 @@ const PlatformDashboard = () => {
         setBreakdown(breakdownRes.data);
       })
       .catch(() => {});
+    loadBackupInfo();
   }, []);
+
+  const handleTriggerBackup = async () => {
+    setTriggering(true);
+    try {
+      await axios.post('http://localhost:3000/platform/backup');
+      await loadBackupInfo();
+    } catch {}
+    finally { setTriggering(false); }
+  };
 
   return (
     <div>
@@ -54,6 +75,31 @@ const PlatformDashboard = () => {
       ) : (
         <p className="text-muted">Cargando estadísticas...</p>
       )}
+
+      <div className="card mb-4">
+        <div className="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <div>
+            <h6 className="mb-1"><i className="bi bi-archive me-2 text-primary"></i>Backup automático</h6>
+            {backupInfo === undefined && <span className="text-muted small">Cargando…</span>}
+            {backupInfo === null && <span className="text-muted small">Sin backups registrados aún.</span>}
+            {backupInfo && (
+              <div className="text-muted small">
+                Último: <strong>{backupInfo.filename}</strong> —{' '}
+                {backupInfo.size_mb} MB · {fmtDate(backupInfo.created_at)}
+                <span className="ms-2 badge bg-secondary">{backupInfo.count} archivo(s)</span>
+              </div>
+            )}
+          </div>
+          <button
+            className="btn btn-outline-primary btn-sm"
+            onClick={handleTriggerBackup}
+            disabled={triggering}
+          >
+            <i className="bi bi-arrow-repeat me-1"></i>
+            {triggering ? 'Ejecutando…' : 'Ejecutar ahora'}
+          </button>
+        </div>
+      </div>
 
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h5 className="mb-0">Desglose por tenant</h5>

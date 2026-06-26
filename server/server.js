@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
+import cron from 'node-cron';
+import { runFullBackup } from './src/utils/backup.js';
 import authRoutes from './routes/authRoutes.js';
 import customersRoutes from './routes/customersRoutes.js';
 import salesRoutes from './routes/salesRoutes.js';
@@ -48,4 +50,14 @@ app.get("/", (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`🔋 🔥 Servidor corriendo en puerto http://localhost:${PORT}`);
-})
+});
+
+// Backup completo automático diario a las 2:00 AM
+cron.schedule('0 2 * * *', async () => {
+  try {
+    const result = await runFullBackup();
+    console.log(`✅ Backup automático completado: ${result.filename} (${result.size_mb} MB)`);
+  } catch (err) {
+    console.error('❌ Error en backup automático:', err.message);
+  }
+});

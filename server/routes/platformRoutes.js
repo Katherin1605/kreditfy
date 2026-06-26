@@ -4,6 +4,7 @@ import {
   getTenants, getTenantById, createTenant, updateTenant,
   getTenantAdmins, createTenantAdmin, toggleTenantAdmin, resetTenantAdminPassword,
   uploadTenantLogo, getPlatformStats, getTenantsBreakdown,
+  getBackupInfo, triggerFullBackup, downloadTenantBackup,
 } from '../src/controllers/platformController.js';
 import { authenticateToken, requirePlatformAdmin } from '../src/middleware/authMiddleware.js';
 import { uploadLogo } from '../src/utils/upload.js';
@@ -11,6 +12,9 @@ import { uploadLogo } from '../src/utils/upload.js';
 const router = Router();
 
 router.get('/platform/stats',                   authenticateToken, requirePlatformAdmin, getPlatformStats);
+router.get('/platform/backup-info',             authenticateToken, requirePlatformAdmin, getBackupInfo);
+router.post('/platform/backup',                 authenticateToken, requirePlatformAdmin, triggerFullBackup);
+router.get('/platform/tenants/:id/backup',      authenticateToken, requirePlatformAdmin, downloadTenantBackup);
 router.get('/platform/plan-configs',            authenticateToken, requirePlatformAdmin, getPlanConfigs);
 router.put('/platform/plan-configs/:plan',      authenticateToken, requirePlatformAdmin, updatePlanConfig);
 router.get('/platform/breakdown',               authenticateToken, requirePlatformAdmin, getTenantsBreakdown);
