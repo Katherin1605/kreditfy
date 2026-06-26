@@ -36,6 +36,22 @@ export const getAdminsByTenant = async (tenantId) => {
   return result.rows;
 };
 
+export const resetAdminPassword = async (adminId, tenantId, hashedPassword) => {
+  const result = await pool.query(
+    `UPDATE admins SET password = $1 WHERE id = $2 AND tenant_id = $3 RETURNING id`,
+    [hashedPassword, adminId, tenantId]
+  );
+  return result.rows[0];
+};
+
+export const updateTenantLogo = async (tenantId, logoUrl) => {
+  const result = await pool.query(
+    `UPDATE tenants SET logo_url = $1 WHERE id = $2 RETURNING *`,
+    [logoUrl, tenantId]
+  );
+  return result.rows[0];
+};
+
 export const toggleAdminActive = async (adminId, tenantId) => {
   const result = await pool.query(
     `UPDATE admins SET active = NOT active WHERE id = $1 AND tenant_id = $2 RETURNING id, active`,

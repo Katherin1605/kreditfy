@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import * as platformModel from "../models/platformModel.js";
 import * as adminModel from "../models/adminModel.js";
 
@@ -69,6 +70,34 @@ export const createTenantAdmin = async (req, res) => {
     console.error(err);
     if (err.code === '23505') return res.status(400).json({ error: 'El email ya está registrado' });
     res.status(500).json({ error: 'Error al crear administrador del tenant' });
+  }
+};
+
+export const resetTenantAdminPassword = async (req, res) => {
+  const { password } = req.body;
+  if (!password) return res.status(400).json({ error: 'La contraseña es obligatoria' });
+  if (password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+  try {
+    const hashed = await bcrypt.hash(password, 10);
+    const admin = await platformModel.resetAdminPassword(req.params.adminId, req.params.id, hashed);
+    if (!admin) return res.status(404).json({ error: 'Administrador no encontrado' });
+    res.json({ message: 'Contraseña actualizada correctamente' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al actualizar la contraseña' });
+  }
+};
+
+export const uploadTenantLogo = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No se recibió ningún archivo' });
+    const logoUrl = `${process.env.FRONTEND_URL?.replace('5173', '3000') || 'http://localhost:3000'}/uploads/logos/${req.file.filename}`;
+    const tenant = await platformModel.updateTenantLogo(req.params.id, logoUrl);
+    if (!tenant) return res.status(404).json({ error: 'Tenant no encontrado' });
+    res.json({ logo_url: logoUrl, tenant });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al subir el logo' });
   }
 };
 

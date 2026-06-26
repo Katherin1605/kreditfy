@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import {
   getTenants, getTenantById, createTenant, updateTenant,
-  getTenantAdmins, createTenantAdmin, toggleTenantAdmin,
-  getPlatformStats, getTenantsBreakdown,
+  getTenantAdmins, createTenantAdmin, toggleTenantAdmin, resetTenantAdminPassword,
+  uploadTenantLogo, getPlatformStats, getTenantsBreakdown,
 } from '../src/controllers/platformController.js';
 import { authenticateToken, requirePlatformAdmin } from '../src/middleware/authMiddleware.js';
+import { uploadLogo } from '../src/utils/upload.js';
 
 const router = Router();
 
@@ -16,6 +17,8 @@ router.get('/platform/tenants/:id',             authenticateToken, requirePlatfo
 router.put('/platform/tenants/:id',             authenticateToken, requirePlatformAdmin, updateTenant);
 router.get('/platform/tenants/:id/admins',                    authenticateToken, requirePlatformAdmin, getTenantAdmins);
 router.post('/platform/tenants/:id/admins',                   authenticateToken, requirePlatformAdmin, createTenantAdmin);
-router.put('/platform/tenants/:id/admins/:adminId/toggle',    authenticateToken, requirePlatformAdmin, toggleTenantAdmin);
+router.put('/platform/tenants/:id/admins/:adminId/toggle',          authenticateToken, requirePlatformAdmin, toggleTenantAdmin);
+router.put('/platform/tenants/:id/admins/:adminId/reset-password',  authenticateToken, requirePlatformAdmin, resetTenantAdminPassword);
+router.post('/platform/tenants/:id/logo',                           authenticateToken, requirePlatformAdmin, uploadLogo.single('logo'), uploadTenantLogo);
 
 export default router;

@@ -13,6 +13,10 @@ const PlatformTenantDetail = () => {
   const [form, setForm] = useState(EMPTY_ADMIN);
   const [saving, setSaving] = useState(false);
   const [togglingAdmin, setTogglingAdmin] = useState(null);
+  const [resetingAdmin, setResetingAdmin] = useState(null);
+  const [resetForm, setResetForm] = useState({ password: '', confirm: '' });
+  const [resetSaving, setResetSaving] = useState(false);
+  const [resetError, setResetError] = useState('');
   const [error, setError] = useState('');
 
   const load = () => {
@@ -65,6 +69,32 @@ const PlatformTenantDetail = () => {
   };
 
   const cancelForm = () => { setShowForm(false); setError(''); setForm(EMPTY_ADMIN); };
+
+  const openResetAdmin = (admin) => {
+    setResetingAdmin(admin);
+    setResetForm({ password: '', confirm: '' });
+    setResetError('');
+  };
+  const cancelReset = () => { setResetingAdmin(null); setResetError(''); };
+
+  const handleResetPassword = async () => {
+    if (!resetForm.password) { setResetError('Ingresa la nueva contraseña'); return; }
+    if (resetForm.password.length < 6) { setResetError('Mínimo 6 caracteres'); return; }
+    if (resetForm.password !== resetForm.confirm) { setResetError('Las contraseñas no coinciden'); return; }
+    setResetSaving(true);
+    setResetError('');
+    try {
+      await axios.put(
+        `http://localhost:3000/platform/tenants/${id}/admins/${resetingAdmin.id}/reset-password`,
+        { password: resetForm.password }
+      );
+      cancelReset();
+    } catch (err) {
+      setResetError(err.response?.data?.error || 'Error al actualizar la contraseña');
+    } finally {
+      setResetSaving(false);
+    }
+  };
 
   const handleToggleAdmin = async (adminId) => {
     setTogglingAdmin(adminId);
@@ -120,6 +150,44 @@ const PlatformTenantDetail = () => {
           <i className="bi bi-plus-lg me-1"></i>Agregar admin
         </button>
       </div>
+
+      {resetingAdmin && (
+        <div className="card mb-4">
+          <div className="card-body">
+            <h6 className="card-title mb-1">Cambiar contraseña</h6>
+            <p className="text-muted small mb-3">Admin: <strong>{resetingAdmin.name}</strong> ({resetingAdmin.email})</p>
+            {resetError && <div className="alert alert-danger py-2 small">{resetError}</div>}
+            <div className="row g-3">
+              <div className="col-md-4">
+                <label className="form-label small fw-semibold">Nueva contraseña</label>
+                <input
+                  type="password"
+                  className="form-control form-control-sm"
+                  placeholder="Mínimo 6 caracteres"
+                  value={resetForm.password}
+                  onChange={e => setResetForm(p => ({ ...p, password: e.target.value }))}
+                />
+              </div>
+              <div className="col-md-4">
+                <label className="form-label small fw-semibold">Confirmar contraseña</label>
+                <input
+                  type="password"
+                  className="form-control form-control-sm"
+                  placeholder="Repite la contraseña"
+                  value={resetForm.confirm}
+                  onChange={e => setResetForm(p => ({ ...p, confirm: e.target.value }))}
+                />
+              </div>
+              <div className="col-md-4 d-flex align-items-end gap-2">
+                <button className="btn btn-primary btn-sm" onClick={handleResetPassword} disabled={resetSaving}>
+                  {resetSaving ? 'Guardando…' : 'Guardar'}
+                </button>
+                <button className="btn btn-secondary btn-sm" onClick={cancelReset}>Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <div className="card mb-4">
@@ -220,14 +288,23 @@ const PlatformTenantDetail = () => {
                     {new Date(a.created_at).toLocaleDateString('es-VE')}
                   </td>
                   <td>
-                    <button
-                      className={`btn btn-sm ${a.active ? 'btn-outline-warning' : 'btn-outline-success'}`}
-                      onClick={() => handleToggleAdmin(a.id)}
-                      disabled={togglingAdmin === a.id}
-                    >
-                      <i className={`bi ${a.active ? 'bi-pause-circle' : 'bi-play-circle'} me-1`}></i>
-                      {togglingAdmin === a.id ? '…' : a.active ? 'Desactivar' : 'Activar'}
-                    </button>
+                    <div className="d-flex gap-2">
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => openResetAdmin(a)}
+                        title="Cambiar contraseña"
+                      >
+                        <i className="bi bi-key"></i>
+                      </button>
+                      <button
+                        className={`btn btn-sm ${a.active ? 'btn-outline-warning' : 'btn-outline-success'}`}
+                        onClick={() => handleToggleAdmin(a.id)}
+                        disabled={togglingAdmin === a.id}
+                        title={a.active ? 'Desactivar' : 'Activar'}
+                      >
+                        <i className={`bi ${a.active ? 'bi-pause-circle' : 'bi-play-circle'}`}></i>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

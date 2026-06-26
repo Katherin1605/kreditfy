@@ -439,6 +439,10 @@
   flex-shrink: 0;
 }
 
+.logo-upload-label {
+  cursor: pointer;
+}
+
 .sidebar-brand-icon.has-logo {
   background: transparent;
   border: 1px solid #dee2e6;

@@ -11,6 +11,7 @@ const PlatformTenants = () => {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
 
   const load = () => {
@@ -45,6 +46,27 @@ const PlatformTenants = () => {
   };
 
   const cancelForm = () => { setShowForm(false); setEditingId(null); setError(''); setForm(EMPTY_FORM); };
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !editingId) return;
+    const data = new FormData();
+    data.append('logo', file);
+    setUploading(true);
+    try {
+      const res = await axios.post(
+        `http://localhost:3000/platform/tenants/${editingId}/logo`,
+        data,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      setForm(p => ({ ...p, logo_url: res.data.logo_url }));
+    } catch (err) {
+      setError(err.response?.data?.error || 'Error al subir el logo');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
 
   const handleSubmit = async () => {
     if (!form.name || !form.slug) { setError('Nombre y slug son obligatorios'); return; }
@@ -136,14 +158,16 @@ const PlatformTenants = () => {
                 </select>
               </div>
               <div className="col-md-3">
-                <label className="form-label small fw-semibold">URL del logo <span className="text-muted fw-normal">(opcional)</span></label>
+                <label className="form-label small fw-semibold">
+                  Logo <span className="text-muted fw-normal">(opcional)</span>
+                </label>
                 <div className="d-flex gap-2 align-items-center">
                   <input
                     className="form-control form-control-sm"
                     name="logo_url"
                     value={form.logo_url}
                     onChange={handleField}
-                    placeholder="https://..."
+                    placeholder="https://... o sube una imagen"
                   />
                   {form.logo_url && (
                     <img
@@ -154,6 +178,22 @@ const PlatformTenants = () => {
                     />
                   )}
                 </div>
+                {editingId && (
+                  <div className="mt-1">
+                    <label className="btn btn-outline-secondary btn-sm w-100 logo-upload-label">
+                      {uploading
+                        ? <><i className="bi bi-arrow-repeat me-1"></i>Subiendo…</>
+                        : <><i className="bi bi-upload me-1"></i>Subir imagen</>}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="d-none"
+                        onChange={handleLogoUpload}
+                        disabled={uploading}
+                      />
+                    </label>
+                  </div>
+                )}
               </div>
               <div className="col-12 d-flex gap-2">
                 <button className="btn btn-primary btn-sm" onClick={handleSubmit} disabled={saving}>

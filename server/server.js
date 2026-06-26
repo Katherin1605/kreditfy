@@ -21,7 +21,8 @@ const app = express();
 // Middelwares
 
 app.use(cors());
-app.use(express.json())
+app.use(express.json());
+app.use('/uploads', express.static('public/uploads'));
 app.use(authRoutes);
 app.use(customersRoutes);
 app.use(salesRoutes);
