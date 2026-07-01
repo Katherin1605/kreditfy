@@ -1,4 +1,4 @@
-CREATE DATABASE credishoping;
+CREATE DATABASE kreditfy;
 
 -- =========================================
 -- CUSTOMERS

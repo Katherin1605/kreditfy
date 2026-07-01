@@ -43,7 +43,7 @@ export const runFullBackup = async () => {
   const filename = `backup_${date}_${Date.now()}.dump`;
   const filepath = path.join(BACKUP_DIR, filename);
 
-  const { DB_HOST = 'localhost', DB_USER = 'postgres', DB_NAME = 'credishoping', DB_PASSWORD = '' } = process.env;
+  const { DB_HOST = 'localhost', DB_USER = 'postgres', DB_NAME = 'kreditfy', DB_PASSWORD = '' } = process.env;
   const cmd = `PGPASSWORD="${DB_PASSWORD}" pg_dump -h ${DB_HOST} -U ${DB_USER} -d ${DB_NAME} -F c -f "${filepath}"`;
 
   await execAsync(cmd);

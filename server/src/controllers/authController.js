@@ -6,8 +6,8 @@ import * as platformModel from "../models/platformModel.js";
 import * as adminModel from "../models/adminModel.js";
 import { sendPasswordResetEmail } from "../utils/mailer.js";
 
-const ACCESS_SECRET  = process.env.JWT_PRIVATE         || "credishoping_secret";
-const REFRESH_SECRET = process.env.JWT_REFRESH_PRIVATE || "credishoping_refresh_secret";
+const ACCESS_SECRET  = process.env.JWT_PRIVATE         || "kreditfy_secret";
+const REFRESH_SECRET = process.env.JWT_REFRESH_PRIVATE || "kreditfy_refresh_secret";
 
 const buildPayload = (admin) => ({
   id:          admin.id,
