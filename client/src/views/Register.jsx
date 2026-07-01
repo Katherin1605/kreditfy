@@ -51,7 +51,7 @@ const Register = () => {
 
     setLoading(true);
     try {
-      await axios.post('http://localhost:3000/auth/register-tenant', {
+      await axios.post('/auth/register-tenant', {
         company_name: form.company_name,
         slug:         form.slug,
         admin_name:   form.admin_name,

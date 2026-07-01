@@ -11,7 +11,7 @@ const AVAILABLE_VIEWS = [
   { key: 'sales', label: 'Ventas' },
   { key: 'payments', label: 'Pagos' },
   { key: 'audit', label: 'Auditoría' },
-  { key: 'earnings', label: 'Cobros' },
+  { key: 'earnings', label: 'Contabilidad' },
 ];
 
 const Admin = () => {
@@ -30,7 +30,7 @@ const Admin = () => {
 
   const loadAdmins = () => {
     setLoading(true);
-    axios.get('http://localhost:3000/admins')
+    axios.get('/admins')
       .then(res => setAdmins(res.data))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
@@ -61,7 +61,7 @@ const Admin = () => {
   const handleDelete = async (id) => {
     const ok = await ask('¿Estás seguro de que deseas eliminar este administrador?');
     if (!ok) return;
-    axios.delete(`http://localhost:3000/admins/${id}`)
+    axios.delete(`/admins/${id}`)
       .then(() => {
         toast.success('Administrador eliminado');
         loadAdmins();
@@ -73,7 +73,7 @@ const Admin = () => {
     const action = admin.active ? 'deshabilitar' : 'habilitar';
     const ok = await ask(`¿Seguro que deseas ${action} a ${admin.name}?`);
     if (!ok) return;
-    axios.patch(`http://localhost:3000/admins/${admin.id}/active`)
+    axios.patch(`/admins/${admin.id}/active`)
       .then(() => {
         toast.success(`Administrador ${admin.active ? 'deshabilitado' : 'habilitado'}`);
         loadAdmins();
@@ -86,7 +86,7 @@ const Admin = () => {
     const newPerms = perms.includes(viewKey)
       ? perms.filter(p => p !== viewKey)
       : [...perms, viewKey];
-    axios.patch(`http://localhost:3000/admins/${adminId}/permissions`, { permissions: newPerms })
+    axios.patch(`/admins/${adminId}/permissions`, { permissions: newPerms })
       .then(() => loadAdmins())
       .catch(err => toast.error(err.response?.data?.error || 'Error al actualizar permisos'));
   };
@@ -99,7 +99,7 @@ const Admin = () => {
     if (editingAdmin) {
       const body = { name: formData.name, email: formData.email, role: formData.role };
       if (formData.password) body.password = formData.password;
-      axios.put(`http://localhost:3000/admins/${editingAdmin.id}`, body)
+      axios.put(`/admins/${editingAdmin.id}`, body)
         .then(() => {
           toast.success('Administrador actualizado');
           resetForm();
@@ -107,7 +107,7 @@ const Admin = () => {
         })
         .catch(err => toast.error(err.response?.data?.error || 'Error al procesar la solicitud'));
     } else {
-      axios.post('http://localhost:3000/admins', formData)
+      axios.post('/admins', formData)
         .then(() => {
           toast.success('Administrador creado');
           resetForm();

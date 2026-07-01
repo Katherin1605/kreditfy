@@ -41,7 +41,7 @@ const Audit = () => {
     if (from) params.date_from = from;
     if (to) params.date_to = to;
 
-    axios.get('http://localhost:3000/audit', { params })
+    axios.get('/audit', { params })
       .then(res => {
         const data = res.data;
         if (Array.isArray(data)) {
@@ -90,7 +90,7 @@ const Audit = () => {
       if (dateFrom)     params.date_from = dateFrom;
       if (dateTo)       params.date_to   = dateTo;
 
-      const res  = await axios.get('http://localhost:3000/audit', { params });
+      const res  = await axios.get('/audit', { params });
       const data = Array.isArray(res.data) ? res.data : (res.data.data || []);
 
       const escape = (v) => {

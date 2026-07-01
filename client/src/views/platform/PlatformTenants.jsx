@@ -16,7 +16,7 @@ const PlatformTenants = () => {
 
   const load = () => {
     setLoading(true);
-    axios.get('http://localhost:3000/platform/tenants')
+    axios.get('/platform/tenants')
       .then(res => setTenants(res.data))
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -56,7 +56,7 @@ const PlatformTenants = () => {
     setUploading(true);
     try {
       const res = await axios.post(
-        `http://localhost:3000/platform/tenants/${editingId}/logo`,
+        `/platform/tenants/${editingId}/logo`,
         data,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
@@ -76,13 +76,13 @@ const PlatformTenants = () => {
     try {
       if (editingId) {
         const tenant = tenants.find(t => t.id === editingId);
-        await axios.put(`http://localhost:3000/platform/tenants/${editingId}`, {
+        await axios.put(`/platform/tenants/${editingId}`, {
           ...form,
           logo_url: form.logo_url || null,
           active: tenant.active,
         });
       } else {
-        await axios.post('http://localhost:3000/platform/tenants', {
+        await axios.post('/platform/tenants', {
           ...form,
           logo_url: form.logo_url || null,
         });
@@ -98,7 +98,7 @@ const PlatformTenants = () => {
 
   const toggleActive = async (tenant) => {
     try {
-      await axios.put(`http://localhost:3000/platform/tenants/${tenant.id}`, {
+      await axios.put(`/platform/tenants/${tenant.id}`, {
         name:     tenant.name,
         slug:     tenant.slug,
         currency: tenant.currency,
@@ -112,7 +112,7 @@ const PlatformTenants = () => {
 
   const handleApprove = async (tenantId) => {
     try {
-      await axios.post(`http://localhost:3000/platform/tenants/${tenantId}/approve`);
+      await axios.post(`/platform/tenants/${tenantId}/approve`);
       load();
     } catch {}
   };

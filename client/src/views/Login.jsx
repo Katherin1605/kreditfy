@@ -26,7 +26,7 @@ const Login = () => {
     setError('');
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:3000/auth/login', formData);
+      const res = await axios.post('/auth/login', formData);
       login(res.data.admin, res.data.token, res.data.refreshToken);
       navigate(res.data.admin.role === 'platform_admin' ? '/platform' : '/');
     } catch (err) {

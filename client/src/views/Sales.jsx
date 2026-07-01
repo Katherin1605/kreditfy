@@ -55,8 +55,8 @@ const Sales = () => {
 
   const loadCatalogs = () => {
     Promise.all([
-      axios.get('http://localhost:3000/customers', { params: { limit: 500 } }),
-      axios.get('http://localhost:3000/products'),
+      axios.get('/customers', { params: { limit: 500 } }),
+      axios.get('/products'),
     ])
       .then(([customersRes, productsRes]) => {
         const cData = customersRes.data;
@@ -72,7 +72,7 @@ const Sales = () => {
     if (q) params.q = q;
     if (from) params.date_from = from;
     if (to) params.date_to = to;
-    axios.get('http://localhost:3000/sales', { params })
+    axios.get('/sales', { params })
       .then(res => {
         const data = res.data;
         if (Array.isArray(data)) {
@@ -94,7 +94,7 @@ const Sales = () => {
     }
     setExpandedId(saleId);
     if (!saleDetails[saleId]) {
-      axios.get(`http://localhost:3000/sales/${saleId}`)
+      axios.get(`/sales/${saleId}`)
         .then(res => {
           setSaleDetails(prev => ({ ...prev, [saleId]: res.data }));
         })
@@ -132,7 +132,7 @@ const Sales = () => {
       })),
     };
     if (editingSale) {
-      axios.put(`http://localhost:3000/sales/${editingSale.id}`, payload)
+      axios.put(`/sales/${editingSale.id}`, payload)
         .then(() => {
           toast.success('Venta actualizada');
           resetForm();
@@ -140,7 +140,7 @@ const Sales = () => {
         })
         .catch(err => toast.error(err.response?.data?.error || 'Error al actualizar la venta'));
     } else {
-      axios.post('http://localhost:3000/sales', payload)
+      axios.post('/sales', payload)
         .then(() => {
           toast.success('Venta creada');
           resetForm();
@@ -152,7 +152,7 @@ const Sales = () => {
 
   const handleEdit = async (sale) => {
     try {
-      const res = await axios.get(`http://localhost:3000/sales/${sale.id}`);
+      const res = await axios.get(`/sales/${sale.id}`);
       const detail = res.data;
       setEditingSale(sale);
       setSelectedCustomerId(sale.customer_id.toString());
@@ -178,7 +178,7 @@ const Sales = () => {
       if (search)   params.q         = search;
       if (dateFrom) params.date_from = dateFrom;
       if (dateTo)   params.date_to   = dateTo;
-      const res  = await axios.get('http://localhost:3000/sales', { params });
+      const res  = await axios.get('/sales', { params });
       const data = Array.isArray(res.data) ? res.data : (res.data.data || []);
 
       const escape = (v) => {
@@ -220,7 +220,7 @@ const Sales = () => {
   const handleDelete = async (saleId) => {
     const ok = await ask('¿Eliminar esta venta? El stock de los productos será restaurado.');
     if (!ok) return;
-    axios.delete(`http://localhost:3000/sales/${saleId}`)
+    axios.delete(`/sales/${saleId}`)
       .then(() => {
         toast.success('Venta eliminada');
         loadSales(search, page, dateFrom, dateTo);

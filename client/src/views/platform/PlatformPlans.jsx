@@ -7,7 +7,7 @@ const ALL_MODULES = [
   { key: 'shopping',  label: 'Compras' },
   { key: 'sales',     label: 'Ventas' },
   { key: 'payments',  label: 'Pagos' },
-  { key: 'earnings',  label: 'Cobros' },
+  { key: 'earnings',  label: 'Contabilidad' },
   { key: 'audit',     label: 'Auditoría' },
 ];
 
@@ -40,7 +40,7 @@ const PlanCard = ({ config, onSaved }) => {
     setError('');
     setSuccess(false);
     try {
-      await axios.put(`http://localhost:3000/platform/plan-configs/${config.plan}`, {
+      await axios.put(`/platform/plan-configs/${config.plan}`, {
         max_admins: unlimited ? -1 : parseInt(maxAdmins),
         modules,
       });
@@ -127,7 +127,7 @@ const PlatformPlans = () => {
   const [loading, setLoading] = useState(true);
 
   const load = () => {
-    axios.get('http://localhost:3000/platform/plan-configs')
+    axios.get('/platform/plan-configs')
       .then(res => setConfigs(res.data))
       .catch(() => {})
       .finally(() => setLoading(false));

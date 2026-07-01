@@ -8,7 +8,7 @@ export const ExchangeRatesProvider = ({ children }) => {
   const [updatedAt, setUpdatedAt] = useState(null);
 
   useEffect(() => {
-    axios.get('http://localhost:3000/exchange-rates')
+    axios.get('/exchange-rates')
       .then(res => {
         setRates({ USD: res.data.USD, EUR: res.data.EUR });
         setUpdatedAt(res.data.updatedAt);

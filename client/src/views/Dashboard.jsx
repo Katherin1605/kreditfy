@@ -31,8 +31,8 @@ const Dashboard = () => {
 
   useEffect(() => {
     Promise.all([
-      axios.get('http://localhost:3000/dashboard/stats'),
-      axios.get('http://localhost:3000/dashboard/monthly-stats'),
+      axios.get('/dashboard/stats'),
+      axios.get('/dashboard/monthly-stats'),
     ])
       .then(([statsRes, monthlyRes]) => {
         setStats(statsRes.data);

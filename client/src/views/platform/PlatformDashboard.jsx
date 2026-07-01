@@ -15,14 +15,14 @@ const PlatformDashboard = () => {
   const [triggering, setTriggering] = useState(false);
 
   const loadBackupInfo = () =>
-    axios.get('http://localhost:3000/platform/backup-info')
+    axios.get('/platform/backup-info')
       .then(res => setBackupInfo(res.data))
       .catch(() => setBackupInfo(null));
 
   useEffect(() => {
     Promise.all([
-      axios.get('http://localhost:3000/platform/stats'),
-      axios.get('http://localhost:3000/platform/breakdown'),
+      axios.get('/platform/stats'),
+      axios.get('/platform/breakdown'),
     ])
       .then(([statsRes, breakdownRes]) => {
         setStats(statsRes.data);
@@ -35,7 +35,7 @@ const PlatformDashboard = () => {
   const handleTriggerBackup = async () => {
     setTriggering(true);
     try {
-      await axios.post('http://localhost:3000/platform/backup');
+      await axios.post('/platform/backup');
       await loadBackupInfo();
     } catch {}
     finally { setTriggering(false); }

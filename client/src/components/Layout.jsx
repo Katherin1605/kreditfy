@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { to: '/shopping', label: 'Compras', icon: 'bi-cart', view: 'shopping' },
   { to: '/sales', label: 'Ventas', icon: 'bi-currency-dollar', view: 'sales' },
   { to: '/payments', label: 'Pagos', icon: 'bi-credit-card', view: 'payments' },
-  { to: '/earnings', label: 'Cobros', icon: 'bi-wallet2', view: 'earnings' },
+  { to: '/earnings', label: 'Contabilidad', icon: 'bi-wallet2', view: 'earnings' },
   { to: '/admin', label: 'Administradores', icon: 'bi-shield', view: 'admin' },
   { to: '/audit', label: 'Auditoría', icon: 'bi-file-earmark-text', view: 'audit' },
 ];

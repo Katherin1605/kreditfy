@@ -60,7 +60,7 @@ const Payments = () => {
     if (q) params.q = q;
     if (from) params.date_from = from;
     if (to) params.date_to = to;
-    axios.get('http://localhost:3000/sales', { params })
+    axios.get('/sales', { params })
       .then(res => {
         const data = res.data;
         if (Array.isArray(data)) {
@@ -80,8 +80,8 @@ const Payments = () => {
     setShowPayForm(false);
     setPayForm({ amount: '', method: '', payment_date: new Date().toISOString().split('T')[0] });
     Promise.all([
-      axios.get(`http://localhost:3000/sales/${sale.id}`),
-      axios.get(`http://localhost:3000/payments/sale/${sale.id}`)
+      axios.get(`/sales/${sale.id}`),
+      axios.get(`/payments/sale/${sale.id}`)
     ])
       .then(([detailRes, paymentsRes]) => {
         setSaleDetail(detailRes.data);
@@ -111,10 +111,10 @@ const Payments = () => {
       payment_date: payForm.payment_date || new Date().toISOString().split('T')[0],
       ...(payForm.method ? { method: payForm.method } : {})
     };
-    axios.post('http://localhost:3000/payments', body)
+    axios.post('/payments', body)
       .then(() => Promise.all([
-        axios.get(`http://localhost:3000/sales/${selectedSale.id}`),
-        axios.get(`http://localhost:3000/payments/sale/${selectedSale.id}`)
+        axios.get(`/sales/${selectedSale.id}`),
+        axios.get(`/payments/sale/${selectedSale.id}`)
       ]))
       .then(([detailRes, paymentsRes]) => {
         toast.success('Pago registrado');

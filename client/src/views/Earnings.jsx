@@ -15,7 +15,7 @@ const Earnings = () => {
   const { rates } = useExchangeRates();
 
   useEffect(() => {
-    axios.get('http://localhost:3000/earnings/years')
+    axios.get('/earnings/years')
       .then(res => {
         const list = res.data;
         const withCurrent = list.includes(currentYear) ? list : [currentYear, ...list];
@@ -33,7 +33,7 @@ const Earnings = () => {
 
   const loadEarnings = (year) => {
     setLoading(true);
-    axios.get('http://localhost:3000/earnings/monthly', { params: { year, currency: 'USD' } })
+    axios.get('/earnings/monthly', { params: { year, currency: 'USD' } })
       .then(res => setRows(res.data))
       .catch(err => toast.error(err.response?.data?.error || 'Error al cargar cobros'))
       .finally(() => setLoading(false));
@@ -50,7 +50,7 @@ const Earnings = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await axios.put(`http://localhost:3000/earnings/${selectedYear}/${modal.month}`, {
+      await axios.put(`/earnings/${selectedYear}/${modal.month}`, {
         notas: modal.notas,
         cerrado: modal.cerrado,
       });
@@ -79,7 +79,7 @@ const Earnings = () => {
     <>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h5 className="mb-0">Cobros Mensuales</h5>
+          <h5 className="mb-0">Contabilidad</h5>
           <small className="text-muted">Resumen financiero por mes</small>
         </div>
         <div className="d-flex gap-2 align-items-center">

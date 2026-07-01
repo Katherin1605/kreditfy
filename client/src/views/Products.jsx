@@ -23,7 +23,7 @@ const Products = () => {
   }, []);
 
   const loadProducts = () => {
-    axios.get('http://localhost:3000/products')
+    axios.get('/products')
       .then(res => setProducts(res.data))
       .catch(err => toast.error(err.response?.data?.error || 'Error al cargar productos'))
       .finally(() => setLoading(false));
@@ -51,7 +51,7 @@ const Products = () => {
   const handleDelete = async (id) => {
     const ok = await ask('¿Eliminar este producto?');
     if (!ok) return;
-    axios.delete(`http://localhost:3000/products/${id}`)
+    axios.delete(`/products/${id}`)
       .then(() => {
         toast.success('Producto eliminado');
         loadProducts();
@@ -69,8 +69,8 @@ const Products = () => {
     setFormErrors({});
     const cleanData = { ...formData, price: priceRaw };
     const request = editingProduct
-      ? axios.put(`http://localhost:3000/products/${editingProduct.id}`, cleanData)
-      : axios.post('http://localhost:3000/products', cleanData);
+      ? axios.put(`/products/${editingProduct.id}`, cleanData)
+      : axios.post('/products', cleanData);
     request
       .then(() => {
         toast.success(editingProduct ? 'Producto actualizado' : 'Producto creado');

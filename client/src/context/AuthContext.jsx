@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }) => {
               if (!storedRefresh) throw new Error('no refresh token');
 
               refreshPromiseRef.current = axios
-                .post('http://localhost:3000/auth/refresh', { refreshToken: storedRefresh })
+                .post('/auth/refresh', { refreshToken: storedRefresh })
                 .finally(() => { refreshPromiseRef.current = null; });
             }
 

@@ -22,8 +22,8 @@ const PlatformTenantDetail = () => {
 
   const load = () => {
     Promise.all([
-      axios.get(`http://localhost:3000/platform/tenants/${id}`),
-      axios.get(`http://localhost:3000/platform/tenants/${id}/admins`),
+      axios.get(`/platform/tenants/${id}`),
+      axios.get(`/platform/tenants/${id}/admins`),
     ])
       .then(([tenantRes, adminsRes]) => {
         setTenant(tenantRes.data);
@@ -39,7 +39,7 @@ const PlatformTenantDetail = () => {
 
   const toggleTenantActive = async () => {
     try {
-      await axios.put(`http://localhost:3000/platform/tenants/${id}`, {
+      await axios.put(`/platform/tenants/${id}`, {
         name: tenant.name,
         slug: tenant.slug,
         currency: tenant.currency,
@@ -58,7 +58,7 @@ const PlatformTenantDetail = () => {
     setSaving(true);
     setError('');
     try {
-      await axios.post(`http://localhost:3000/platform/tenants/${id}/admins`, form);
+      await axios.post(`/platform/tenants/${id}/admins`, form);
       setForm(EMPTY_ADMIN);
       setShowForm(false);
       load();
@@ -75,7 +75,7 @@ const PlatformTenantDetail = () => {
     setDownloadingBackup(true);
     try {
       const res = await axios.get(
-        `http://localhost:3000/platform/tenants/${id}/backup`,
+        `/platform/tenants/${id}/backup`,
         { responseType: 'blob' }
       );
       const url      = URL.createObjectURL(new Blob([res.data], { type: 'application/sql' }));
@@ -105,7 +105,7 @@ const PlatformTenantDetail = () => {
     setResetError('');
     try {
       await axios.put(
-        `http://localhost:3000/platform/tenants/${id}/admins/${resetingAdmin.id}/reset-password`,
+        `/platform/tenants/${id}/admins/${resetingAdmin.id}/reset-password`,
         { password: resetForm.password }
       );
       cancelReset();
@@ -119,7 +119,7 @@ const PlatformTenantDetail = () => {
   const handleToggleAdmin = async (adminId) => {
     setTogglingAdmin(adminId);
     try {
-      await axios.put(`http://localhost:3000/platform/tenants/${id}/admins/${adminId}/toggle`);
+      await axios.put(`/platform/tenants/${id}/admins/${adminId}/toggle`);
       load();
     } catch {}
     finally { setTogglingAdmin(null); }

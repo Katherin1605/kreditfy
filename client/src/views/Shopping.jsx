@@ -22,8 +22,8 @@ const Shopping = () => {
 
   const loadData = () => {
     Promise.all([
-      axios.get('http://localhost:3000/shopping'),
-      axios.get('http://localhost:3000/products'),
+      axios.get('/shopping'),
+      axios.get('/products'),
     ])
       .then(([shoppingRes, productsRes]) => {
         setShopping(shoppingRes.data);
@@ -41,7 +41,7 @@ const Shopping = () => {
   const handleDelete = async (id) => {
     const ok = await ask('¿Seguro que deseas eliminar esta compra?');
     if (!ok) return;
-    axios.delete(`http://localhost:3000/shopping/${id}`)
+    axios.delete(`/shopping/${id}`)
       .then(() => {
         toast.success('Compra eliminada');
         loadData();
@@ -55,7 +55,7 @@ const Shopping = () => {
     if (!formData.quantity || parseInt(formData.quantity) < 1) { toast.error('Ingresa una cantidad válida'); return; }
     const costRaw = parseFloat(formData.cost.toString().replace(/,/g, ''));
     if (isNaN(costRaw) || costRaw < 0) { toast.error('Ingresa un costo válido'); return; }
-    axios.post('http://localhost:3000/shopping', { ...formData, cost: costRaw })
+    axios.post('/shopping', { ...formData, cost: costRaw })
       .then(() => {
         toast.success('Compra registrada');
         setFormData({ product_id: '', quantity: '', cost: '', date: new Date().toISOString().split('T')[0] });

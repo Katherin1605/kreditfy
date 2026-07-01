@@ -89,7 +89,7 @@ const Customers = () => {
     setLoading(true);
     const params = { page: p, limit: 20 };
     if (q) params.q = q;
-    axios.get('http://localhost:3000/customers', { params })
+    axios.get('/customers', { params })
       .then(res => {
         const data = res.data;
         if (Array.isArray(data)) {
@@ -145,7 +145,7 @@ const Customers = () => {
   const handleDelete = async (id) => {
     const ok = await ask('¿Está seguro de eliminar este cliente?');
     if (!ok) return;
-    axios.delete(`http://localhost:3000/customers/${id}`)
+    axios.delete(`/customers/${id}`)
       .then(() => {
         toast.success('Cliente eliminado');
         loadCustomers(search.trim(), page);
@@ -161,8 +161,8 @@ const Customers = () => {
     if (Object.keys(errs).length) { setFormErrors(errs); return; }
     setFormErrors({});
     const request = editingCustomer
-      ? axios.put(`http://localhost:3000/customers/${editingCustomer.id}`, formData)
-      : axios.post('http://localhost:3000/customers', formData);
+      ? axios.put(`/customers/${editingCustomer.id}`, formData)
+      : axios.post('/customers', formData);
 
     request
       .then(() => {
@@ -185,7 +185,7 @@ const Customers = () => {
     try {
       const params = { page: 1, limit: 99999 };
       if (search) params.q = search.trim();
-      const res  = await axios.get('http://localhost:3000/customers', { params });
+      const res  = await axios.get('/customers', { params });
       const data = Array.isArray(res.data) ? res.data : (res.data.data || []);
 
       const escape = (v) => {
@@ -236,7 +236,7 @@ const Customers = () => {
   const handleConfirmImport = async () => {
     setImporting(true);
     try {
-      const res = await axios.post('http://localhost:3000/customers/import', { customers: importPreview });
+      const res = await axios.post('/customers/import', { customers: importPreview });
       const { inserted, skipped } = res.data;
       toast.success(`${inserted} clientes importados${skipped ? ` · ${skipped} duplicados omitidos` : ''}`);
       setShowImportModal(false);
