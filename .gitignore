@@ -16,6 +16,15 @@ dist-ssr
 **/.DS_Store
 .env
 
+# Backups de base de datos
+server/backups/*.dump
+server/backups/*.sql.gz
+server/backups/*.tar
+
+# Archivos subidos por usuarios
+server/public/uploads/**/*
+!server/public/uploads/.gitkeep
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
