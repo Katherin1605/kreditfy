@@ -16,6 +16,10 @@ dist-ssr
 **/.DS_Store
 .env
 
+# Claude Code
+.claude/
+.CLAUDE.md
+
 # Backups de base de datos
 server/backups/*.dump
 server/backups/*.sql.gz
