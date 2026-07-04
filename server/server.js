@@ -48,13 +48,12 @@ app.get("/", (req, res) => {
 const start = async () => {
   try {
     await initPlans();
-    app.listen(PORT, () => {
-      console.log(`🔋 🔥 Servidor corriendo en puerto http://localhost:${PORT}`);
-    });
   } catch (err) {
-    console.error('❌ Error al iniciar el servidor:', err);
-    process.exit(1);
+    console.error('⚠️  initPlans falló, continuando sin ella:', err.message);
   }
+  app.listen(PORT, () => {
+    console.log(`🔋 🔥 Servidor corriendo en puerto http://localhost:${PORT}`);
+  });
 };
 
 start();
