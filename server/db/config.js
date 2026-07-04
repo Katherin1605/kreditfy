@@ -1,15 +1,11 @@
 import pg from 'pg';
 import 'dotenv/config';
 
-const { DB_HOST, DB_USER, DB_PASSWORD, DB_NAME } = process.env;
+const { DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_URL } = process.env;
 
-const pool = new pg.Pool({
-  host: DB_HOST,
-  user: DB_USER,
-  password: DB_PASSWORD,
-  database: DB_NAME,
-  allowExitOnIdle: true,
-});
+const pool = DB_URL
+  ? new pg.Pool({ connectionString: DB_URL, ssl: { rejectUnauthorized: false }, allowExitOnIdle: true })
+  : new pg.Pool({ host: DB_HOST, user: DB_USER, password: DB_PASSWORD, database: DB_NAME, allowExitOnIdle: true });
 
 pool.query('SELECT NOW()', (err, res) => {
   if (err) {
