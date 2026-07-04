@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 
 const NAV_ITEMS = [
@@ -9,12 +11,32 @@ const NAV_ITEMS = [
 ];
 
 const PlatformLayout = () => {
-  const { currentAdmin, logout } = useAuth();
+  const { currentAdmin, logout, updateCurrentAdmin } = useAuth();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   const savedCollapsed = localStorage.getItem('platform_sidebar_collapsed') === 'true';
   const [collapsed, setCollapsed] = useState(savedCollapsed);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('logo', file);
+    setUploadingLogo(true);
+    try {
+      const res = await axios.post('/platform/logo', formData);
+      updateCurrentAdmin({ tenant_logo: res.data.logo_url });
+      toast.success('Logo actualizado');
+    } catch {
+      toast.error('Error al subir el logo');
+    } finally {
+      setUploadingLogo(false);
+      e.target.value = '';
+    }
+  };
 
   useEffect(() => {
     localStorage.setItem('platform_sidebar_collapsed', collapsed);
@@ -40,10 +62,25 @@ const PlatformLayout = () => {
 
       <aside className={sidebarClass}>
         <div className="sidebar-brand">
-          <div className="sidebar-brand-icon">
-            <i className="bi bi-grid-3x3-gap-fill"></i>
+          <div
+            className={`sidebar-brand-icon ${currentAdmin?.tenant_logo ? 'has-logo' : ''}`}
+            onClick={() => fileInputRef.current?.click()}
+            title="Cambiar logo"
+          >
+            {currentAdmin?.tenant_logo
+              ? <img src={currentAdmin.tenant_logo} alt="Logo" className="sidebar-brand-logo" />
+              : <i className="bi bi-grid-3x3-gap-fill"></i>
+            }
+            {uploadingLogo && <span className="spinner-border spinner-border-sm position-absolute" />}
           </div>
           <span className="sidebar-brand-text">Kreditfy</span>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="d-none"
+            onChange={handleLogoUpload}
+          />
         </div>
 
         <nav className="sidebar-nav">

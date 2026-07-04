@@ -3,7 +3,7 @@ import {
   getPlanConfigs, updatePlanConfig,
   getTenants, getTenantById, createTenant, updateTenant, approveTenant,
   getTenantAdmins, createTenantAdmin, toggleTenantAdmin, resetTenantAdminPassword,
-  uploadTenantLogo, getPlatformStats, getTenantsBreakdown,
+  uploadTenantLogo, uploadPlatformLogo, getPlatformStats, getTenantsBreakdown,
   getBackupInfo, triggerFullBackup, downloadTenantBackup,
 } from '../src/controllers/platformController.js';
 import { authenticateToken, requirePlatformAdmin } from '../src/middleware/authMiddleware.js';
@@ -27,6 +27,7 @@ router.get('/platform/tenants/:id/admins',                    authenticateToken,
 router.post('/platform/tenants/:id/admins',                   authenticateToken, requirePlatformAdmin, createTenantAdmin);
 router.put('/platform/tenants/:id/admins/:adminId/toggle',          authenticateToken, requirePlatformAdmin, toggleTenantAdmin);
 router.put('/platform/tenants/:id/admins/:adminId/reset-password',  authenticateToken, requirePlatformAdmin, resetTenantAdminPassword);
-router.post('/platform/tenants/:id/logo',                           authenticateToken, requirePlatformAdmin, uploadLogo.single('logo'), uploadTenantLogo);
+router.post('/platform/tenants/:id/logo',  authenticateToken, requirePlatformAdmin, uploadLogo.single('logo'), uploadTenantLogo);
+router.post('/platform/logo',              authenticateToken, requirePlatformAdmin, uploadLogo.single('logo'), uploadPlatformLogo);
 
 export default router;

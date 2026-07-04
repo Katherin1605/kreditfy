@@ -135,6 +135,10 @@ export const updateTenantLogo = async (tenantId, logoUrl) => {
   return result.rows[0];
 };
 
+export const updateAdminLogo = async (adminId, logoUrl) => {
+  await pool.query('UPDATE admins SET logo_url = $1 WHERE id = $2', [logoUrl, adminId]);
+};
+
 export const toggleAdminActive = async (adminId, tenantId) => {
   const result = await pool.query(
     `UPDATE admins SET active = NOT active WHERE id = $1 AND tenant_id = $2 RETURNING id, active`,

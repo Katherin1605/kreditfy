@@ -1,5 +1,8 @@
 import pool from "../../db/config.js";
 
+pool.query(`ALTER TABLE admins ADD COLUMN IF NOT EXISTS logo_url TEXT DEFAULT NULL`)
+  .catch(err => console.error('[admins] Error en migración logo_url:', err));
+
 // Auto-crea la tabla si no existe al iniciar el servidor
 pool.query(`
   CREATE TABLE IF NOT EXISTS password_reset_tokens (

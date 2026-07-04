@@ -96,6 +96,14 @@ export const AuthProvider = ({ children }) => {
     applyToken(token);
   };
 
+  const updateCurrentAdmin = (patch) => {
+    setCurrentAdmin(prev => {
+      const updated = { ...prev, ...patch };
+      localStorage.setItem('admin', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const logout = () => {
     setCurrentAdmin(null);
     localStorage.removeItem('admin');
@@ -105,7 +113,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ currentAdmin, login, logout, loading }}>
+    <AuthContext.Provider value={{ currentAdmin, login, logout, loading, updateCurrentAdmin }}>
       {children}
     </AuthContext.Provider>
   );

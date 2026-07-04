@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import * as platformModel from "../models/platformModel.js";
 import * as adminModel from "../models/adminModel.js";
 import { runFullBackup, getLastBackupInfo, generateTenantDump } from "../utils/backup.js";
+import { uploadToCloudinary } from "../utils/cloudinaryConfig.js";
 
 export const getPlanConfigs = async (req, res) => {
   try {
@@ -126,10 +127,22 @@ export const resetTenantAdminPassword = async (req, res) => {
 export const uploadTenantLogo = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No se recibió ningún archivo' });
-    const logoUrl = `${process.env.FRONTEND_URL?.replace('5173', '3000') || 'http://localhost:3000'}/uploads/logos/${req.file.filename}`;
-    const tenant = await platformModel.updateTenantLogo(req.params.id, logoUrl);
+    const result = await uploadToCloudinary(req.file.buffer);
+    const tenant = await platformModel.updateTenantLogo(req.params.id, result.secure_url);
     if (!tenant) return res.status(404).json({ error: 'Tenant no encontrado' });
-    res.json({ logo_url: logoUrl, tenant });
+    res.json({ logo_url: result.secure_url, tenant });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al subir el logo' });
+  }
+};
+
+export const uploadPlatformLogo = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No se recibió ningún archivo' });
+    const result = await uploadToCloudinary(req.file.buffer, 'kreditfy/platform');
+    await platformModel.updateAdminLogo(req.admin.id, result.secure_url);
+    res.json({ logo_url: result.secure_url });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al subir el logo' });

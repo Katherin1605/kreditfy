@@ -437,6 +437,8 @@
   color: #fff;
   font-size: 1rem;
   flex-shrink: 0;
+  cursor: pointer;
+  position: relative;
 }
 
 .logo-upload-label {

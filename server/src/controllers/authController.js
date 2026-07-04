@@ -10,14 +10,16 @@ const ACCESS_SECRET  = process.env.JWT_PRIVATE         || "kreditfy_secret";
 const REFRESH_SECRET = process.env.JWT_REFRESH_PRIVATE || "kreditfy_refresh_secret";
 
 const buildPayload = (admin) => ({
-  id:          admin.id,
-  name:        admin.name,
-  email:       admin.email,
-  role:        admin.role,
-  permissions: admin.permissions || [],
-  tenant_id:   admin.tenant_id   ?? null,
-  tenant_name: admin.tenant_name ?? null,
-  tenant_logo: admin.tenant_logo ?? null,
+  id:           admin.id,
+  name:         admin.name,
+  email:        admin.email,
+  role:         admin.role,
+  permissions:  admin.permissions || [],
+  tenant_id:    admin.tenant_id    ?? null,
+  tenant_name:  admin.tenant_name  ?? null,
+  tenant_logo:  admin.role === 'platform_admin'
+                  ? (admin.logo_url ?? null)
+                  : (admin.tenant_logo ?? null),
   plan_modules: admin.plan_modules ?? null,
 });
 
