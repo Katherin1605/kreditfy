@@ -1,6 +1,6 @@
 import pool from "../../db/config.js";
 
-const initPlans = async () => {
+export const initPlans = async () => {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS plan_configs (
       plan        VARCHAR(20) PRIMARY KEY,
@@ -18,7 +18,6 @@ const initPlans = async () => {
   await pool.query(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS plan VARCHAR(20) NOT NULL DEFAULT 'basic'`);
   await pool.query(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS pending_review BOOLEAN NOT NULL DEFAULT FALSE`);
 };
-initPlans().catch(err => console.error('Error inicializando plan_configs:', err));
 
 export const getPlanConfigs = async () => {
   const result = await pool.query('SELECT * FROM plan_configs ORDER BY plan');

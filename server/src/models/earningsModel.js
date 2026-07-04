@@ -1,5 +1,18 @@
 import pool from "../../db/config.js";
 
+pool.query(`
+  CREATE TABLE IF NOT EXISTS monthly_closings (
+    id         SERIAL PRIMARY KEY,
+    year       INTEGER     NOT NULL,
+    month      INTEGER     NOT NULL,
+    notas      TEXT,
+    cerrado    BOOLEAN     NOT NULL DEFAULT FALSE,
+    tenant_id  INTEGER     REFERENCES tenants(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT monthly_closings_year_month_tenant_key UNIQUE (year, month, tenant_id)
+  )
+`).catch(err => console.error('[earnings] Error en migración monthly_closings:', err));
+
 export const getMonthlySummary = async (year, currency = '', tenantId) => {
   const targetYear = parseInt(year) || new Date().getFullYear();
   const params = [targetYear];
