@@ -3,6 +3,7 @@ import * as platformModel from "../models/platformModel.js";
 import * as adminModel from "../models/adminModel.js";
 import { runFullBackup, getLastBackupInfo, generateTenantDump } from "../utils/backup.js";
 import { uploadToCloudinary } from "../utils/cloudinaryConfig.js";
+import { sendApprovalEmail } from "../utils/mailer.js";
 
 export const getPlanConfigs = async (req, res) => {
   try {
@@ -151,12 +152,28 @@ export const uploadPlatformLogo = async (req, res) => {
 
 export const approveTenant = async (req, res) => {
   try {
-    const tenant = await platformModel.approveTenant(req.params.id);
-    if (!tenant) return res.status(404).json({ error: 'Tenant no encontrado' });
-    res.json(tenant);
+    const result = await platformModel.approveTenant(req.params.id);
+    if (!result?.tenant) return res.status(404).json({ error: 'Tenant no encontrado' });
+    res.json(result.tenant);
+    if (result.adminEmail) {
+      sendApprovalEmail(result.adminEmail, result.tenant.name).catch(err =>
+        console.error('⚠️  Error enviando email de aprobación:', err.message)
+      );
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al aprobar el tenant' });
+  }
+};
+
+export const deleteTenant = async (req, res) => {
+  try {
+    const tenant = await platformModel.deleteTenant(req.params.id);
+    if (!tenant) return res.status(404).json({ error: 'Tenant no encontrado' });
+    res.json({ message: 'Tenant eliminado correctamente' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar el tenant' });
   }
 };
 

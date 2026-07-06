@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import toast from 'react-hot-toast';
+import useConfirm from '../../hooks/useConfirm';
 
 const EMPTY_FORM = { name: '', slug: '', currency: 'USD', logo_url: '', plan: 'basic' };
 
@@ -13,6 +15,7 @@ const PlatformTenants = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const { confirmModal, ask } = useConfirm();
 
   const load = () => {
     setLoading(true);
@@ -113,12 +116,30 @@ const PlatformTenants = () => {
   const handleApprove = async (tenantId) => {
     try {
       await axios.post(`/platform/tenants/${tenantId}/approve`);
+      toast.success('Tenant aprobado. Se notificó al administrador por correo.');
       load();
-    } catch {}
+    } catch {
+      toast.error('Error al aprobar el tenant');
+    }
+  };
+
+  const handleDelete = async (tenant) => {
+    const confirmed = await ask(
+      `¿Eliminar "${tenant.name}"? Esta acción eliminará permanentemente todos sus datos (clientes, ventas, productos, pagos) y no se puede deshacer.`
+    );
+    if (!confirmed) return;
+    try {
+      await axios.delete(`/platform/tenants/${tenant.id}`);
+      toast.success('Tenant eliminado');
+      load();
+    } catch {
+      toast.error('Error al eliminar el tenant');
+    }
   };
 
   return (
     <div>
+      {confirmModal}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0">Tenants</h2>
         <button className="btn btn-primary btn-sm" onClick={openCreate}>
@@ -312,6 +333,13 @@ const PlatformTenants = () => {
                             <i className={`bi ${t.active ? 'bi-pause-circle' : 'bi-play-circle'}`}></i>
                           </button>
                         )}
+                        <button
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() => handleDelete(t)}
+                          title="Eliminar tenant"
+                        >
+                          <i className="bi bi-trash"></i>
+                        </button>
                         <Link
                           to={`/platform/tenants/${t.id}`}
                           className="btn btn-sm btn-outline-primary"

@@ -91,8 +91,36 @@ export const approveTenant = async (tenantId) => {
       `UPDATE admins SET active = TRUE WHERE tenant_id = $1`,
       [tenantId]
     );
+    const adminRes = await client.query(
+      `SELECT email FROM admins WHERE tenant_id = $1 AND role = 'superadmin' LIMIT 1`,
+      [tenantId]
+    );
     await client.query('COMMIT');
-    return tenantRes.rows[0];
+    return { tenant: tenantRes.rows[0], adminEmail: adminRes.rows[0]?.email ?? null };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+};
+
+export const deleteTenant = async (tenantId) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(`DELETE FROM audit_logs      WHERE tenant_id = $1`, [tenantId]);
+    await client.query(`DELETE FROM monthly_closings WHERE tenant_id = $1`, [tenantId]);
+    await client.query(`DELETE FROM payments        WHERE sale_id IN (SELECT id FROM sales WHERE tenant_id = $1)`, [tenantId]);
+    await client.query(`DELETE FROM sale_details    WHERE sale_id IN (SELECT id FROM sales WHERE tenant_id = $1)`, [tenantId]);
+    await client.query(`DELETE FROM sales           WHERE tenant_id = $1`, [tenantId]);
+    await client.query(`DELETE FROM shopping        WHERE tenant_id = $1`, [tenantId]);
+    await client.query(`DELETE FROM customers       WHERE tenant_id = $1`, [tenantId]);
+    await client.query(`DELETE FROM products        WHERE tenant_id = $1`, [tenantId]);
+    await client.query(`DELETE FROM admins          WHERE tenant_id = $1`, [tenantId]);
+    const res = await client.query(`DELETE FROM tenants WHERE id = $1 RETURNING *`, [tenantId]);
+    await client.query('COMMIT');
+    return res.rows[0];
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;
