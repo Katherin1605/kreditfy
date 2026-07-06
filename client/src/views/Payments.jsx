@@ -234,9 +234,9 @@ const Payments = () => {
                         </div>
                         <small className="text-muted">{new Date(s.sale_date || s.created_at).toLocaleDateString('es-ES')}</small>
                         <div className="d-flex justify-content-between mt-2 mb-1 small">
-                          <span>Total: <strong><AmountDisplay amount={s.total} rates={rates} /></strong></span>
+                          <span>Total: <strong><AmountDisplay amount={s.total} rates={rates} storedRate={s.exchange_rate} /></strong></span>
                           <span className="text-muted">{cuotasPagadas}/{s.cuotas} cuotas</span>
-                          <span className="text-warning fw-bold">Saldo: <AmountDisplay amount={s.balance} rates={rates} /></span>
+                          <span className="text-warning fw-bold">Saldo: <AmountDisplay amount={s.balance} rates={rates} storedRate={s.exchange_rate} /></span>
                         </div>
                         <div className="progress" style={{ height: '5px' }}>
                           <div className={`progress-bar ${getProgressColor(pct)}`} style={{ width: `${pct}%` }} />
@@ -291,14 +291,14 @@ const Payments = () => {
                 {saleDetail?.details?.map(d => (
                   <div key={d.id} className="d-flex justify-content-between small mb-1">
                     <span>{d.product_name} × {d.quantity}</span>
-                    <AmountDisplay amount={d.quantity * parseFloat(d.price)} rates={rates} />
+                    <AmountDisplay amount={d.quantity * parseFloat(d.price)} rates={rates} storedRate={selectedSale.exchange_rate} />
                   </div>
                 ))}
 
                 <hr />
                 <div className="d-flex justify-content-between mb-1">
                   <span>Total</span>
-                  <strong><AmountDisplay amount={selectedSale.total} rates={rates} /></strong>
+                  <strong><AmountDisplay amount={selectedSale.total} rates={rates} storedRate={selectedSale.exchange_rate} /></strong>
                 </div>
                 <div className="d-flex justify-content-between mb-1">
                   <span className="text-muted small">Cuotas</span>
@@ -331,11 +331,11 @@ const Payments = () => {
                 </div>
                 <div className="d-flex justify-content-between mb-1 text-success">
                   <span>Pagado</span>
-                  <AmountDisplay amount={selectedSale.total_paid} rates={rates} />
+                  <AmountDisplay amount={selectedSale.total_paid} rates={rates} storedRate={selectedSale.exchange_rate} />
                 </div>
                 <div className="d-flex justify-content-between fw-bold text-warning">
                   <span>Saldo pendiente</span>
-                  <AmountDisplay amount={selectedSale.balance} rates={rates} />
+                  <AmountDisplay amount={selectedSale.balance} rates={rates} storedRate={selectedSale.exchange_rate} />
                 </div>
 
                 {payments.length > 0 && (

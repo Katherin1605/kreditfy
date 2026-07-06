@@ -105,11 +105,11 @@ const Layout = () => {
             <div className="sidebar-user">
               <i className="bi bi-person-circle fs-4 text-primary flex-shrink-0"></i>
               <div className="sidebar-user-info">
-                <div className="fw-semibold small text-truncate" style={{ maxWidth: '140px' }}>
+                <div className="fw-semibold small text-truncate sidebar-user-name">
                   {currentAdmin.name}
                 </div>
                 {currentAdmin.role === 'superadmin' && (
-                  <span className="badge bg-primary" style={{ fontSize: '0.65rem' }}>superadmin</span>
+                  <span className="badge bg-primary badge-platform-role">superadmin</span>
                 )}
               </div>
             </div>

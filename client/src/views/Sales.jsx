@@ -25,6 +25,7 @@ const Sales = () => {
   const [editingSale, setEditingSale] = useState(null);
   const [cuotas, setCuotas] = useState('1');
   const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
+  const [exchangeRate, setExchangeRate] = useState('');
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
   const [exporting, setExporting] = useState(false);
@@ -109,6 +110,7 @@ const Sales = () => {
     setEditingSale(null);
     setCuotas('1');
     setSaleDate(new Date().toISOString().split('T')[0]);
+    setExchangeRate(rates.USD ? String(rates.USD) : '');
   };
 
   const handleSubmit = () => {
@@ -125,6 +127,7 @@ const Sales = () => {
       cuotas: parseInt(cuotas) || 1,
       sale_date: saleDate,
       currency: 'USD',
+      exchange_rate: parseFloat(exchangeRate) || null,
       products: items.map(i => ({
         product_id: i.product_id,
         quantity: i.quantity,
@@ -165,6 +168,7 @@ const Sales = () => {
       })));
       setCuotas(detail.cuotas?.toString() || '1');
       setSaleDate(detail.sale_date ? detail.sale_date.split('T')[0] : new Date().toISOString().split('T')[0]);
+      setExchangeRate(detail.exchange_rate ? String(detail.exchange_rate) : (rates.USD ? String(rates.USD) : ''));
       setShowForm(true);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Error al cargar la venta');
@@ -259,7 +263,7 @@ const Sales = () => {
               : <><i className="bi bi-file-earmark-spreadsheet me-1"></i>Exportar CSV</>
             }
           </button>
-          <button className="btn btn-primary text-nowrap" onClick={() => setShowForm(true)}>
+          <button className="btn btn-primary text-nowrap" onClick={() => { setExchangeRate(rates.USD ? String(rates.USD) : ''); setShowForm(true); }}>
             <i className="bi bi-plus-lg me-1"></i>
             Nueva Venta
           </button>
@@ -322,6 +326,8 @@ const Sales = () => {
           setCuotas={setCuotas}
           saleDate={saleDate}
           setSaleDate={setSaleDate}
+          exchangeRate={exchangeRate}
+          setExchangeRate={setExchangeRate}
           onSubmit={handleSubmit}
           onClose={resetForm}
         />
@@ -368,17 +374,17 @@ const Sales = () => {
                         <span className="badge bg-light text-dark border">USD</span>
                       </td>
                       <td className="px-4 py-2">
-                        <AmountDisplay amount={s.total} rates={rates} />
+                        <AmountDisplay amount={s.total} rates={rates} storedRate={s.exchange_rate} />
                       </td>
                       <td className="px-4 py-2">
                         <span>{s.cuotas} cuotas</span><br />
                         <small className="text-muted">{formatCurrency(s.valor_cuota || 0, 'USD')}/c.</small>
                       </td>
                       <td className="px-4 py-2 text-success">
-                        <AmountDisplay amount={s.total_paid} rates={rates} />
+                        <AmountDisplay amount={s.total_paid} rates={rates} storedRate={s.exchange_rate} />
                       </td>
                       <td className="px-4 py-2 text-warning">
-                        <AmountDisplay amount={s.balance} rates={rates} />
+                        <AmountDisplay amount={s.balance} rates={rates} storedRate={s.exchange_rate} />
                       </td>
                       <td className="px-4 py-2">
                         <span className={`badge ${s.status === 'paid' ? 'bg-success' : 'bg-warning text-dark'}`}>
@@ -427,8 +433,8 @@ const Sales = () => {
                                   <tr key={d.id}>
                                     <td>{d.product_name}</td>
                                     <td>{d.quantity}</td>
-                                    <td><AmountDisplay amount={d.price} rates={rates} /></td>
-                                    <td><AmountDisplay amount={d.quantity * parseFloat(d.price)} rates={rates} /></td>
+                                    <td><AmountDisplay amount={d.price} rates={rates} storedRate={s.exchange_rate} /></td>
+                                    <td><AmountDisplay amount={d.quantity * parseFloat(d.price)} rates={rates} storedRate={s.exchange_rate} /></td>
                                   </tr>
                                 ))}
                               </tbody>

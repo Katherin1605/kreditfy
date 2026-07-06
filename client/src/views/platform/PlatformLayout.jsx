@@ -106,7 +106,7 @@ const PlatformLayout = () => {
               <div className="fw-semibold small text-truncate sidebar-user-name">
                 {currentAdmin?.name}
               </div>
-              <span className="badge bg-dark badge-platform-role">Plataforma administrativa</span>
+              <span className="badge badge-platform-role">Plataforma administrativa</span>
             </div>
           </div>
           <button

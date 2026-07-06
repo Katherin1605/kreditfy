@@ -37,75 +37,73 @@ const Login = () => {
   };
 
   return (
-    <>
-      <div className="main-container">
-        <div className="d-flex justify-content-center align-items-center vh-100 bd-page">
-          <div className="card shadow p-4 border-0 form-card">
-            <div className="text-center mb-4 mt-2">
-              <div className="icon-circle d-inline-flex mb-3 shadow-sm">
-                <i className="bi bi-box-arrow-in-right fs-2" aria-hidden></i>
-              </div>
-              <h1>Kreditfy</h1>
-              <p>Ingresa tus credenciales para acceder al sistema</p>
+    <div className="login-page">
+      <div className="login-card card border-0">
+        <div className="card-body p-4 p-sm-5">
+          <div className="text-center mb-4">
+            <div className="login-brand-icon mb-3">
+              <i className="bi bi-hexagon-fill"></i>
             </div>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-3">
-                <label htmlFor="email" className="form-label text-secondary fw-semibold mb-1 text-sm">
-                  Email
-                </label>
+            <h1 className="login-title">Kreditfy</h1>
+            <p className="login-subtitle">Ingresa tus credenciales para continuar</p>
+          </div>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label htmlFor="email" className="form-label fw-semibold small">
+                Correo electrónico
+              </label>
+              <input
+                type="email"
+                className="form-control"
+                id="email"
+                name="email"
+                placeholder="tu@correo.com"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="password" className="form-label fw-semibold small">
+                Contraseña
+              </label>
+              <div className="input-group">
                 <input
-                  type="email"
+                  type={showPassword ? 'text' : 'password'}
                   className="form-control"
-                  id="email"
-                  name="email"
-                  placeholder="Ingresa tu email"
-                  value={formData.email}
+                  id="password"
+                  name="password"
+                  placeholder="••••••••"
+                  value={formData.password}
                   onChange={handleChange}
                   required
                 />
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={() => setShowPassword(prev => !prev)}
+                  tabIndex={-1}
+                >
+                  <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                </button>
               </div>
-              <div className="mb-3">
-                <label htmlFor="password" className="form-label text-secondary fw-semibold mb-1 text-sm">
-                  Contraseña
-                </label>
-                <div className="input-group">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    className="form-control"
-                    id="password"
-                    name="password"
-                    placeholder="Ingresa tu contraseña"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-outline-secondary"
-                    onClick={() => setShowPassword(prev => !prev)}
-                    tabIndex={-1}
-                  >
-                    <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
-                  </button>
-                </div>
-              </div>
-              {error && <div className="alert alert-danger py-2">{error}</div>}
-              <button type="submit" className="btn-primary w-100 py-2 mb-3" disabled={loading}>
-                {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-              </button>
-              <div className="text-center d-flex justify-content-between">
-                <Link to="/forgot-password" className="text-muted small">
-                  ¿Olvidaste tu contraseña?
-                </Link>
-                <Link to="/register" className="text-muted small">
-                  Registrar empresa
-                </Link>
-              </div>
-            </form>
-          </div>
+            </div>
+            {error && <div className="alert alert-danger py-2 small">{error}</div>}
+            <button type="submit" className="btn btn-primary w-100 py-2 mb-3 fw-semibold" disabled={loading}>
+              {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+            </button>
+            <div className="d-flex justify-content-between">
+              <Link to="/forgot-password" className="login-link small">
+                ¿Olvidaste tu contraseña?
+              </Link>
+              <Link to="/register" className="login-link small">
+                Registrar empresa
+              </Link>
+            </div>
+          </form>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
