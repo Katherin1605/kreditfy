@@ -426,8 +426,8 @@ const Payments = () => {
                           >
                             <option value="">Sin especificar</option>
                             <option value="cash">Efectivo</option>
-                            <option value="transfer">Transferencia</option>
-                            <option value="card">Tarjeta</option>
+                            <option value="transfer">Pago Móvil</option>
+                            <option value="card">Cobro Externo</option>
                           </select>
                         </div>
                         <div className="d-flex gap-2">
