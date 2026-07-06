@@ -188,6 +188,18 @@ export const toggleTenantAdmin = async (req, res) => {
   }
 };
 
+export const deleteTenantAdmin = async (req, res) => {
+  try {
+    const admin = await adminModel.getAdminById(req.params.adminId, parseInt(req.params.id));
+    if (!admin) return res.status(404).json({ error: 'Administrador no encontrado' });
+    await adminModel.deleteAdmin(req.params.adminId, parseInt(req.params.id));
+    res.json({ message: 'Administrador eliminado' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar administrador' });
+  }
+};
+
 export const getTenantsBreakdown = async (req, res) => {
   try {
     const rows = await platformModel.getTenantsBreakdown();

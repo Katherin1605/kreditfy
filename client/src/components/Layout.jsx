@@ -48,9 +48,9 @@ const Layout = () => {
 
   const visibleItems = NAV_ITEMS.filter(item => {
     if (!item.view) return true;
+    if (item.view === 'admin') return currentAdmin?.role === 'superadmin';
     if (currentAdmin?.plan_modules && !currentAdmin.plan_modules.includes(item.view)) return false;
     if (currentAdmin?.role === 'superadmin') return true;
-    if (item.view === 'admin') return false;
     return currentAdmin?.permissions?.includes(item.view);
   });
 

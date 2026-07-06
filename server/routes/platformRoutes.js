@@ -2,7 +2,7 @@ import { Router } from 'express';
 import {
   getPlanConfigs, updatePlanConfig,
   getTenants, getTenantById, createTenant, updateTenant, approveTenant,
-  getTenantAdmins, createTenantAdmin, toggleTenantAdmin, resetTenantAdminPassword,
+  getTenantAdmins, createTenantAdmin, toggleTenantAdmin, resetTenantAdminPassword, deleteTenantAdmin,
   uploadTenantLogo, uploadPlatformLogo, getPlatformStats, getTenantsBreakdown,
   getBackupInfo, triggerFullBackup, downloadTenantBackup, deleteTenant,
 } from '../src/controllers/platformController.js';
@@ -28,6 +28,7 @@ router.get('/platform/tenants/:id/admins',                    authenticateToken,
 router.post('/platform/tenants/:id/admins',                   authenticateToken, requirePlatformAdmin, createTenantAdmin);
 router.put('/platform/tenants/:id/admins/:adminId/toggle',          authenticateToken, requirePlatformAdmin, toggleTenantAdmin);
 router.put('/platform/tenants/:id/admins/:adminId/reset-password',  authenticateToken, requirePlatformAdmin, resetTenantAdminPassword);
+router.delete('/platform/tenants/:id/admins/:adminId',              authenticateToken, requirePlatformAdmin, deleteTenantAdmin);
 router.post('/platform/tenants/:id/logo',  authenticateToken, requirePlatformAdmin, uploadLogo.single('logo'), uploadTenantLogo);
 router.post('/platform/logo',              authenticateToken, requirePlatformAdmin, uploadLogo.single('logo'), uploadPlatformLogo);
 

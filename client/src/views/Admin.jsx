@@ -17,6 +17,7 @@ const AVAILABLE_VIEWS = [
 const Admin = () => {
   const { currentAdmin } = useAuth();
   const [admins, setAdmins] = useState([]);
+  const [planInfo, setPlanInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState(null);
@@ -30,11 +31,23 @@ const Admin = () => {
 
   const loadAdmins = () => {
     setLoading(true);
-    axios.get('/admins')
-      .then(res => setAdmins(res.data))
+    Promise.all([
+      axios.get('/admins'),
+      axios.get('/admins/plan-info'),
+    ])
+      .then(([adminsRes, planRes]) => {
+        setAdmins(adminsRes.data);
+        setPlanInfo(planRes.data);
+      })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   };
+
+  const atPlanLimit = planInfo && planInfo.max_admins !== -1 && planInfo.count >= planInfo.max_admins;
+
+  const availableViews = currentAdmin?.plan_modules
+    ? AVAILABLE_VIEWS.filter(v => currentAdmin.plan_modules.includes(v.key))
+    : AVAILABLE_VIEWS;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -127,9 +140,23 @@ const Admin = () => {
     <>
       {confirmModal}
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5>Administradores</h5>
+        <div>
+          <h5 className="mb-0">Administradores</h5>
+          {planInfo && (
+            <small className={`text-muted ${atPlanLimit ? 'text-warning fw-semibold' : ''}`}>
+              {planInfo.max_admins === -1
+                ? `Plan ${planInfo.plan} · Sin límite de administradores`
+                : `Plan ${planInfo.plan} · ${planInfo.count} de ${planInfo.max_admins} administrador(es)`}
+            </small>
+          )}
+        </div>
         {currentAdmin?.role === 'superadmin' && (
-          <button className="btn btn-primary" onClick={handleNew}>
+          <button
+            className="btn btn-primary"
+            onClick={handleNew}
+            disabled={atPlanLimit}
+            title={atPlanLimit ? `Tu plan ${planInfo.plan} no permite más administradores` : ''}
+          >
             <i className="bi bi-plus-lg me-1"></i> Nuevo Administrador
           </button>
         )}
@@ -253,10 +280,11 @@ const Admin = () => {
                           <i className={`bi ${admin.active ? 'bi-person-slash' : 'bi-person-check'}`}></i>
                         </button>
                       )}
-                      {currentAdmin?.role === 'superadmin' && (
+                      {currentAdmin?.role === 'superadmin' && admin.id !== currentAdmin.id && (
                         <button
                           className="btn btn-sm btn-outline-danger"
                           onClick={() => handleDelete(admin.id)}
+                          title="Eliminar"
                         >
                           <i className="bi bi-trash"></i>
                         </button>
@@ -274,7 +302,7 @@ const Admin = () => {
                     <div className="mt-3 pt-3 border-top">
                       <p className="small fw-bold mb-2 text-muted">Acceso a vistas:</p>
                       <div className="d-flex flex-wrap gap-2">
-                        {AVAILABLE_VIEWS.map(v => (
+                        {availableViews.map(v => (
                           <div key={v.key} className="form-check form-check-inline m-0">
                             <input
                               type="checkbox"

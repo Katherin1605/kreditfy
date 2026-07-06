@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
+import toast from 'react-hot-toast';
+import useConfirm from '../../hooks/useConfirm';
 
 const EMPTY_ADMIN = { name: '', email: '', password: '', role: 'superadmin' };
 
@@ -14,7 +16,9 @@ const PlatformTenantDetail = () => {
   const [saving, setSaving] = useState(false);
   const [downloadingBackup, setDownloadingBackup] = useState(false);
   const [togglingAdmin, setTogglingAdmin] = useState(null);
+  const [deletingAdmin, setDeletingAdmin] = useState(null);
   const [resetingAdmin, setResetingAdmin] = useState(null);
+  const { confirmModal, ask } = useConfirm();
   const [resetForm, setResetForm] = useState({ password: '', confirm: '' });
   const [resetSaving, setResetSaving] = useState(false);
   const [resetError, setResetError] = useState('');
@@ -125,11 +129,27 @@ const PlatformTenantDetail = () => {
     finally { setTogglingAdmin(null); }
   };
 
+  const handleDeleteAdmin = async (admin) => {
+    const ok = await ask(`¿Eliminar al administrador "${admin.name}"? Esta acción no se puede deshacer.`);
+    if (!ok) return;
+    setDeletingAdmin(admin.id);
+    try {
+      await axios.delete(`/platform/tenants/${id}/admins/${admin.id}`);
+      toast.success('Administrador eliminado');
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Error al eliminar administrador');
+    } finally {
+      setDeletingAdmin(null);
+    }
+  };
+
   if (loading) return <p className="text-muted">Cargando…</p>;
   if (!tenant) return <p className="text-danger">Tenant no encontrado.</p>;
 
   return (
     <div>
+      {confirmModal}
       <nav aria-label="breadcrumb" className="layout-breadcrumb mb-3">
         <ol className="breadcrumb">
           <li className="breadcrumb-item"><Link to="/platform">Dashboard</Link></li>
@@ -334,6 +354,14 @@ const PlatformTenantDetail = () => {
                         title={a.active ? 'Desactivar' : 'Activar'}
                       >
                         <i className={`bi ${a.active ? 'bi-pause-circle' : 'bi-play-circle'}`}></i>
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={() => handleDeleteAdmin(a)}
+                        disabled={deletingAdmin === a.id}
+                        title="Eliminar administrador"
+                      >
+                        <i className="bi bi-trash"></i>
                       </button>
                     </div>
                   </td>

@@ -1,5 +1,6 @@
 import * as adminModel from "../models/adminModel.js";
 import * as auditModel from "../models/auditModel.js";
+import * as platformModel from "../models/platformModel.js";
 
 export const getAdmins = async (req, res) => {
   try {
@@ -22,11 +23,31 @@ export const getAdminById = async (req, res) => {
   }
 };
 
+export const getPlanInfo = async (req, res) => {
+  try {
+    const info = await platformModel.getTenantWithPlan(req.tenantId);
+    const count = await platformModel.getAdminCount(req.tenantId);
+    res.json({ count, max_admins: info?.plan_max_admins ?? -1, plan: info?.plan ?? 'basic' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al obtener info del plan' });
+  }
+};
+
 export const createAdmin = async (req, res) => {
   try {
     const { name, email, password } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ error: "Nombre, email y contraseña son obligatorios" });
+    }
+    const tenantInfo = await platformModel.getTenantWithPlan(req.tenantId);
+    if (tenantInfo?.plan_max_admins !== -1) {
+      const count = await platformModel.getAdminCount(req.tenantId);
+      if (count >= tenantInfo.plan_max_admins) {
+        return res.status(400).json({
+          error: `Tu plan ${tenantInfo.plan} permite máximo ${tenantInfo.plan_max_admins} administrador(es)`
+        });
+      }
     }
     const newAdmin = await adminModel.createAdmin(req.body, req.tenantId);
     res.status(201).json(newAdmin);
@@ -71,6 +92,9 @@ export const updateAdmin = async (req, res) => {
 
 export const deleteAdmin = async (req, res) => {
   try {
+    if (parseInt(req.params.id) === req.admin.id) {
+      return res.status(400).json({ error: "No puedes eliminarte a ti mismo" });
+    }
     const admin = await adminModel.getAdminById(req.params.id, req.tenantId);
     if (!admin) return res.status(404).json({ error: "Administrador no encontrado" });
     await adminModel.deleteAdmin(req.params.id, req.tenantId);

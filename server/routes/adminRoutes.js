@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
   getAdmins, getAdminById, createAdmin, updateAdmin, deleteAdmin,
-  toggleAdminActive, updateAdminPermissions,
+  toggleAdminActive, updateAdminPermissions, getPlanInfo,
 } from "../src/controllers/adminController.js";
 import { authenticateToken, requireSuperAdmin } from "../src/middleware/authMiddleware.js";
 import { resolveTenant } from "../src/middleware/resolveTenant.js";
@@ -9,6 +9,7 @@ import { resolveTenant } from "../src/middleware/resolveTenant.js";
 const router = Router();
 
 router.get("/admins", authenticateToken, resolveTenant, getAdmins);
+router.get("/admins/plan-info", authenticateToken, resolveTenant, getPlanInfo);
 router.get("/admins/:id", authenticateToken, resolveTenant, getAdminById);
 router.post("/admins", authenticateToken, resolveTenant, requireSuperAdmin, createAdmin);
 router.put("/admins/:id", authenticateToken, resolveTenant, updateAdmin);
