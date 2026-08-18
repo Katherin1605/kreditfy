@@ -59,7 +59,7 @@ const start = async () => {
 
 start();
 
-cron.schedule('0 2 * * *', async () => {
+cron.schedule('0 2 1 * *', async () => {
   try {
     const result = await runFullBackup();
     console.log(`✅ Backup automático completado: ${result.filename} (${result.size_mb} MB)`);

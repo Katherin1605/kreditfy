@@ -1,15 +1,20 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { readdir, stat, unlink, mkdir } from 'fs/promises';
+import { readdir, stat, unlink, mkdir, writeFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import pool from '../../db/config.js';
 
-const execAsync   = promisify(exec);
-const BACKUP_DIR  = path.resolve('backups');
-const KEEP_DAYS   = 7;
+const BACKUP_DIR = path.resolve('backups');
+const KEEP_FILES = 7;
 
-// Orden de exportación respetando dependencias (FK)
+// Orden respetando dependencias FK
+const ALL_TABLES = [
+  'tenants', 'plan_configs', 'exchange_rates',
+  'admins', 'customers', 'products',
+  'sales', 'sale_details', 'payments',
+  'shopping', 'audit_logs', 'monthly_closings',
+  'password_reset_tokens',
+];
+
 const TENANT_TABLES = [
   'customers', 'products', 'admins',
   'sales', 'sale_details', 'payments',
@@ -35,19 +40,51 @@ const serializeValue = (v) => {
   return `'${String(v).replace(/'/g, "''")}'`;
 };
 
+const dumpTable = async (table, whereClause = '', params = []) => {
+  const query = whereClause
+    ? `SELECT * FROM "${table}" WHERE ${whereClause} ORDER BY id`
+    : `SELECT * FROM "${table}" ORDER BY id`;
+
+  const { rows } = await pool.query(query, params);
+  const lines = [`-- Tabla: ${table} (${rows.length} registros)`];
+
+  if (rows.length > 0) {
+    const cols    = Object.keys(rows[0]);
+    const colList = cols.map(c => `"${c}"`).join(', ');
+    for (const row of rows) {
+      const vals = cols.map(c => serializeValue(row[c])).join(', ');
+      lines.push(`INSERT INTO "${table}" (${colList}) VALUES (${vals});`);
+    }
+  }
+
+  lines.push('');
+  return lines.join('\n');
+};
+
 // ── Backup completo ────────────────────────────────────────────────────────
 
 export const runFullBackup = async () => {
   await ensureDir();
   const date     = new Date().toISOString().slice(0, 10);
-  const filename = `backup_${date}_${Date.now()}.dump`;
+  const filename = `backup_${date}_${Date.now()}.sql`;
   const filepath = path.join(BACKUP_DIR, filename);
 
-  const { DB_HOST = 'localhost', DB_USER = 'postgres', DB_NAME = 'kreditfy', DB_PASSWORD = '' } = process.env;
-  const cmd = `PGPASSWORD="${DB_PASSWORD}" pg_dump -h ${DB_HOST} -U ${DB_USER} -d ${DB_NAME} -F c -f "${filepath}"`;
+  const lines = [
+    `-- Kreditfy — Backup completo`,
+    `-- Generado: ${new Date().toISOString()}`,
+    '',
+    'BEGIN;',
+    '',
+  ];
 
-  await execAsync(cmd);
+  for (const table of ALL_TABLES) {
+    lines.push(await dumpTable(table));
+  }
+
+  lines.push('COMMIT;');
+  await writeFile(filepath, lines.join('\n'), 'utf8');
   await cleanOldBackups();
+
   const info = await stat(filepath);
   return { filename, size_mb: (info.size / 1024 / 1024).toFixed(2) };
 };
@@ -55,11 +92,11 @@ export const runFullBackup = async () => {
 export const cleanOldBackups = async () => {
   await ensureDir();
   const files = (await readdir(BACKUP_DIR))
-    .filter(f => f.startsWith('backup_') && f.endsWith('.dump'))
+    .filter(f => f.startsWith('backup_') && (f.endsWith('.sql') || f.endsWith('.dump')))
     .sort()
     .reverse();
 
-  for (const file of files.slice(KEEP_DAYS)) {
+  for (const file of files.slice(KEEP_FILES)) {
     await unlink(path.join(BACKUP_DIR, file));
   }
 };
@@ -67,7 +104,7 @@ export const cleanOldBackups = async () => {
 export const getLastBackupInfo = async () => {
   await ensureDir();
   const files = (await readdir(BACKUP_DIR))
-    .filter(f => f.startsWith('backup_') && f.endsWith('.dump'))
+    .filter(f => f.startsWith('backup_') && (f.endsWith('.sql') || f.endsWith('.dump')))
     .sort()
     .reverse();
 
@@ -96,23 +133,7 @@ export const generateTenantDump = async (tenantId, tenantName) => {
   ];
 
   for (const table of TENANT_TABLES) {
-    const { rows } = await pool.query(
-      `SELECT * FROM "${table}" WHERE tenant_id = $1 ORDER BY id`,
-      [tenantId]
-    );
-
-    lines.push(`-- Tabla: ${table} (${rows.length} registros)`);
-
-    if (rows.length > 0) {
-      const cols    = Object.keys(rows[0]);
-      const colList = cols.map(c => `"${c}"`).join(', ');
-      for (const row of rows) {
-        const vals = cols.map(c => serializeValue(row[c])).join(', ');
-        lines.push(`INSERT INTO "${table}" (${colList}) VALUES (${vals});`);
-      }
-    }
-
-    lines.push('');
+    lines.push(await dumpTable(table, 'tenant_id = $1', [tenantId]));
   }
 
   lines.push('COMMIT;');
