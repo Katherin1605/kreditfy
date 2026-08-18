@@ -153,11 +153,20 @@ const Customers = () => {
       .catch(err => toast.error(err.response?.data?.error || 'Error al procesar la solicitud'));
   };
 
+  const VALID_PREFIXES = ['0412', '0414', '0416', '0424', '0426'];
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const errs = {};
     if (!formData.name.trim()) errs.name = 'El nombre es obligatorio';
     if (!formData.identity_card.trim()) errs.identity_card = 'La cédula es obligatoria';
+    if (formData.phone) {
+      if (formData.phone.length !== 11) {
+        errs.phone = 'El teléfono debe tener 11 dígitos';
+      } else if (!VALID_PREFIXES.some(p => formData.phone.startsWith(p))) {
+        errs.phone = 'Prefijo inválido. Use: 0412, 0414, 0416, 0424 o 0426';
+      }
+    }
     if (Object.keys(errs).length) { setFormErrors(errs); return; }
     setFormErrors({});
     const request = editingCustomer

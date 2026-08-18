@@ -1,6 +1,23 @@
+const VALID_PREFIXES = ['0412', '0414', '0416', '0424', '0426'];
+
+const formatCedula = (raw) => {
+  const digits = raw.replace(/\D/g, '');
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+};
+
 const FormCustomers = ({ formData, setFormData, editingCustomer, onSubmit, onClose, errors }) => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleCedulaChange = (e) => {
+    const digits = e.target.value.replace(/\D/g, '');
+    setFormData({ ...formData, identity_card: digits });
+  };
+
+  const handlePhoneChange = (e) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+    setFormData({ ...formData, phone: digits });
   };
 
   return (
@@ -26,11 +43,13 @@ const FormCustomers = ({ formData, setFormData, editingCustomer, onSubmit, onClo
           <label htmlFor="identity_card" className="form-label">Cédula *</label>
           <input
             type="text"
+            inputMode="numeric"
             className={`form-control ${errors?.identity_card ? 'is-invalid' : ''}`}
             id="identity_card"
             name="identity_card"
-            value={formData.identity_card}
-            onChange={handleChange}
+            value={formatCedula(formData.identity_card)}
+            onChange={handleCedulaChange}
+            placeholder="12.345.678"
           />
           {errors?.identity_card && <div className="invalid-feedback">{errors.identity_card}</div>}
         </div>
@@ -38,14 +57,18 @@ const FormCustomers = ({ formData, setFormData, editingCustomer, onSubmit, onClo
           <label htmlFor="phone" className="form-label">Teléfono</label>
           <input
             type="tel"
-            className="form-control"
+            inputMode="numeric"
+            className={`form-control ${errors?.phone ? 'is-invalid' : ''}`}
             id="phone"
             name="phone"
             value={formData.phone}
-            onChange={handleChange}
+            onChange={handlePhoneChange}
             placeholder="04126756788"
           />
-        </div>
+          {errors?.phone
+            ? <div className="invalid-feedback">{errors.phone}</div>
+            : <div className="form-text">Prefijos válidos: 0412, 0414, 0416, 0424, 0426</div>
+          }
         <div className="col-md-6">
           <label htmlFor="address" className="form-label">Dirección</label>
           <input
