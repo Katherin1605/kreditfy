@@ -9,10 +9,10 @@ const AmountDisplay = ({ amount, rates, storedRate, className = '' }) => {
 
   return (
     <div className={className}>
-      <span>{formatCurrency(n, 'USD')}</span>
+      <span>{bsf !== null ? formatCurrency(bsf, 'BsF') : formatCurrency(n, 'USD')}</span>
       {bsf !== null && (
         <div className="amount-equiv">
-          {formatCurrency(bsf, 'BsF')}
+          {formatCurrency(n, 'USD')}
         </div>
       )}
     </div>
