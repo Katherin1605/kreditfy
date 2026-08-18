@@ -3,8 +3,8 @@ import 'dotenv/config';
 
 const { DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_URL } = process.env;
 
-// SSL solo para URLs externas (contienen dominio completo); URLs internas de Render no necesitan SSL
-const needsSSL = DB_URL && DB_URL.includes('.render.com');
+// SSL para URLs externas: Render y Supabase
+const needsSSL = DB_URL && (DB_URL.includes('.render.com') || DB_URL.includes('.supabase.com'));
 
 const pool = DB_URL
   ? new pg.Pool({ connectionString: DB_URL, ...(needsSSL && { ssl: { rejectUnauthorized: false } }), allowExitOnIdle: true })
