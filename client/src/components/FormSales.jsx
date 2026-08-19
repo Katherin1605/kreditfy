@@ -1,4 +1,4 @@
-import { useState, Fragment } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 
 const STEPS = ['Cliente', 'Productos', 'Confirmar'];
 
@@ -14,20 +14,31 @@ const FormSales = ({
 }) => {
   const [step, setStep] = useState(1);
   const [clienteSearch, setClienteSearch] = useState('');
+  const [showClienteDropdown, setShowClienteDropdown] = useState(false);
   const [productoSearch, setProductoSearch] = useState('');
+  const [showProductoDropdown, setShowProductoDropdown] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState('');
   const [cantidad, setCantidad] = useState(1);
   const [stepError, setStepError] = useState('');
   const [localExchangeRate, setLocalExchangeRate] = useState(exchangeRate ?? '');
 
-  const filteredClientes = customers.filter(c =>
-    c.name.toLowerCase().includes(clienteSearch.toLowerCase()) ||
-    c.identity_card.includes(clienteSearch)
-  );
+  useEffect(() => {
+    if (selectedCustomerId) {
+      const c = customers.find(c => c.id === parseInt(selectedCustomerId));
+      if (c) setClienteSearch(c.name);
+    }
+  }, []);
 
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(productoSearch.toLowerCase())
-  );
+  const filteredClientes = clienteSearch
+    ? customers.filter(c =>
+        c.name.toLowerCase().includes(clienteSearch.toLowerCase()) ||
+        c.identity_card.includes(clienteSearch)
+      )
+    : customers;
+
+  const filteredProducts = productoSearch
+    ? products.filter(p => p.name.toLowerCase().includes(productoSearch.toLowerCase()))
+    : products;
 
   const handleAddItem = () => {
     if (!selectedProductId) return;
@@ -111,30 +122,47 @@ const FormSales = ({
           {step === 1 && (
             <div className="row g-3">
               <div className="col-md-6">
-                <label className="form-label">Buscar cliente</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Nombre o cédula..."
-                  value={clienteSearch}
-                  onChange={e => setClienteSearch(e.target.value)}
-                />
-              </div>
-              <div className="col-md-6">
                 <label className="form-label">
                   Cliente <span className="text-danger">*</span>
                 </label>
-                <select
-                  className={`form-select${stepError ? ' is-invalid' : ''}`}
-                  value={selectedCustomerId}
-                  onChange={e => { setSelectedCustomerId(e.target.value); setStepError(''); }}
-                >
-                  <option value="">Seleccione un cliente</option>
-                  {filteredClientes.map(c => (
-                    <option key={c.id} value={c.id}>{c.name} — {c.identity_card}</option>
-                  ))}
-                </select>
-                {stepError && <div className="invalid-feedback">{stepError}</div>}
+                <div className="position-relative">
+                  <input
+                    type="text"
+                    className={`form-control${stepError && !selectedCustomerId ? ' is-invalid' : ''}`}
+                    placeholder="Buscar por nombre o cédula..."
+                    value={clienteSearch}
+                    onChange={e => {
+                      setClienteSearch(e.target.value);
+                      setSelectedCustomerId('');
+                      setStepError('');
+                      setShowClienteDropdown(true);
+                    }}
+                    onFocus={() => setShowClienteDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowClienteDropdown(false), 150)}
+                  />
+                  {showClienteDropdown && filteredClientes.length > 0 && (
+                    <ul className="autocomplete-dropdown">
+                      {filteredClientes.slice(0, 8).map(c => (
+                        <li
+                          key={c.id}
+                          className="autocomplete-option"
+                          onMouseDown={() => {
+                            setSelectedCustomerId(String(c.id));
+                            setClienteSearch(c.name);
+                            setShowClienteDropdown(false);
+                            setStepError('');
+                          }}
+                        >
+                          <span>{c.name}</span>
+                          <small className="text-muted">{c.identity_card}</small>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {stepError && !selectedCustomerId && (
+                    <div className="invalid-feedback d-block">{stepError}</div>
+                  )}
+                </div>
               </div>
               <div className="col-md-4">
                 <label className="form-label">
@@ -170,32 +198,43 @@ const FormSales = ({
           {/* ── Paso 2: Productos ── */}
           {step === 2 && (
             <div className="row g-3">
-              <div className="col-md-5">
-                <label className="form-label">Buscar producto</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Nombre del producto..."
-                  value={productoSearch}
-                  onChange={e => setProductoSearch(e.target.value)}
-                />
-              </div>
-              <div className="col-md-4">
+              <div className="col-md-6">
                 <label className="form-label">Producto</label>
-                <select
-                  className="form-select"
-                  value={selectedProductId}
-                  onChange={e => setSelectedProductId(e.target.value)}
-                >
-                  <option value="">Seleccione un producto</option>
-                  {filteredProducts.map(p => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} — ${parseFloat(p.price).toFixed(2)} (stock: {p.stock})
-                    </option>
-                  ))}
-                </select>
+                <div className="position-relative">
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Buscar producto..."
+                    value={productoSearch}
+                    onChange={e => {
+                      setProductoSearch(e.target.value);
+                      setSelectedProductId('');
+                      setShowProductoDropdown(true);
+                    }}
+                    onFocus={() => setShowProductoDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowProductoDropdown(false), 150)}
+                  />
+                  {showProductoDropdown && filteredProducts.length > 0 && (
+                    <ul className="autocomplete-dropdown">
+                      {filteredProducts.slice(0, 8).map(p => (
+                        <li
+                          key={p.id}
+                          className="autocomplete-option"
+                          onMouseDown={() => {
+                            setSelectedProductId(String(p.id));
+                            setProductoSearch(p.name);
+                            setShowProductoDropdown(false);
+                          }}
+                        >
+                          <span>{p.name}</span>
+                          <small className="text-muted">${parseFloat(p.price).toFixed(2)} · stock: {p.stock}</small>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
-              <div className="col-md-2">
+              <div className="col-md-3">
                 <label className="form-label">Cantidad</label>
                 <input
                   type="number"
@@ -205,9 +244,9 @@ const FormSales = ({
                   onChange={e => setCantidad(e.target.value)}
                 />
               </div>
-              <div className="col-md-1 d-flex align-items-end">
+              <div className="col-md-3 d-flex align-items-end">
                 <button type="button" className="btn btn-primary w-100" onClick={handleAddItem}>
-                  <i className="bi bi-plus-lg"></i>
+                  <i className="bi bi-plus-lg me-1"></i>Agregar
                 </button>
               </div>
 

@@ -1036,3 +1036,36 @@ table tbody tr:hover {
   border-color: var(--border-input);
   color: var(--primary-color);
 }
+
+/* ── Autocomplete ─────────────────────────────────────────── */
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1050;
+  background: #fff;
+  border: 1px solid var(--border-input);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.10);
+  max-height: 220px;
+  overflow-y: auto;
+  list-style: none;
+  padding: 4px 0;
+  margin: 0;
+}
+
+.autocomplete-option {
+  padding: 8px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.autocomplete-option:hover {
+  background: var(--bg-section);
+  color: var(--primary-color);
+}

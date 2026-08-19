@@ -1,6 +1,30 @@
 import * as productModel from "../models/productsModel.js";
 import * as auditModel from "../models/auditModel.js";
 
+export const importProducts = async (req, res) => {
+  try {
+    const { products } = req.body;
+    if (!Array.isArray(products) || products.length === 0)
+      return res.status(400).json({ error: 'No se recibieron productos' });
+    const invalid = products.some(p => !p.name || p.price === undefined || p.price === '');
+    if (invalid)
+      return res.status(400).json({ error: 'Cada producto debe tener nombre y precio' });
+    const result = await productModel.importProducts(products, req.tenantId);
+    res.json(result);
+    auditModel.createAuditLog({
+      admin_id: req.admin?.id || null,
+      action: 'CREATE',
+      table_name: 'products',
+      record_id: null,
+      description: `Importó ${result.inserted} productos desde CSV`,
+      tenant_id: req.tenantId,
+    }).catch(() => {});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al importar productos' });
+  }
+};
+
 export const getProducts = async (req, res) => {
   try {
     const products = await productModel.getAllProducts(req.tenantId);

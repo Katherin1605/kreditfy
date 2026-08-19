@@ -5,6 +5,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  importProducts,
 } from "../src/controllers/productsController.js";
 import { authenticateToken } from "../src/middleware/authMiddleware.js";
 import { resolveTenant } from "../src/middleware/resolveTenant.js";
@@ -12,6 +13,7 @@ import { resolveTenant } from "../src/middleware/resolveTenant.js";
 const router = Router();
 
 router.get("/products", authenticateToken, resolveTenant, getProducts);
+router.post("/products/import", authenticateToken, resolveTenant, importProducts);
 router.get("/products/:id", authenticateToken, resolveTenant, getProductById);
 router.post("/products", authenticateToken, resolveTenant, createProduct);
 router.put("/products/:id", authenticateToken, resolveTenant, updateProduct);

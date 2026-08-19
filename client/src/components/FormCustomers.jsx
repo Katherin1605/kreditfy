@@ -69,6 +69,7 @@ const FormCustomers = ({ formData, setFormData, editingCustomer, onSubmit, onClo
             ? <div className="invalid-feedback">{errors.phone}</div>
             : <div className="form-text">Prefijos válidos: 0412, 0414, 0416, 0424, 0426</div>
           }
+        </div>
         <div className="col-md-6">
           <label htmlFor="address" className="form-label">Dirección</label>
           <input

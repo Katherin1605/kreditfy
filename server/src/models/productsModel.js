@@ -44,3 +44,24 @@ export const deleteProduct = async (id, tenantId) => {
   if (tenantId != null) { where += ' AND tenant_id = $2'; params.push(tenantId); }
   await pool.query(`DELETE FROM products ${where}`, params);
 };
+
+export const importProducts = async (products, tenantId) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    for (const p of products) {
+      await client.query(
+        `INSERT INTO products (name, description, price, stock, tenant_id)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [p.name, p.description || '', parseFloat(p.price), parseInt(p.stock) || 0, tenantId]
+      );
+    }
+    await client.query('COMMIT');
+    return { inserted: products.length };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+};
