@@ -32,7 +32,7 @@ const Payments = () => {
   const [saleDetail, setSaleDetail] = useState(null);
   const [payments, setPayments] = useState([]);
   const [showPayForm, setShowPayForm] = useState(false);
-  const [payForm, setPayForm] = useState({ amount: '', method: '', payment_date: new Date().toISOString().split('T')[0] });
+  const [payForm, setPayForm] = useState({ amount: '', method: '', payment_date: new Date().toISOString().split('T')[0], exchange_rate: '' });
   const debounceRef = useRef(null);
   const { confirmModal } = useConfirm();
   const { rates } = useExchangeRates();
@@ -53,6 +53,13 @@ const Payments = () => {
     setPage(1);
     loadSales(search, 1, dateFrom, dateTo);
   }, [dateFrom, dateTo]);
+
+  useEffect(() => {
+    if (!showPayForm) return;
+    axios.get('/exchange-rates', { params: { date: payForm.payment_date } })
+      .then(res => { if (res.data.USD) setPayForm(prev => ({ ...prev, exchange_rate: String(res.data.USD) })); })
+      .catch(() => {});
+  }, [payForm.payment_date, showPayForm]);
 
   const loadSales = (q = '', p = 1, from = '', to = '') => {
     setLoading(true);
@@ -78,7 +85,7 @@ const Payments = () => {
   const handleSelectSale = (sale) => {
     setSelectedSale(sale);
     setShowPayForm(false);
-    setPayForm({ amount: '', method: '', payment_date: new Date().toISOString().split('T')[0] });
+    setPayForm({ amount: '', method: '', payment_date: new Date().toISOString().split('T')[0], exchange_rate: '' });
     Promise.all([
       axios.get(`/sales/${sale.id}`),
       axios.get(`/payments/sale/${sale.id}`)
@@ -109,6 +116,7 @@ const Payments = () => {
       sale_id: selectedSale.id,
       amount,
       payment_date: payForm.payment_date || new Date().toISOString().split('T')[0],
+      exchange_rate: parseFloat(payForm.exchange_rate) || null,
       ...(payForm.method ? { method: payForm.method } : {})
     };
     axios.post('/payments', body)
@@ -123,7 +131,7 @@ const Payments = () => {
         setPayments(paymentsRes.data);
         setSelectedSale(prev => ({ ...prev, ...detailRes.data }));
         setShowPayForm(false);
-        setPayForm({ amount: '', method: '', payment_date: new Date().toISOString().split('T')[0] });
+        setPayForm({ amount: '', method: '', payment_date: new Date().toISOString().split('T')[0], exchange_rate: '' });
         if (parseFloat(detailRes.data.balance) <= 0) handleCloseDetail();
       })
       .catch(err => toast.error(err.response?.data?.error || 'Error al registrar el pago'));
@@ -282,7 +290,7 @@ const Payments = () => {
                   </div>
                   <div className="col-2">
                     <p className="text-muted mb-0 small">Moneda</p>
-                    <span className="badge bg-light text-dark border">USD</span>
+                    <span className="badge bg-light text-dark border">Bs</span>
                   </div>
                 </div>
 
@@ -358,7 +366,7 @@ const Payments = () => {
                                 {new Date(p.payment_date || p.created_at).toLocaleDateString('es-ES')}
                               </td>
                               <td>
-                                <AmountDisplay amount={p.amount} rates={rates} className="text-success fw-bold small" />
+                                <AmountDisplay amount={p.amount} rates={rates} storedRate={p.exchange_rate} className="text-success fw-bold small" />
                               </td>
                               <td className="small text-muted">
                                 {METHOD_LABELS[p.method] || p.method || '—'}
@@ -415,6 +423,19 @@ const Payments = () => {
                             className="form-control"
                             value={payForm.payment_date}
                             onChange={e => setPayForm({ ...payForm, payment_date: e.target.value })}
+                          />
+                        </div>
+                        <div className="mb-3">
+                          <label className="form-label">
+                            Tasa BCV <small className="text-muted">(Bs. por $1)</small>
+                          </label>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            className="form-control"
+                            value={payForm.exchange_rate}
+                            onChange={e => setPayForm({ ...payForm, exchange_rate: e.target.value.replace(/[^0-9.]/g, '') })}
+                            placeholder="Ej: 773.31"
                           />
                         </div>
                         <div className="mb-3">
