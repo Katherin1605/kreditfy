@@ -12,7 +12,7 @@ const Shopping = () => {
   const [products, setProducts] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({ product_id: '', quantity: '', cost: '', date: new Date().toISOString().split('T')[0] });
+  const [formData, setFormData] = useState({ product_id: '', quantity: '', cost: '', date: new Date().toISOString().split('T')[0], exchange_rate: '' });
   const { confirmModal, ask } = useConfirm();
   const { rates } = useExchangeRates();
 
@@ -34,8 +34,19 @@ const Shopping = () => {
   };
 
   const handleNew = () => {
-    setFormData({ product_id: '', quantity: '', cost: '', date: new Date().toISOString().split('T')[0] });
+    const today = new Date().toISOString().split('T')[0];
+    setFormData({ product_id: '', quantity: '', cost: '', date: today, exchange_rate: rates.USD ? String(rates.USD) : '' });
     setShowForm(true);
+  };
+
+  const handleDateChange = (date) => {
+    axios.get('/exchange-rates', { params: { date } })
+      .then(res => {
+        if (res.data.USD) {
+          setFormData(prev => ({ ...prev, exchange_rate: String(res.data.USD) }));
+        }
+      })
+      .catch(() => {});
   };
 
   const handleDelete = async (id) => {
@@ -55,10 +66,10 @@ const Shopping = () => {
     if (!formData.quantity || parseInt(formData.quantity) < 1) { toast.error('Ingresa una cantidad válida'); return; }
     const costRaw = parseFloat(formData.cost.toString().replace(/,/g, ''));
     if (isNaN(costRaw) || costRaw < 0) { toast.error('Ingresa un costo válido'); return; }
-    axios.post('/shopping', { ...formData, cost: costRaw })
+    axios.post('/shopping', { ...formData, cost: costRaw, exchange_rate: parseFloat(formData.exchange_rate) || null })
       .then(() => {
         toast.success('Compra registrada');
-        setFormData({ product_id: '', quantity: '', cost: '', date: new Date().toISOString().split('T')[0] });
+        setFormData({ product_id: '', quantity: '', cost: '', date: new Date().toISOString().split('T')[0], exchange_rate: '' });
         setShowForm(false);
         loadData();
       })
@@ -66,7 +77,7 @@ const Shopping = () => {
   };
 
   const resetForm = () => {
-    setFormData({ product_id: '', quantity: '', cost: '', date: new Date().toISOString().split('T')[0] });
+    setFormData({ product_id: '', quantity: '', cost: '', date: new Date().toISOString().split('T')[0], exchange_rate: '' });
     setShowForm(false);
   };
 
@@ -87,6 +98,7 @@ const Shopping = () => {
           products={products}
           onSubmit={handleSubmit}
           onClose={resetForm}
+          onDateChange={handleDateChange}
         />
       )}
 
@@ -121,13 +133,13 @@ const Shopping = () => {
                     <td className="px-4 py-3">{products.find(p => p.id === row.product_id)?.name || '-'}</td>
                     <td className="px-4 py-3">{row.quantity}</td>
                     <td className="px-4 py-3">
-                      <span className="badge bg-light text-dark border">USD</span>
+                      <span className="badge bg-light text-dark border">Bs</span>
                     </td>
                     <td className="px-4 py-3">
-                      <AmountDisplay amount={row.cost} rates={rates} />
+                      <AmountDisplay amount={row.cost} rates={rates} storedRate={row.exchange_rate} />
                     </td>
                     <td className="px-4 py-3">
-                      <AmountDisplay amount={parseFloat(row.cost) * row.quantity} rates={rates} />
+                      <AmountDisplay amount={parseFloat(row.cost) * row.quantity} rates={rates} storedRate={row.exchange_rate} />
                     </td>
                     <td className="px-4 py-3">
                       {(() => {
@@ -136,7 +148,7 @@ const Shopping = () => {
                         const ganancia = (parseFloat(product.price) - parseFloat(row.cost)) * row.quantity;
                         return (
                           <span className={ganancia >= 0 ? 'text-success' : 'text-danger'}>
-                            <AmountDisplay amount={ganancia} rates={rates} />
+                            <AmountDisplay amount={ganancia} rates={rates} storedRate={row.exchange_rate} />
                           </span>
                         );
                       })()}

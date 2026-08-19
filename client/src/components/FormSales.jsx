@@ -142,7 +142,7 @@ const FormSales = ({
                   />
                   {showClienteDropdown && filteredClientes.length > 0 && (
                     <ul className="autocomplete-dropdown">
-                      {filteredClientes.slice(0, 8).map(c => (
+                      {filteredClientes.slice(0, clienteSearch ? 8 : 3).map(c => (
                         <li
                           key={c.id}
                           className="autocomplete-option"
@@ -216,7 +216,7 @@ const FormSales = ({
                   />
                   {showProductoDropdown && filteredProducts.length > 0 && (
                     <ul className="autocomplete-dropdown">
-                      {filteredProducts.slice(0, 8).map(p => (
+                      {filteredProducts.slice(0, productoSearch ? 8 : 3).map(p => (
                         <li
                           key={p.id}
                           className="autocomplete-option"

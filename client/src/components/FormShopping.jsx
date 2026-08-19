@@ -1,6 +1,12 @@
-const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) => {
+const FormShopping = ({ formData, setFormData, products, onSubmit, onClose, onDateChange }) => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleDateChange = (e) => {
+    const date = e.target.value;
+    setFormData({ ...formData, date });
+    onDateChange?.(date);
   };
 
   return (
@@ -9,7 +15,7 @@ const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) =>
         <h5>Nueva Compra</h5>
         <button type="button" className="btn-close" onClick={onClose} aria-label="Close"></button>
       </div>
-      <form onSubmit={onSubmit} className="row g-3" noValidate>
+      <div className="row g-3">
         <div className="col-md-12">
           <label className="form-label">Producto *</label>
           <select
@@ -25,17 +31,17 @@ const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) =>
           </select>
         </div>
 
-        <div className="col-md-4">
+        <div className="col-md-3">
           <label className="form-label">Fecha *</label>
           <input
             type="date"
             className="form-control"
             name="date"
             value={formData.date}
-            onChange={handleChange}
+            onChange={handleDateChange}
           />
         </div>
-        <div className="col-md-4">
+        <div className="col-md-3">
           <label className="form-label">Cantidad *</label>
           <input
             type="number"
@@ -46,8 +52,8 @@ const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) =>
             onChange={handleChange}
           />
         </div>
-        <div className="col-md-4">
-          <label className="form-label">Costo (USD) *</label>
+        <div className="col-md-3">
+          <label className="form-label">Costo Unit. (USD) *</label>
           <input
             type="text"
             inputMode="decimal"
@@ -73,12 +79,29 @@ const FormShopping = ({ formData, setFormData, products, onSubmit, onClose }) =>
             }}
           />
         </div>
+        <div className="col-md-3">
+          <label className="form-label">
+            Tasa BCV <small className="text-muted">(Bs. por $1)</small>
+          </label>
+          <input
+            type="text"
+            inputMode="decimal"
+            className="form-control"
+            name="exchange_rate"
+            value={formData.exchange_rate || ''}
+            onChange={e => {
+              const v = e.target.value.replace(/[^0-9.]/g, '');
+              setFormData({ ...formData, exchange_rate: v });
+            }}
+            placeholder="Ej: 773.31"
+          />
+        </div>
 
         <div className="col-12">
-          <button type="submit" className="btn btn-success me-2">Guardar</button>
+          <button type="button" className="btn btn-success me-2" onClick={onSubmit}>Guardar</button>
           <button type="button" className="btn btn-danger" onClick={onClose}>Cancelar</button>
         </div>
-      </form>
+      </div>
     </div>
   );
 };

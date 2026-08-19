@@ -4,6 +4,10 @@ pool.query(`
   ALTER TABLE shopping ADD COLUMN IF NOT EXISTS currency VARCHAR(3) NOT NULL DEFAULT 'USD'
 `).catch(err => console.error('[shopping] Error en migración:', err));
 
+pool.query(`
+  ALTER TABLE shopping ADD COLUMN IF NOT EXISTS exchange_rate NUMERIC(10,4)
+`).catch(err => console.error('[shopping] Error en migración exchange_rate:', err));
+
 export const getAllShopping = async (tenantId) => {
   const params = [];
   let where = '';
@@ -29,11 +33,11 @@ export const getShoppingByProductId = async (product_id, tenantId) => {
 };
 
 export const createShopping = async (data, tenantId) => {
-  const { product_id, quantity, cost, currency = 'USD', date } = data;
+  const { product_id, quantity, cost, currency = 'USD', date, exchange_rate } = data;
   const result = await pool.query(
-    `INSERT INTO shopping (product_id, quantity, cost, currency, date, tenant_id)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-    [product_id, quantity, cost, currency, date || new Date().toISOString().split('T')[0], tenantId]
+    `INSERT INTO shopping (product_id, quantity, cost, currency, date, exchange_rate, tenant_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+    [product_id, quantity, cost, currency, date || new Date().toISOString().split('T')[0], exchange_rate || null, tenantId]
   );
   return result.rows[0];
 };

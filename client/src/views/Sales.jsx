@@ -54,6 +54,13 @@ const Sales = () => {
     loadSales(search, 1, dateFrom, dateTo);
   }, [dateFrom, dateTo]);
 
+  useEffect(() => {
+    if (!showForm) return;
+    axios.get('/exchange-rates', { params: { date: saleDate } })
+      .then(res => { if (res.data.USD) setExchangeRate(String(res.data.USD)); })
+      .catch(() => {});
+  }, [saleDate, showForm]);
+
   const loadCatalogs = () => {
     Promise.all([
       axios.get('/customers', { params: { limit: 500 } }),
@@ -371,7 +378,7 @@ const Sales = () => {
                       </td>
                       <td className="px-4 py-2">{s.customer_name || '-'}</td>
                       <td className="px-4 py-2">
-                        <span className="badge bg-light text-dark border">USD</span>
+                        <span className="badge bg-light text-dark border">Bs</span>
                       </td>
                       <td className="px-4 py-2">
                         <AmountDisplay amount={s.total} rates={rates} storedRate={s.exchange_rate} />
