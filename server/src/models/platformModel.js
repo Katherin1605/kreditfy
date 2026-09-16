@@ -17,6 +17,38 @@ export const initPlans = async () => {
   `);
   await pool.query(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS plan VARCHAR(20) NOT NULL DEFAULT 'basic'`);
   await pool.query(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS pending_review BOOLEAN NOT NULL DEFAULT FALSE`);
+  await pool.query(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS low_stock_threshold INTEGER NOT NULL DEFAULT 5`);
+  await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS cost_price NUMERIC(10,2)`);
+  await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS sku VARCHAR(100)`);
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_products_sku_tenant
+    ON products (sku, tenant_id)
+    WHERE sku IS NOT NULL AND sku <> ''
+  `);
+};
+
+export const getTenantSettings = async (tenantId) => {
+  const result = await pool.query(
+    `SELECT low_stock_threshold, logo_url FROM tenants WHERE id = $1`,
+    [tenantId]
+  );
+  return result.rows[0];
+};
+
+export const updateTenantSettings = async (tenantId, { low_stock_threshold }) => {
+  const result = await pool.query(
+    `UPDATE tenants SET low_stock_threshold = $1 WHERE id = $2 RETURNING low_stock_threshold`,
+    [low_stock_threshold, tenantId]
+  );
+  return result.rows[0];
+};
+
+export const updateTenantLogoById = async (tenantId, logoUrl) => {
+  const result = await pool.query(
+    `UPDATE tenants SET logo_url = $1 WHERE id = $2 RETURNING logo_url`,
+    [logoUrl, tenantId]
+  );
+  return result.rows[0];
 };
 
 export const getPlanConfigs = async () => {

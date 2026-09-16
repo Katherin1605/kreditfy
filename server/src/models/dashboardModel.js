@@ -1,6 +1,6 @@
 import pool from "../../db/config.js";
 
-export const getStats = async (tenantId) => {
+export const getStats = async (tenantId, lowStockThreshold = 5) => {
   const p = tenantId != null ? [tenantId] : [];
   const tf = tenantId != null ? 'WHERE s.tenant_id = $1' : '';
   const tf2 = tenantId != null ? 'AND s.tenant_id = $1' : '';
@@ -40,8 +40,8 @@ export const getStats = async (tenantId) => {
     `, p),
 
     pool.query(`
-      SELECT id, name, stock FROM products
-      WHERE stock <= 5 ${tf2 ? tf2.replace('s.tenant_id', 'tenant_id') : ''}
+      SELECT id, name, sku, stock FROM products
+      WHERE stock <= ${parseInt(lowStockThreshold) || 5} ${tf2 ? tf2.replace('s.tenant_id', 'tenant_id') : ''}
       ORDER BY stock ASC, name ASC
     `, p),
 

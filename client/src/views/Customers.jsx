@@ -2,62 +2,17 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import FormCustomers from '../components/FormCustomers';
+import ImportModal from '../components/ImportModal';
 import TableSkeleton from '../components/TableSkeleton';
 import Pagination from '../components/Pagination';
 import useConfirm from '../hooks/useConfirm';
 
-const splitCSVLine = (line, sep) => {
-  const result = [];
-  let current = '';
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') {
-      if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if (ch === sep && !inQuotes) {
-      result.push(current);
-      current = '';
-    } else {
-      current += ch;
-    }
-  }
-  result.push(current);
-  return result;
-};
-
-const parseCustomersCSV = (text) => {
-  const clean = text.replace(/^﻿/, '');
-  const lines = clean.split(/\r?\n/).filter(l => l.trim());
-  if (lines.length < 2) return null;
-
-  const sep = lines[0].includes(';') ? ';' : ',';
-  const headers = splitCSVLine(lines[0], sep).map(h =>
-    h.trim().replace(/^"|"$/g, '').toLowerCase()
-      .normalize('NFD').replace(/[̀-ͯ]/g, '')
-  );
-
-  const idx = {
-    name:          headers.findIndex(h => h.includes('nombre') || h === 'name'),
-    identity_card: headers.findIndex(h => h.includes('cedula') || h.includes('identity')),
-    phone:         headers.findIndex(h => h.includes('telefono') || h === 'phone'),
-    address:       headers.findIndex(h => h.includes('direccion') || h === 'address'),
-  };
-
-  if (idx.name === -1 || idx.identity_card === -1) return null;
-
-  return lines.slice(1)
-    .map(line => {
-      const cols = splitCSVLine(line, sep).map(c => c.trim().replace(/^"|"$/g, ''));
-      return {
-        name:          cols[idx.name]          || '',
-        identity_card: cols[idx.identity_card] || '',
-        phone:         idx.phone  !== -1 ? (cols[idx.phone]  || '') : '',
-        address:       idx.address !== -1 ? (cols[idx.address] || '') : '',
-      };
-    })
-    .filter(r => r.name && r.identity_card);
-};
+const CUSTOMER_FIELDS = [
+  { key: 'name',          label: 'Nombre',    required: true,  aliases: ['nombre', 'cliente'] },
+  { key: 'identity_card', label: 'Cédula',    required: true,  aliases: ['cedula', 'ci', 'identity', 'documento', 'dni'] },
+  { key: 'phone',         label: 'Teléfono',  required: false, aliases: ['telefono', 'tel', 'celular', 'movil'] },
+  { key: 'address',       label: 'Dirección', required: false, aliases: ['direccion', 'dir', 'domicilio'] },
+];
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -70,11 +25,9 @@ const Customers = () => {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
   const [exporting, setExporting] = useState(false);
-  const [importPreview, setImportPreview] = useState([]);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importing, setImporting] = useState(false);
   const debounceRef = useRef(null);
-  const importRef = useRef(null);
   const { confirmModal, ask } = useConfirm();
 
   useEffect(() => {
@@ -221,35 +174,19 @@ const Customers = () => {
     }
   };
 
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    e.target.value = '';
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const parsed = parseCustomersCSV(ev.target.result);
-      if (parsed === null) {
-        toast.error('El CSV debe tener columnas "Nombre" y "Cédula"');
-        return;
-      }
-      if (parsed.length === 0) {
-        toast.error('No se encontraron filas válidas en el archivo');
-        return;
-      }
-      setImportPreview(parsed);
-      setShowImportModal(true);
-    };
-    reader.readAsText(file, 'UTF-8');
-  };
-
-  const handleConfirmImport = async () => {
+  const handleImport = async (rows) => {
+    const valid = rows.filter(r => r.name?.trim() && r.identity_card?.trim());
+    if (!valid.length) { toast.error('No se encontraron filas con nombre y cédula'); return; }
     setImporting(true);
     try {
-      const res = await axios.post('/customers/import', { customers: importPreview });
-      const { inserted, skipped } = res.data;
-      toast.success(`${inserted} clientes importados${skipped ? ` · ${skipped} duplicados omitidos` : ''}`);
+      const res = await axios.post('/customers/import', { customers: valid });
+      const { inserted, updated, skipped } = res.data;
+      const parts = [];
+      if (inserted) parts.push(`${inserted} nuevos`);
+      if (updated)  parts.push(`${updated} actualizados`);
+      if (skipped)  parts.push(`${skipped} omitidos`);
+      toast.success(`Importación completada: ${parts.join(' · ')}`);
       setShowImportModal(false);
-      setImportPreview([]);
       loadCustomers(search.trim(), 1);
       setPage(1);
     } catch (err) {
@@ -263,7 +200,14 @@ const Customers = () => {
     <>
       {confirmModal}
 
-      <input ref={importRef} type="file" accept=".csv" className="d-none" onChange={handleFileSelect} />
+      <ImportModal
+        show={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={handleImport}
+        fields={CUSTOMER_FIELDS}
+        title="Importar Clientes"
+        importing={importing}
+      />
 
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h5>Clientes</h5>
@@ -301,8 +245,7 @@ const Customers = () => {
           </button>
           <button
             className="btn btn-outline-primary text-nowrap"
-            onClick={() => importRef.current.click()}
-            title="Importar clientes desde CSV"
+            onClick={() => setShowImportModal(true)}
           >
             <i className="bi bi-file-earmark-arrow-up me-1"></i>Importar
           </button>
@@ -374,81 +317,6 @@ const Customers = () => {
         onPageChange={handlePageChange}
       />
 
-      {showImportModal && (
-        <>
-          <div className="modal-backdrop fade show" onClick={() => !importing && setShowImportModal(false)} />
-          <div className="modal fade show d-block" tabIndex="-1">
-            <div className="modal-dialog modal-lg modal-dialog-scrollable">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">
-                    <i className="bi bi-file-earmark-arrow-up me-2"></i>
-                    Importar Clientes desde CSV
-                  </h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={() => setShowImportModal(false)}
-                    disabled={importing}
-                  />
-                </div>
-                <div className="modal-body">
-                  <p className="text-muted small mb-3">
-                    Se encontraron <strong>{importPreview.length}</strong> clientes en el archivo.
-                    Las cédulas ya registradas serán omitidas automáticamente.
-                  </p>
-                  <div className="table-responsive">
-                    <table className="table table-sm table-bordered mb-0">
-                      <thead className="table-light">
-                        <tr>
-                          <th>Nombre</th>
-                          <th>Cédula</th>
-                          <th>Teléfono</th>
-                          <th>Dirección</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {importPreview.slice(0, 10).map((r, i) => (
-                          <tr key={i}>
-                            <td>{r.name}</td>
-                            <td>{r.identity_card}</td>
-                            <td>{r.phone || '-'}</td>
-                            <td>{r.address || '-'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  {importPreview.length > 10 && (
-                    <p className="text-muted small mt-2 mb-0">
-                      ... y {importPreview.length - 10} filas más
-                    </p>
-                  )}
-                </div>
-                <div className="modal-footer">
-                  <button
-                    className="btn btn-outline-secondary"
-                    onClick={() => setShowImportModal(false)}
-                    disabled={importing}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    className="btn btn-success"
-                    onClick={handleConfirmImport}
-                    disabled={importing}
-                  >
-                    {importing
-                      ? <><span className="spinner-border spinner-border-sm me-1" role="status"></span>Importando...</>
-                      : <><i className="bi bi-check-lg me-1"></i>Confirmar importación</>
-                    }
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
     </>
   );
 };

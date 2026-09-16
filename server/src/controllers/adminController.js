@@ -80,7 +80,7 @@ export const updateAdmin = async (req, res) => {
       action: 'UPDATE',
       table_name: 'admins',
       record_id: parseInt(req.params.id),
-      description: `Actualizó administrador ID ${req.params.id}`,
+      description: `Actualizó administrador: ${updated.name}`,
       tenant_id: req.tenantId,
     }).catch(() => {});
   } catch (error) {
@@ -104,7 +104,7 @@ export const deleteAdmin = async (req, res) => {
       action: 'DELETE',
       table_name: 'admins',
       record_id: parseInt(req.params.id),
-      description: `Eliminó administrador ID ${req.params.id}`,
+      description: `Eliminó administrador: ${admin.name}`,
       tenant_id: req.tenantId,
     }).catch(() => {});
   } catch (error) {
@@ -124,7 +124,7 @@ export const toggleAdminActive = async (req, res) => {
       action: 'UPDATE',
       table_name: 'admins',
       record_id: parseInt(req.params.id),
-      description: `Cambió estado de administrador ID ${req.params.id}`,
+      description: `Cambió estado de ${admin.name} a ${!admin.active ? 'activo' : 'inactivo'}`,
       tenant_id: req.tenantId,
     }).catch(() => {});
   } catch (error) {
@@ -147,7 +147,7 @@ export const updateAdminPermissions = async (req, res) => {
       action: 'UPDATE',
       table_name: 'admins',
       record_id: parseInt(req.params.id),
-      description: `Actualizó permisos de administrador ID ${req.params.id}`,
+      description: `Actualizó permisos de ${updated.name}`,
       tenant_id: req.tenantId,
     }).catch(() => {});
   } catch (error) {

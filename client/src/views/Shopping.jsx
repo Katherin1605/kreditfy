@@ -109,6 +109,7 @@ const Shopping = () => {
               <tr>
                 <th className="px-4 py-3">Fecha</th>
                 <th className="px-4 py-3">Producto</th>
+                <th className="px-4 py-3">SKU</th>
                 <th className="px-4 py-3">Cantidad</th>
                 <th className="px-4 py-3">Moneda</th>
                 <th className="px-4 py-3">Costo Unit.</th>
@@ -119,10 +120,10 @@ const Shopping = () => {
             </thead>
             <tbody>
               {loading ? (
-                <TableSkeleton cols={8} />
+                <TableSkeleton cols={9} />
               ) : shopping.length === 0 ? (
                 <tr>
-                  <td className="text-center px-4 py-5 text-secondary" colSpan={8}>
+                  <td className="text-center px-4 py-5 text-secondary" colSpan={9}>
                     No hay compras registradas
                   </td>
                 </tr>
@@ -131,6 +132,14 @@ const Shopping = () => {
                   <tr key={row.id}>
                     <td className="px-4 py-3">{new Date(row.date).toLocaleDateString('es-ES')}</td>
                     <td className="px-4 py-3">{products.find(p => p.id === row.product_id)?.name || '-'}</td>
+                    <td className="px-4 py-3">
+                      {(() => {
+                        const sku = products.find(p => p.id === row.product_id)?.sku;
+                        return sku
+                          ? <span className="badge bg-light text-secondary border">{sku}</span>
+                          : <span className="text-muted">—</span>;
+                      })()}
+                    </td>
                     <td className="px-4 py-3">{row.quantity}</td>
                     <td className="px-4 py-3">
                       <span className="badge bg-light text-dark border">Bs</span>

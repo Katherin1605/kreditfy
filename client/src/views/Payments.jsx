@@ -246,8 +246,8 @@ const Payments = () => {
                           <span className="text-muted">{cuotasPagadas}/{s.cuotas} cuotas</span>
                           <span className="text-warning fw-bold">Saldo: <AmountDisplay amount={s.balance} rates={rates} storedRate={s.exchange_rate} /></span>
                         </div>
-                        <div className="progress" style={{ height: '5px' }}>
-                          <div className={`progress-bar ${getProgressColor(pct)}`} style={{ width: `${pct}%` }} />
+                        <div className="progress progress-xs">
+                          <div className={`progress-bar progress-bar-dynamic ${getProgressColor(pct)}`} style={{ '--bar-width': `${pct}%` }} />
                         </div>
                       </div>
                     </div>
@@ -297,8 +297,12 @@ const Payments = () => {
                 <hr />
                 <p className="text-muted small mb-2">Productos vendidos</p>
                 {saleDetail?.details?.map(d => (
-                  <div key={d.id} className="d-flex justify-content-between small mb-1">
-                    <span>{d.product_name} × {d.quantity}</span>
+                  <div key={d.id} className="d-flex justify-content-between align-items-center small mb-1">
+                    <span>
+                      {d.product_name}
+                      {d.product_sku && <span className="badge bg-light text-secondary border ms-1">{d.product_sku}</span>}
+                      {' '}× {d.quantity}
+                    </span>
                     <AmountDisplay amount={d.quantity * parseFloat(d.price)} rates={rates} storedRate={selectedSale.exchange_rate} />
                   </div>
                 ))}
@@ -326,8 +330,8 @@ const Payments = () => {
                         <span>Progreso de cuotas</span>
                         <span>{pct}%</span>
                       </div>
-                      <div className="progress" style={{ height: '8px' }}>
-                        <div className={`progress-bar ${getProgressColor(pct)}`} style={{ width: `${pct}%` }} />
+                      <div className="progress progress-sm">
+                        <div className={`progress-bar progress-bar-dynamic ${getProgressColor(pct)}`} style={{ '--bar-width': `${pct}%` }} />
                       </div>
                     </div>
                   );

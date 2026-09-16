@@ -29,6 +29,11 @@ const FormSales = ({
     }
   }, []);
 
+  // Sincronizar tasa cuando el padre la actualiza al cambiar la fecha
+  useEffect(() => {
+    if (exchangeRate) setLocalExchangeRate(String(exchangeRate));
+  }, [exchangeRate]);
+
   const filteredClientes = clienteSearch
     ? customers.filter(c =>
         c.name.toLowerCase().includes(clienteSearch.toLowerCase()) ||
@@ -37,7 +42,10 @@ const FormSales = ({
     : customers;
 
   const filteredProducts = productoSearch
-    ? products.filter(p => p.name.toLowerCase().includes(productoSearch.toLowerCase()))
+    ? products.filter(p =>
+        p.name.toLowerCase().includes(productoSearch.toLowerCase()) ||
+        (p.sku && p.sku.toLowerCase().includes(productoSearch.toLowerCase()))
+      )
     : products;
 
   const handleAddItem = () => {
@@ -56,6 +64,7 @@ const FormSales = ({
       setItems([...items, {
         product_id:   product.id,
         product_name: product.name,
+        product_sku:  product.sku || null,
         quantity:     cantidadNum,
         price:        parseFloat(product.price),
         subtotal:     cantidadNum * parseFloat(product.price),
@@ -226,7 +235,10 @@ const FormSales = ({
                             setShowProductoDropdown(false);
                           }}
                         >
-                          <span>{p.name}</span>
+                          <span>
+                            {p.name}
+                            {p.sku && <span className="badge bg-light text-secondary border ms-2">{p.sku}</span>}
+                          </span>
                           <small className="text-muted">${parseFloat(p.price).toFixed(2)} · stock: {p.stock}</small>
                         </li>
                       ))}
@@ -265,6 +277,7 @@ const FormSales = ({
                       <thead className="sales-table-head">
                         <tr>
                           <th>Producto</th>
+                          <th>SKU</th>
                           <th>Cant.</th>
                           <th>Precio Unit.</th>
                           <th>Subtotal</th>
@@ -275,6 +288,12 @@ const FormSales = ({
                         {items.map(i => (
                           <tr key={i.product_id}>
                             <td>{i.product_name}</td>
+                            <td>
+                              {i.product_sku
+                                ? <span className="badge bg-light text-secondary border">{i.product_sku}</span>
+                                : <span className="text-muted">—</span>
+                              }
+                            </td>
                             <td>{i.quantity}</td>
                             <td>${i.price.toFixed(2)}</td>
                             <td>${i.subtotal.toFixed(2)}</td>
@@ -333,6 +352,7 @@ const FormSales = ({
                     <thead className="sales-table-head">
                       <tr>
                         <th>Producto</th>
+                        <th>SKU</th>
                         <th>Cant.</th>
                         <th>Precio Unit.</th>
                         <th>Subtotal</th>
@@ -342,6 +362,12 @@ const FormSales = ({
                       {items.map(i => (
                         <tr key={i.product_id}>
                           <td>{i.product_name}</td>
+                          <td>
+                            {i.product_sku
+                              ? <span className="badge bg-light text-secondary border">{i.product_sku}</span>
+                              : <span className="text-muted">—</span>
+                            }
+                          </td>
                           <td>{i.quantity}</td>
                           <td>${i.price.toFixed(2)}</td>
                           <td>${i.subtotal.toFixed(2)}</td>

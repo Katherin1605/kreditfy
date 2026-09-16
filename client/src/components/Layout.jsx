@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 import useConfirm from '../hooks/useConfirm';
 import { useAuth } from '../context/AuthContext';
@@ -14,10 +15,11 @@ const NAV_ITEMS = [
   { to: '/earnings', label: 'Contabilidad', icon: 'bi-wallet2', view: 'earnings' },
   { to: '/admin', label: 'Administradores', icon: 'bi-shield', view: 'admin' },
   { to: '/audit', label: 'Auditoría', icon: 'bi-file-earmark-text', view: 'audit' },
+  { to: '/settings', label: 'Configuración', icon: 'bi-gear', view: 'settings' },
 ];
 
 const Layout = () => {
-  const { currentAdmin, logout } = useAuth();
+  const { currentAdmin, logout, updateCurrentAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -29,6 +31,8 @@ const Layout = () => {
   const savedCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
   const [collapsed, setCollapsed] = useState(savedCollapsed);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const logoInputRef = useRef(null);
 
   useEffect(() => {
     localStorage.setItem('sidebar_collapsed', collapsed);
@@ -46,9 +50,29 @@ const Layout = () => {
   const toggleMobile = () => setMobileOpen(prev => !prev);
   const closeMobile = () => setMobileOpen(false);
 
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingLogo(true);
+    const form = new FormData();
+    form.append('logo', file);
+    try {
+      const res = await axios.post('/settings/logo', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      updateCurrentAdmin({ tenant_logo: res.data.logo_url });
+      toast.success('Logo actualizado');
+    } catch {
+      toast.error('Error al subir el logo');
+    } finally {
+      setUploadingLogo(false);
+      if (logoInputRef.current) logoInputRef.current.value = '';
+    }
+  };
+
   const visibleItems = NAV_ITEMS.filter(item => {
     if (!item.view) return true;
-    if (item.view === 'admin') return currentAdmin?.role === 'superadmin';
+    if (item.view === 'admin' || item.view === 'settings') return currentAdmin?.role === 'superadmin';
     if (currentAdmin?.plan_modules && !currentAdmin.plan_modules.includes(item.view)) return false;
     if (currentAdmin?.role === 'superadmin') return true;
     return currentAdmin?.permissions?.includes(item.view);
@@ -73,13 +97,28 @@ const Layout = () => {
 
       <aside className={sidebarClass}>
         <div className="sidebar-brand">
-          <div className={`sidebar-brand-icon${currentAdmin?.tenant_logo ? ' has-logo' : ''}`}>
-            {currentAdmin?.tenant_logo
-              ? <img src={currentAdmin.tenant_logo} alt="logo" className="sidebar-brand-logo" />
-              : <i className="bi bi-bag-heart"></i>
+          <div
+            className={`sidebar-brand-icon${currentAdmin?.tenant_logo ? ' has-logo' : ''}${currentAdmin?.role === 'superadmin' ? ' sidebar-logo-clickable' : ''}`}
+            onClick={() => currentAdmin?.role === 'superadmin' && logoInputRef.current?.click()}
+            title={currentAdmin?.role === 'superadmin' ? 'Cambiar logo del negocio' : undefined}
+          >
+            {uploadingLogo
+              ? <span className="spinner-border spinner-border-sm text-light" />
+              : currentAdmin?.tenant_logo
+                ? <img src={currentAdmin.tenant_logo} alt="logo" className="sidebar-brand-logo" />
+                : <i className="bi bi-bag-heart"></i>
             }
           </div>
           <span className="sidebar-brand-text">{currentAdmin?.tenant_name || 'CrediShoping'}</span>
+          {currentAdmin?.role === 'superadmin' && (
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/*"
+              className="d-none"
+              onChange={handleLogoUpload}
+            />
+          )}
         </div>
 
         <nav className="sidebar-nav">
@@ -127,8 +166,7 @@ const Layout = () => {
 
       {/* Toggle desktop — fuera del aside para no ser cortado por overflow:hidden */}
       <button
-        className="sidebar-toggle-btn d-none d-md-flex"
-        style={{ left: collapsed ? 46 : 226 }}
+        className={`sidebar-toggle-btn d-none d-md-flex ${collapsed ? 'is-collapsed' : 'is-expanded'}`}
         onClick={toggleCollapse}
         aria-label="Toggle sidebar"
       >
@@ -137,15 +175,14 @@ const Layout = () => {
 
       {/* Hamburger mobile */}
       <button
-        className="d-md-none btn btn-sm btn-outline-secondary"
-        style={{ position: 'fixed', top: '1rem', left: '1rem', zIndex: 1100 }}
+        className="d-md-none btn btn-sm btn-outline-secondary mobile-hamburger"
         onClick={toggleMobile}
         aria-label="Abrir menú"
       >
         <i className="bi bi-list"></i>
       </button>
 
-      <main className={mainClass} style={{ padding: '1.5rem 2rem' }}>
+      <main className={mainClass}>
         {currentNavItem && (
           <nav aria-label="breadcrumb" className="layout-breadcrumb">
             <ol className="breadcrumb">

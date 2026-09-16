@@ -61,7 +61,7 @@ export const updateCustomer = async (req, res) => {
       action: 'UPDATE',
       table_name: 'customers',
       record_id: parseInt(req.params.id),
-      description: `Actualizó cliente ID ${req.params.id}`,
+      description: `Actualizó cliente: ${updated.name}`,
       tenant_id: req.tenantId,
     }).catch(() => {});
   } catch (error) {
@@ -101,6 +101,12 @@ export const deleteCustomer = async (req, res) => {
   try {
     const existing = await customerModel.getCustomerById(req.params.id, req.tenantId);
     if (!existing) return res.status(404).json({ error: "Cliente no encontrado" });
+    const pendingCount = await customerModel.getCustomerPendingSalesCount(req.params.id, req.tenantId);
+    if (pendingCount > 0) {
+      return res.status(400).json({
+        error: `No se puede eliminar el cliente porque tiene ${pendingCount} venta${pendingCount > 1 ? 's' : ''} con pagos pendientes`,
+      });
+    }
     await customerModel.deleteCustomer(req.params.id, req.tenantId);
     res.json({ message: "Cliente eliminado correctamente" });
     auditModel.createAuditLog({
@@ -108,7 +114,7 @@ export const deleteCustomer = async (req, res) => {
       action: 'DELETE',
       table_name: 'customers',
       record_id: parseInt(req.params.id),
-      description: `Eliminó cliente ID ${req.params.id}`,
+      description: `Eliminó cliente: ${existing.name}`,
       tenant_id: req.tenantId,
     }).catch(() => {});
   } catch (error) {

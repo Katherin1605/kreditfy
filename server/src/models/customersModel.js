@@ -66,6 +66,14 @@ export const updateCustomer = async (id, customer, tenantId) => {
   return result.rows[0];
 };
 
+export const getCustomerPendingSalesCount = async (id, tenantId) => {
+  const params = [id];
+  let where = "WHERE customer_id = $1 AND status != 'paid'";
+  if (tenantId != null) { where += ' AND tenant_id = $2'; params.push(tenantId); }
+  const result = await pool.query(`SELECT COUNT(*) FROM sales ${where}`, params);
+  return parseInt(result.rows[0].count);
+};
+
 export const deleteCustomer = async (id, tenantId) => {
   const params = [id];
   let where = 'WHERE id = $1';
@@ -78,19 +86,26 @@ export const importCustomers = async (customers, tenantId) => {
   try {
     await client.query('BEGIN');
     let inserted = 0;
+    let updated  = 0;
     let skipped  = 0;
     for (const c of customers) {
       const res = await client.query(
         `INSERT INTO customers (name, identity_card, phone, address, tenant_id)
          VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (identity_card) DO NOTHING`,
+         ON CONFLICT (identity_card) DO UPDATE SET
+           name    = EXCLUDED.name,
+           phone   = COALESCE(NULLIF(EXCLUDED.phone::text,   ''), customers.phone),
+           address = COALESCE(NULLIF(EXCLUDED.address::text, ''), customers.address)
+         WHERE customers.tenant_id = EXCLUDED.tenant_id
+         RETURNING xmax`,
         [c.name.trim(), c.identity_card.trim(), c.phone || null, c.address || null, tenantId]
       );
-      if (res.rowCount > 0) inserted++;
-      else skipped++;
+      if (res.rowCount === 0) skipped++;
+      else if (res.rows[0]?.xmax === '0' || res.rows[0]?.xmax === 0) inserted++;
+      else updated++;
     }
     await client.query('COMMIT');
-    return { inserted, skipped };
+    return { inserted, updated, skipped };
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;

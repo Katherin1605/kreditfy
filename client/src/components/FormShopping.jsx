@@ -26,7 +26,9 @@ const FormShopping = ({ formData, setFormData, products, onSubmit, onClose, onDa
           >
             <option value="">Seleccione un producto</option>
             {products.map(p => (
-              <option key={p.id} value={p.id}>{p.name} (Stock: {p.stock})</option>
+              <option key={p.id} value={p.id}>
+                {p.name}{p.sku ? ` [${p.sku}]` : ''} — Stock: {p.stock}
+              </option>
             ))}
           </select>
         </div>

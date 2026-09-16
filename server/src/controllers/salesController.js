@@ -31,13 +31,15 @@ export const createSale = async (req, res) => {
     }
     const sale = await salesModel.createSaleWithDetails(req.body, req.tenantId);
     res.status(201).json(sale);
-    auditModel.createAuditLog({
-      admin_id: req.admin?.id || null,
-      action: 'CREATE',
-      table_name: 'sales',
-      record_id: sale.id,
-      description: `Creó venta ID ${sale.id}`,
-      tenant_id: req.tenantId,
+    salesModel.getSaleById(sale.id, req.tenantId).then(full => {
+      auditModel.createAuditLog({
+        admin_id: req.admin?.id || null,
+        action: 'CREATE',
+        table_name: 'sales',
+        record_id: sale.id,
+        description: `Creó venta #${sale.id} — Cliente: ${full?.customer_name || sale.customer_id}`,
+        tenant_id: req.tenantId,
+      }).catch(() => {});
     }).catch(() => {});
   } catch (error) {
     console.error(error);
@@ -59,7 +61,7 @@ export const deleteSale = async (req, res) => {
       action: 'DELETE',
       table_name: 'sales',
       record_id: parseInt(req.params.id),
-      description: `Eliminó venta ID ${req.params.id}`,
+      description: `Eliminó venta #${req.params.id} — Cliente: ${sale.customer_name}`,
       tenant_id: req.tenantId,
     }).catch(() => {});
   } catch (error) {
@@ -86,7 +88,7 @@ export const updateSale = async (req, res) => {
       action: 'UPDATE',
       table_name: 'sales',
       record_id: parseInt(req.params.id),
-      description: `Actualizó venta ID ${req.params.id}`,
+      description: `Actualizó venta #${req.params.id} — Cliente: ${sale.customer_name}`,
       tenant_id: req.tenantId,
     }).catch(() => {});
   } catch (error) {

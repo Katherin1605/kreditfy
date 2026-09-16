@@ -1,8 +1,14 @@
 import * as dashboardModel from "../models/dashboardModel.js";
+import * as platformModel from "../models/platformModel.js";
 
 export const getStats = async (req, res) => {
   try {
-    const stats = await dashboardModel.getStats(req.tenantId);
+    let threshold = 5;
+    if (req.tenantId != null) {
+      const settings = await platformModel.getTenantSettings(req.tenantId);
+      threshold = settings?.low_stock_threshold ?? 5;
+    }
+    const stats = await dashboardModel.getStats(req.tenantId, threshold);
     res.json(stats);
   } catch (error) {
     console.error(error);

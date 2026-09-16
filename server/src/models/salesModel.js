@@ -98,7 +98,7 @@ export const getSaleById = async (id, tenantId) => {
   if (!sale) return null;
 
   const detailsResult = await pool.query(
-    `SELECT sd.*, pr.name AS product_name
+    `SELECT sd.*, pr.name AS product_name, pr.sku AS product_sku
      FROM sale_details sd
      JOIN products pr ON sd.product_id = pr.id
      WHERE sd.sale_id = $1`,

@@ -1,4 +1,5 @@
 import * as paymentModel from "../models/paymentsModel.js";
+import * as salesModel from "../models/salesModel.js";
 import * as auditModel from "../models/auditModel.js";
 
 export const getPayments = async (req, res) => {
@@ -39,13 +40,15 @@ export const createPayment = async (req, res) => {
     if (!amount)  return res.status(400).json({ error: "El monto es obligatorio" });
     const payment = await paymentModel.createPayment({ sale_id, amount, method, payment_date, exchange_rate }, req.tenantId);
     res.status(201).json(payment);
-    auditModel.createAuditLog({
-      admin_id: req.admin?.id || null,
-      action: 'CREATE',
-      table_name: 'payments',
-      record_id: payment.id,
-      description: `Registró pago de $${payment.amount} para venta ID ${payment.sale_id}`,
-      tenant_id: req.tenantId,
+    salesModel.getSaleById(payment.sale_id, req.tenantId).then(sale => {
+      auditModel.createAuditLog({
+        admin_id: req.admin?.id || null,
+        action: 'CREATE',
+        table_name: 'payments',
+        record_id: payment.id,
+        description: `Registró pago de $${payment.amount}${sale?.customer_name ? ` — ${sale.customer_name}` : ''} (venta #${payment.sale_id})`,
+        tenant_id: req.tenantId,
+      }).catch(() => {});
     }).catch(() => {});
   } catch (error) {
     console.error(error);
@@ -61,13 +64,15 @@ export const deletePayment = async (req, res) => {
     if (!payment) return res.status(404).json({ error: "Pago no encontrado" });
     await paymentModel.deletePayment(req.params.id, req.tenantId);
     res.json({ message: "Pago eliminado correctamente" });
-    auditModel.createAuditLog({
-      admin_id: req.admin?.id || null,
-      action: 'DELETE',
-      table_name: 'payments',
-      record_id: parseInt(req.params.id),
-      description: `Eliminó pago ID ${req.params.id}`,
-      tenant_id: req.tenantId,
+    salesModel.getSaleById(payment.sale_id, req.tenantId).then(sale => {
+      auditModel.createAuditLog({
+        admin_id: req.admin?.id || null,
+        action: 'DELETE',
+        table_name: 'payments',
+        record_id: parseInt(req.params.id),
+        description: `Eliminó pago #${req.params.id} de $${payment.amount}${sale?.customer_name ? ` — ${sale.customer_name}` : ''} (venta #${payment.sale_id})`,
+        tenant_id: req.tenantId,
+      }).catch(() => {});
     }).catch(() => {});
   } catch (error) {
     console.error(error);

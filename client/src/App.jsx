@@ -14,13 +14,14 @@ import Payments from "./views/Payments";
 import Admin from "./views/Admin";
 import Audit from "./views/Audit";
 import Earnings from "./views/Earnings";
+import Settings from "./views/Settings";
 import PlatformLayout from "./views/platform/PlatformLayout";
 import PlatformDashboard from "./views/platform/PlatformDashboard";
 import PlatformTenants from "./views/platform/PlatformTenants";
 import PlatformTenantDetail from "./views/platform/PlatformTenantDetail";
 import PlatformPlans from "./views/platform/PlatformPlans";
 
-const SUPERADMIN_VIEWS = ['admin', 'audit', 'earnings'];
+const SUPERADMIN_VIEWS = ['admin', 'audit', 'earnings', 'settings'];
 
 const ProtectedRoute = ({ element, view }) => {
   const { currentAdmin, loading } = useAuth();
@@ -65,6 +66,7 @@ function App() {
           <Route path="admin"     element={<ProtectedRoute element={<Admin />}     view="admin" />} />
           <Route path="audit"     element={<ProtectedRoute element={<Audit />}     view="audit" />} />
           <Route path="earnings"  element={<ProtectedRoute element={<Earnings />}  view="earnings" />} />
+          <Route path="settings"  element={<ProtectedRoute element={<Settings />}  view="settings" />} />
         </Route>
       </Routes>
     </BrowserRouter>

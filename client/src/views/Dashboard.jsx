@@ -266,7 +266,10 @@ const Dashboard = () => {
                 <ul className="list-group list-group-flush">
                   {stats.low_stock_products.map(p => (
                     <li key={p.id} className="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
-                      <span className="dashboard-table">{p.name}</span>
+                      <span className="dashboard-table">
+                        {p.name}
+                        {p.sku && <span className="badge bg-light text-secondary border ms-2">{p.sku}</span>}
+                      </span>
                       <span className={`badge ${p.stock === 0 ? 'bg-danger' : 'bg-warning text-dark'}`}>
                         {p.stock === 0 ? 'Sin stock' : `${p.stock} unid.`}
                       </span>

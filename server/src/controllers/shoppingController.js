@@ -1,4 +1,5 @@
 import * as shoppingModel from "../models/shoppingModel.js";
+import * as productModel from "../models/productsModel.js";
 import * as auditModel from "../models/auditModel.js";
 
 export const getAllShopping = async (req, res) => {
@@ -39,14 +40,20 @@ export const createShopping = async (req, res) => {
       return res.status(400).json({ error: "product_id, quantity y cost son obligatorios" });
     }
     const newShopping = await shoppingModel.createShopping(req.body, req.tenantId);
+    const newCost = parseFloat(newShopping.cost);
+    if (!isNaN(newCost) && newCost > 0) {
+      await productModel.updateProductCostPrice(newShopping.product_id, newCost, req.tenantId);
+    }
     res.status(201).json(newShopping);
-    auditModel.createAuditLog({
-      admin_id: req.admin?.id || null,
-      action: 'CREATE',
-      table_name: 'shopping',
-      record_id: newShopping.id,
-      description: `Registró compra de ${newShopping.quantity} unidades (producto ID ${newShopping.product_id})`,
-      tenant_id: req.tenantId,
+    productModel.getProductById(newShopping.product_id, req.tenantId).then(product => {
+      auditModel.createAuditLog({
+        admin_id: req.admin?.id || null,
+        action: 'CREATE',
+        table_name: 'shopping',
+        record_id: newShopping.id,
+        description: `Registró compra: ${newShopping.quantity} unid. de ${product?.name || `producto #${newShopping.product_id}`}`,
+        tenant_id: req.tenantId,
+      }).catch(() => {});
     }).catch(() => {});
   } catch (error) {
     console.error(error);
@@ -61,13 +68,15 @@ export const deleteShopping = async (req, res) => {
     if (!existing) return res.status(404).json({ error: "Compra no encontrada" });
     await shoppingModel.deleteShopping(req.params.id, req.tenantId);
     res.json({ message: "Compra eliminada correctamente" });
-    auditModel.createAuditLog({
-      admin_id: req.admin?.id || null,
-      action: 'DELETE',
-      table_name: 'shopping',
-      record_id: parseInt(req.params.id),
-      description: `Eliminó compra ID ${req.params.id}`,
-      tenant_id: req.tenantId,
+    productModel.getProductById(existing.product_id, req.tenantId).then(product => {
+      auditModel.createAuditLog({
+        admin_id: req.admin?.id || null,
+        action: 'DELETE',
+        table_name: 'shopping',
+        record_id: parseInt(req.params.id),
+        description: `Eliminó compra #${req.params.id} — ${product?.name || `producto #${existing.product_id}`} (${existing.quantity} unid.)`,
+        tenant_id: req.tenantId,
+      }).catch(() => {});
     }).catch(() => {});
   } catch (error) {
     console.error(error);

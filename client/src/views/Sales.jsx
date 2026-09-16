@@ -167,11 +167,12 @@ const Sales = () => {
       setEditingSale(sale);
       setSelectedCustomerId(sale.customer_id.toString());
       setItems(detail.details.map(d => ({
-        product_id: d.product_id,
+        product_id:  d.product_id,
         product_name: d.product_name,
-        quantity: d.quantity,
-        price: parseFloat(d.price),
-        subtotal: d.quantity * parseFloat(d.price),
+        product_sku: d.product_sku || null,
+        quantity:    d.quantity,
+        price:       parseFloat(d.price),
+        subtotal:    d.quantity * parseFloat(d.price),
       })));
       setCuotas(detail.cuotas?.toString() || '1');
       setSaleDate(detail.sale_date ? detail.sale_date.split('T')[0] : new Date().toISOString().split('T')[0]);
@@ -430,6 +431,7 @@ const Sales = () => {
                               <thead>
                                 <tr>
                                   <th>Producto</th>
+                                  <th>SKU</th>
                                   <th>Cantidad</th>
                                   <th>Precio Unit.</th>
                                   <th>Subtotal</th>
@@ -439,6 +441,12 @@ const Sales = () => {
                                 {saleDetails[s.id].details.map(d => (
                                   <tr key={d.id}>
                                     <td>{d.product_name}</td>
+                                    <td>
+                                      {d.product_sku
+                                        ? <span className="badge bg-light text-secondary border">{d.product_sku}</span>
+                                        : <span className="text-muted">—</span>
+                                      }
+                                    </td>
                                     <td>{d.quantity}</td>
                                     <td><AmountDisplay amount={d.price} rates={rates} storedRate={s.exchange_rate} /></td>
                                     <td><AmountDisplay amount={d.quantity * parseFloat(d.price)} rates={rates} storedRate={s.exchange_rate} /></td>

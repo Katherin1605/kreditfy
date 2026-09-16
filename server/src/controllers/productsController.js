@@ -80,7 +80,7 @@ export const updateProduct = async (req, res) => {
       action: 'UPDATE',
       table_name: 'products',
       record_id: parseInt(req.params.id),
-      description: `Actualizó producto ID ${req.params.id}`,
+      description: `Actualizó producto: ${existing.name}`,
       tenant_id: req.tenantId,
     }).catch(() => {});
   } catch (error) {
@@ -101,7 +101,7 @@ export const deleteProduct = async (req, res) => {
       action: 'DELETE',
       table_name: 'products',
       record_id: parseInt(req.params.id),
-      description: `Eliminó producto ID ${req.params.id}`,
+      description: `Eliminó producto: ${existing.name}`,
       tenant_id: req.tenantId,
     }).catch(() => {});
   } catch (error) {
