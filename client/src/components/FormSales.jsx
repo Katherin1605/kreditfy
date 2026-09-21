@@ -163,7 +163,7 @@ const FormSales = ({
                           }}
                         >
                           <span>{c.name}</span>
-                          <small className="text-muted">{c.identity_card}</small>
+                          <small className="text-muted">{c.identity_card?.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}</small>
                         </li>
                       ))}
                     </ul>
@@ -326,7 +326,7 @@ const FormSales = ({
                 <div className="form-stepper-summary-box">
                   <p className="form-stepper-summary-label">Cliente</p>
                   <p className="form-stepper-summary-value">{selectedCustomer?.name || '-'}</p>
-                  <p className="form-stepper-summary-sub">{selectedCustomer?.identity_card}</p>
+                  <p className="form-stepper-summary-sub">{selectedCustomer?.identity_card?.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}</p>
                 </div>
               </div>
               <div className="col-md-3">

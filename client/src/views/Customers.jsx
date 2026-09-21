@@ -14,6 +14,8 @@ const CUSTOMER_FIELDS = [
   { key: 'address',       label: 'Dirección', required: false, aliases: ['direccion', 'dir', 'domicilio'] },
 ];
 
+const fmtCI = (v) => v ? String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '—';
+
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -291,7 +293,7 @@ const Customers = () => {
                 customers.map(c => (
                   <tr key={c.id}>
                     <td className="px-4 py-2">{c.name}</td>
-                    <td className="px-4 py-2">{c.identity_card}</td>
+                    <td className="px-4 py-2">{fmtCI(c.identity_card)}</td>
                     <td className="px-4 py-2">{c.phone || '-'}</td>
                     <td className="px-4 py-2">{c.address || '-'}</td>
                     <td className="px-4 py-2">
