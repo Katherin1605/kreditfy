@@ -95,11 +95,18 @@ export const upsertClosing = async (year, month, { notas, cerrado }, tenantId) =
 
 export const getAvailableYears = async (tenantId) => {
   const params = [];
-  let where = '';
-  if (tenantId != null) { where = 'WHERE tenant_id = $1'; params.push(tenantId); }
+  const filter = tenantId != null ? (params.push(tenantId), `WHERE tenant_id = $1`) : '';
   const result = await pool.query(
-    `SELECT DISTINCT EXTRACT(YEAR FROM payment_date)::int AS year
-     FROM payments ${where}
+    `SELECT DISTINCT year FROM (
+       SELECT EXTRACT(YEAR FROM payment_date)::int AS year FROM payments         ${filter}
+       UNION
+       SELECT EXTRACT(YEAR FROM sale_date)::int    AS year FROM sales            ${filter}
+       UNION
+       SELECT EXTRACT(YEAR FROM date)::int         AS year FROM shopping         ${filter}
+       UNION
+       SELECT year                                          FROM monthly_closings ${filter}
+     ) y
+     WHERE year IS NOT NULL
      ORDER BY year DESC`,
     params
   );

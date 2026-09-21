@@ -4,7 +4,8 @@ import * as auditModel from "../models/auditModel.js";
 
 export const getAllShopping = async (req, res) => {
   try {
-    const data = await shoppingModel.getAllShopping(req.tenantId);
+    const { date_from, date_to } = req.query;
+    const data = await shoppingModel.getAllShopping(req.tenantId, { dateFrom: date_from, dateTo: date_to });
     res.json(data);
   } catch (error) {
     console.error(error);

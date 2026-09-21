@@ -14,8 +14,7 @@ const Sales = () => {
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
@@ -33,26 +32,30 @@ const Sales = () => {
   const { confirmModal, ask } = useConfirm();
   const { rates } = useExchangeRates();
 
+  const [mYear, mMonth] = selectedMonth.split('-').map(Number);
+  const monthFrom = `${selectedMonth}-01`;
+  const monthTo   = new Date(mYear, mMonth, 0).toISOString().split('T')[0];
+
   useEffect(() => {
     loadCatalogs();
   }, []);
 
   useEffect(() => {
-    loadSales(search, page, dateFrom, dateTo);
+    loadSales(search, page, monthFrom, monthTo);
   }, [page]);
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setPage(1);
-      loadSales(search, 1, dateFrom, dateTo);
+      loadSales(search, 1, monthFrom, monthTo);
     }, 350);
   }, [search]);
 
   useEffect(() => {
     setPage(1);
-    loadSales(search, 1, dateFrom, dateTo);
-  }, [dateFrom, dateTo]);
+    loadSales(search, 1, monthFrom, monthTo);
+  }, [selectedMonth]);
 
   useEffect(() => {
     if (!showForm) return;
@@ -186,10 +189,8 @@ const Sales = () => {
   const handleExportCSV = async () => {
     setExporting(true);
     try {
-      const params = { page: 1, limit: 99999 };
-      if (search)   params.q         = search;
-      if (dateFrom) params.date_from = dateFrom;
-      if (dateTo)   params.date_to   = dateTo;
+      const params = { page: 1, limit: 99999, date_from: monthFrom, date_to: monthTo };
+      if (search) params.q = search;
       const res  = await axios.get('/sales', { params });
       const data = Array.isArray(res.data) ? res.data : (res.data.data || []);
 
@@ -279,45 +280,36 @@ const Sales = () => {
       </div>
 
       <div className="bg-white rounded shadow-sm p-3 mb-3">
-        <div className="row g-2 align-items-end">
-          <div className="col-auto">
-            <label className="form-label small text-muted mb-1">Desde</label>
-            <input
-              type="date"
-              className="form-control form-control-sm"
-              value={dateFrom}
-              max={dateTo || undefined}
-              onChange={e => setDateFrom(e.target.value)}
-            />
-          </div>
-          <div className="col-auto">
-            <label className="form-label small text-muted mb-1">Hasta</label>
-            <input
-              type="date"
-              className="form-control form-control-sm"
-              value={dateTo}
-              min={dateFrom || undefined}
-              onChange={e => setDateTo(e.target.value)}
-            />
-          </div>
-          {(dateFrom || dateTo) && (
-            <div className="col-auto">
-              <button
-                className="btn btn-sm btn-outline-secondary"
-                onClick={() => { setDateFrom(''); setDateTo(''); }}
-              >
-                <i className="bi bi-x-lg me-1"></i>Limpiar fechas
-              </button>
-            </div>
-          )}
-          {(dateFrom || dateTo) && (
-            <div className="col-auto ms-auto">
-              <small className="text-muted">
-                <i className="bi bi-funnel me-1"></i>
-                Filtrando por rango de fechas
-              </small>
-            </div>
-          )}
+        <div className="d-flex align-items-center gap-2 flex-wrap">
+          <label className="form-label small text-muted mb-0">Período:</label>
+          <button
+            className="btn btn-sm btn-outline-secondary"
+            onClick={() => {
+              const [y, m] = selectedMonth.split('-').map(Number);
+              const prev = new Date(y, m - 2, 1);
+              setSelectedMonth(`${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`);
+            }}
+          >
+            <i className="bi bi-chevron-left"></i>
+          </button>
+          <input
+            type="month"
+            className="form-control form-control-sm period-month-input"
+            value={selectedMonth}
+            max={new Date().toISOString().slice(0, 7)}
+            onChange={e => setSelectedMonth(e.target.value)}
+          />
+          <button
+            className="btn btn-sm btn-outline-secondary"
+            onClick={() => {
+              const [y, m] = selectedMonth.split('-').map(Number);
+              const next = new Date(y, m, 1);
+              setSelectedMonth(`${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}`);
+            }}
+            disabled={selectedMonth >= new Date().toISOString().slice(0, 7)}
+          >
+            <i className="bi bi-chevron-right"></i>
+          </button>
         </div>
       </div>
 

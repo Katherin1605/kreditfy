@@ -23,8 +23,7 @@ const METHOD_LABELS = { cash: 'Efectivo', transfer: 'Transferencia', card: 'Tarj
 const Payments = () => {
   const [sales, setSales] = useState([]);
   const [search, setSearch] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
@@ -37,22 +36,26 @@ const Payments = () => {
   const { confirmModal } = useConfirm();
   const { rates } = useExchangeRates();
 
+  const [mYear, mMonth] = selectedMonth.split('-').map(Number);
+  const monthFrom = `${selectedMonth}-01`;
+  const monthTo   = new Date(mYear, mMonth, 0).toISOString().split('T')[0];
+
   useEffect(() => {
-    loadSales(search, page, dateFrom, dateTo);
+    loadSales(search, page, monthFrom, monthTo);
   }, [page]);
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setPage(1);
-      loadSales(search, 1, dateFrom, dateTo);
+      loadSales(search, 1, monthFrom, monthTo);
     }, 350);
   }, [search]);
 
   useEffect(() => {
     setPage(1);
-    loadSales(search, 1, dateFrom, dateTo);
-  }, [dateFrom, dateTo]);
+    loadSales(search, 1, monthFrom, monthTo);
+  }, [selectedMonth]);
 
   useEffect(() => {
     if (!showPayForm) return;
@@ -149,7 +152,7 @@ const Payments = () => {
     return 'bg-danger';
   };
 
-  const hasFilters = search || dateFrom || dateTo;
+  const hasFilters = !!search;
 
   return (
     <>
@@ -177,36 +180,35 @@ const Payments = () => {
                   onChange={e => setSearch(e.target.value)}
                 />
               </div>
-              <div className="d-flex gap-2 align-items-end">
-                <div className="flex-fill">
-                  <label className="form-label small text-muted mb-1">Desde</label>
-                  <input
-                    type="date"
-                    className="form-control form-control-sm"
-                    value={dateFrom}
-                    max={dateTo || undefined}
-                    onChange={e => setDateFrom(e.target.value)}
-                  />
-                </div>
-                <div className="flex-fill">
-                  <label className="form-label small text-muted mb-1">Hasta</label>
-                  <input
-                    type="date"
-                    className="form-control form-control-sm"
-                    value={dateTo}
-                    min={dateFrom || undefined}
-                    onChange={e => setDateTo(e.target.value)}
-                  />
-                </div>
-                {hasFilters && (
-                  <button
-                    className="btn btn-sm btn-outline-secondary"
-                    onClick={() => { setSearch(''); setDateFrom(''); setDateTo(''); }}
-                    title="Limpiar filtros"
-                  >
-                    <i className="bi bi-x-lg"></i>
-                  </button>
-                )}
+              <div className="d-flex align-items-center gap-2 mt-1">
+                <button
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() => {
+                    const [y, m] = selectedMonth.split('-').map(Number);
+                    const prev = new Date(y, m - 2, 1);
+                    setSelectedMonth(`${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`);
+                  }}
+                >
+                  <i className="bi bi-chevron-left"></i>
+                </button>
+                <input
+                  type="month"
+                  className="form-control form-control-sm period-month-input"
+                  value={selectedMonth}
+                  max={new Date().toISOString().slice(0, 7)}
+                  onChange={e => setSelectedMonth(e.target.value)}
+                />
+                <button
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() => {
+                    const [y, m] = selectedMonth.split('-').map(Number);
+                    const next = new Date(y, m, 1);
+                    setSelectedMonth(`${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}`);
+                  }}
+                  disabled={selectedMonth >= new Date().toISOString().slice(0, 7)}
+                >
+                  <i className="bi bi-chevron-right"></i>
+                </button>
               </div>
             </div>
 

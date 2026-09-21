@@ -8,10 +8,13 @@ pool.query(`
   ALTER TABLE shopping ADD COLUMN IF NOT EXISTS exchange_rate NUMERIC(10,4)
 `).catch(err => console.error('[shopping] Error en migración exchange_rate:', err));
 
-export const getAllShopping = async (tenantId) => {
+export const getAllShopping = async (tenantId, { dateFrom, dateTo } = {}) => {
   const params = [];
-  let where = '';
-  if (tenantId != null) { where = 'WHERE tenant_id = $1'; params.push(tenantId); }
+  const conds = [];
+  if (tenantId != null)  { params.push(tenantId); conds.push(`tenant_id = $${params.length}`); }
+  if (dateFrom)          { params.push(dateFrom);  conds.push(`date >= $${params.length}`); }
+  if (dateTo)            { params.push(dateTo);    conds.push(`date <= $${params.length}`); }
+  const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
   const result = await pool.query(`SELECT * FROM shopping ${where} ORDER BY date DESC, id DESC`, params);
   return result.rows;
 };

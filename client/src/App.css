@@ -223,6 +223,11 @@
   font-size: 0.72rem;
 }
 
+.period-month-input {
+  width: auto;
+  min-width: 150px;
+}
+
 .btn-primary {
   background: var(--primary-color);
   color: white;
