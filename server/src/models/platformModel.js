@@ -261,3 +261,43 @@ export const getPlatformStats = async () => {
   `);
   return result.rows[0];
 };
+
+export const getPlatformExtras = async () => {
+  const [planDistRes, inactiveRes, recentRes] = await Promise.all([
+    // Distribución de planes
+    pool.query(`
+      SELECT plan, COUNT(*)::int AS count
+      FROM tenants
+      WHERE active = TRUE
+      GROUP BY plan
+      ORDER BY plan
+    `),
+    // Tenants sin actividad en los últimos 30 días
+    pool.query(`
+      SELECT t.id, t.name, t.slug, t.plan,
+             MAX(s.sale_date) AS last_sale_date,
+             COUNT(s.id)::int AS total_sales
+      FROM tenants t
+      LEFT JOIN sales s ON s.tenant_id = t.id
+      WHERE t.active = TRUE
+      GROUP BY t.id, t.name, t.slug, t.plan
+      HAVING MAX(s.sale_date) < NOW() - INTERVAL '30 days'
+          OR MAX(s.sale_date) IS NULL
+      ORDER BY last_sale_date ASC NULLS FIRST
+      LIMIT 10
+    `),
+    // Últimos 5 tenants registrados
+    pool.query(`
+      SELECT id, name, slug, plan, active, pending_review, created_at
+      FROM tenants
+      ORDER BY created_at DESC
+      LIMIT 5
+    `),
+  ]);
+
+  return {
+    plan_distribution: planDistRes.rows,
+    inactive_tenants:  inactiveRes.rows,
+    recent_tenants:    recentRes.rows,
+  };
+};

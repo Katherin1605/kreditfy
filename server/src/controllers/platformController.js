@@ -257,3 +257,13 @@ export const getPlatformStats = async (req, res) => {
     res.status(500).json({ error: 'Error al obtener estadísticas globales' });
   }
 };
+
+export const getPlatformExtras = async (req, res) => {
+  try {
+    const extras = await platformModel.getPlatformExtras();
+    res.json(extras);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener datos adicionales' });
+  }
+};

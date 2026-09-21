@@ -3,6 +3,20 @@ import pool from "../../db/config.js";
 pool.query(`ALTER TABLE admins ADD COLUMN IF NOT EXISTS logo_url TEXT DEFAULT NULL`)
   .catch(err => console.error('[admins] Error en migración logo_url:', err));
 
+// Reemplazar UNIQUE(email) global por dos índices parciales:
+// - un email por tenant activo
+// - un email para platform_admin (tenant_id IS NULL)
+pool.query(`ALTER TABLE admins DROP CONSTRAINT IF EXISTS admins_email_key`)
+  .catch(() => {});
+pool.query(`
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_admins_email_tenant
+  ON admins (email, tenant_id) WHERE tenant_id IS NOT NULL
+`).catch(err => console.error('[admins] Error en migración idx_admins_email_tenant:', err));
+pool.query(`
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_admins_email_platform
+  ON admins (email) WHERE tenant_id IS NULL
+`).catch(err => console.error('[admins] Error en migración idx_admins_email_platform:', err));
+
 // Auto-crea la tabla si no existe al iniciar el servidor
 pool.query(`
   CREATE TABLE IF NOT EXISTS password_reset_tokens (
@@ -24,6 +38,33 @@ export const findAdminByEmail = async (email) => {
      LEFT JOIN plan_configs pc ON pc.plan = t.plan
      WHERE a.email = $1`,
     [email]
+  );
+  return result.rows[0];
+};
+
+export const findAllAdminsByEmail = async (email) => {
+  const result = await pool.query(
+    `SELECT a.*, t.name AS tenant_name, t.logo_url AS tenant_logo, t.plan AS tenant_plan,
+            t.pending_review AS tenant_pending_review, pc.modules AS plan_modules
+     FROM admins a
+     LEFT JOIN tenants t ON t.id = a.tenant_id
+     LEFT JOIN plan_configs pc ON pc.plan = t.plan
+     WHERE a.email = $1
+     ORDER BY a.tenant_id NULLS LAST`,
+    [email]
+  );
+  return result.rows;
+};
+
+export const findAdminByEmailAndTenant = async (email, tenantId) => {
+  const result = await pool.query(
+    `SELECT a.*, t.name AS tenant_name, t.logo_url AS tenant_logo, t.plan AS tenant_plan,
+            t.pending_review AS tenant_pending_review, pc.modules AS plan_modules
+     FROM admins a
+     LEFT JOIN tenants t ON t.id = a.tenant_id
+     LEFT JOIN plan_configs pc ON pc.plan = t.plan
+     WHERE a.email = $1 AND a.tenant_id ${tenantId === null ? 'IS NULL' : '= $2'}`,
+    tenantId === null ? [email] : [email, tenantId]
   );
   return result.rows[0];
 };

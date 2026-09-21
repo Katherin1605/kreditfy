@@ -3,7 +3,7 @@ import {
   getPlanConfigs, updatePlanConfig,
   getTenants, getTenantById, createTenant, updateTenant, approveTenant,
   getTenantAdmins, createTenantAdmin, toggleTenantAdmin, resetTenantAdminPassword, deleteTenantAdmin,
-  uploadTenantLogo, uploadPlatformLogo, getPlatformStats, getTenantsBreakdown,
+  uploadTenantLogo, uploadPlatformLogo, getPlatformStats, getPlatformExtras, getTenantsBreakdown,
   getBackupInfo, triggerFullBackup, downloadTenantBackup, deleteTenant,
 } from '../src/controllers/platformController.js';
 import { authenticateToken, requirePlatformAdmin } from '../src/middleware/authMiddleware.js';
@@ -12,6 +12,7 @@ import { uploadLogo } from '../src/utils/upload.js';
 const router = Router();
 
 router.get('/platform/stats',                   authenticateToken, requirePlatformAdmin, getPlatformStats);
+router.get('/platform/extras',                  authenticateToken, requirePlatformAdmin, getPlatformExtras);
 router.get('/platform/backup-info',             authenticateToken, requirePlatformAdmin, getBackupInfo);
 router.post('/platform/backup',                 authenticateToken, requirePlatformAdmin, triggerFullBackup);
 router.get('/platform/tenants/:id/backup',      authenticateToken, requirePlatformAdmin, downloadTenantBackup);

@@ -185,6 +185,35 @@
   text-decoration: underline;
 }
 
+.login-tenant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.login-tenant-item {
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  border: 1.5px solid #c4b5fd;
+  border-radius: var(--border-radius);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+  color: var(--text-color);
+}
+
+.login-tenant-item:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  background: var(--secondary-bg);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
+}
+
+.login-tenant-item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .btn-primary {
   background: var(--primary-color);
   color: white;

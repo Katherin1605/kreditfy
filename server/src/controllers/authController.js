@@ -25,16 +25,39 @@ const buildPayload = (admin) => ({
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, tenant_id } = req.body;
     if (!email || !password) {
       return res.status(400).json({ error: "Email y contraseña son obligatorios" });
     }
 
-    const admin = await authModel.findAdminByEmail(email);
-    if (!admin) return res.status(401).json({ error: "Credenciales inválidas" });
+    const allAdmins = await authModel.findAllAdminsByEmail(email);
+    if (!allAdmins.length) return res.status(401).json({ error: "Credenciales inválidas" });
 
-    const valid = await bcrypt.compare(password, admin.password);
+    const valid = await bcrypt.compare(password, allAdmins[0].password);
     if (!valid) return res.status(401).json({ error: "Credenciales inválidas" });
+
+    let admin;
+
+    if ('tenant_id' in req.body) {
+      // Segunda etapa: el usuario ya eligió su negocio
+      const targetTenantId = tenant_id === null || tenant_id === undefined ? null : parseInt(tenant_id);
+      admin = allAdmins.find(a =>
+        targetTenantId === null ? a.tenant_id === null : a.tenant_id === targetTenantId
+      );
+      if (!admin) return res.status(401).json({ error: "Credenciales inválidas" });
+    } else if (allAdmins.length === 1) {
+      admin = allAdmins[0];
+    } else {
+      // Múltiples perfiles → pedir selección de negocio
+      return res.json({
+        requireTenantSelection: true,
+        tenants: allAdmins.map(a => ({
+          tenant_id:   a.tenant_id,
+          tenant_name: a.tenant_id === null ? 'Kreditfy (Plataforma)' : (a.tenant_name ?? `Negocio #${a.tenant_id}`),
+          role:        a.role,
+        })),
+      });
+    }
 
     if (!admin.active) {
       if (admin.tenant_pending_review) {

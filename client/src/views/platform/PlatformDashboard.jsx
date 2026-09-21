@@ -6,11 +6,16 @@ const fmtDate = (d) => d
   ? new Date(d).toLocaleString('es-VE', { dateStyle: 'medium', timeStyle: 'short' })
   : '—';
 
-const fmt = (n) => Number(n).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtDateShort = (d) => d
+  ? new Date(d).toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' })
+  : '—';
+
+const PLAN_COLORS = { basic: 'bg-secondary', pro: 'bg-primary' };
 
 const PlatformDashboard = () => {
-  const [stats, setStats]       = useState(null);
+  const [stats, setStats]         = useState(null);
   const [breakdown, setBreakdown] = useState([]);
+  const [extras, setExtras]       = useState(null);
   const [backupInfo, setBackupInfo] = useState(undefined);
   const [triggering, setTriggering] = useState(false);
 
@@ -23,10 +28,12 @@ const PlatformDashboard = () => {
     Promise.all([
       axios.get('/platform/stats'),
       axios.get('/platform/breakdown'),
+      axios.get('/platform/extras'),
     ])
-      .then(([statsRes, breakdownRes]) => {
+      .then(([statsRes, breakdownRes, extrasRes]) => {
         setStats(statsRes.data);
         setBreakdown(breakdownRes.data);
+        setExtras(extrasRes.data);
       })
       .catch(() => {});
     loadBackupInfo();
@@ -40,6 +47,8 @@ const PlatformDashboard = () => {
     } catch {}
     finally { setTriggering(false); }
   };
+
+  const totalActivePlans = extras?.plan_distribution?.reduce((s, r) => s + r.count, 0) || 0;
 
   return (
     <div>
@@ -55,6 +64,7 @@ const PlatformDashboard = () => {
         </div>
       )}
 
+      {/* ── Métricas globales ── */}
       {stats ? (
         <div className="row g-3 mb-4">
           <div className="col-6 col-md-3">
@@ -86,6 +96,154 @@ const PlatformDashboard = () => {
         <p className="text-muted">Cargando estadísticas...</p>
       )}
 
+      {/* ── Tres secciones nuevas ── */}
+      <div className="row g-4 mb-4">
+
+        {/* Distribución de planes */}
+        <div className="col-md-4">
+          <div className="card h-100">
+            <div className="card-header dashboard-card-header">
+              <i className="bi bi-pie-chart me-2"></i>Distribución de planes
+            </div>
+            <div className="card-body">
+              {!extras ? (
+                <p className="text-muted small">Cargando...</p>
+              ) : extras.plan_distribution.length === 0 ? (
+                <p className="text-muted small">Sin tenants activos</p>
+              ) : (
+                <>
+                  {extras.plan_distribution.map(row => {
+                    const pct = totalActivePlans > 0 ? Math.round((row.count / totalActivePlans) * 100) : 0;
+                    return (
+                      <div key={row.plan} className="mb-3">
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <span className={`badge ${PLAN_COLORS[row.plan] || 'bg-secondary'} text-capitalize`}>
+                            {row.plan}
+                          </span>
+                          <span className="fw-semibold">{row.count} <span className="text-muted fw-normal small">({pct}%)</span></span>
+                        </div>
+                        <div className="progress progress-sm">
+                          <div
+                            className={`progress-bar progress-bar-dynamic ${PLAN_COLORS[row.plan] || 'bg-secondary'}`}
+                            style={{ '--bar-width': `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <p className="text-muted small mb-0 mt-2">
+                    {totalActivePlans} tenant{totalActivePlans !== 1 ? 's' : ''} activo{totalActivePlans !== 1 ? 's' : ''} en total
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Tenants registrados recientemente */}
+        <div className="col-md-8">
+          <div className="card h-100">
+            <div className="card-header dashboard-card-header">
+              <i className="bi bi-person-plus me-2"></i>Tenants recientes
+            </div>
+            <div className="card-body p-0">
+              {!extras ? (
+                <p className="text-muted small p-3">Cargando...</p>
+              ) : extras.recent_tenants.length === 0 ? (
+                <p className="text-muted small p-3">Sin registros</p>
+              ) : (
+                <table className="table table-sm table-hover mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th className="px-3 py-2">Tenant</th>
+                      <th className="px-3 py-2">Plan</th>
+                      <th className="px-3 py-2">Estado</th>
+                      <th className="px-3 py-2">Registrado</th>
+                      <th className="px-3 py-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {extras.recent_tenants.map(t => (
+                      <tr key={t.id}>
+                        <td className="px-3 py-2">
+                          <div className="fw-semibold">{t.name}</div>
+                          <div className="text-muted small"><code>{t.slug}</code></div>
+                        </td>
+                        <td className="px-3 py-2">
+                          <span className={`badge ${PLAN_COLORS[t.plan] || 'bg-secondary'} text-capitalize`}>{t.plan}</span>
+                        </td>
+                        <td className="px-3 py-2">
+                          {t.pending_review
+                            ? <span className="badge bg-warning text-dark">Pendiente</span>
+                            : <span className={`badge ${t.active ? 'bg-success' : 'bg-secondary'}`}>{t.active ? 'Activo' : 'Inactivo'}</span>
+                          }
+                        </td>
+                        <td className="px-3 py-2 text-muted small">{fmtDateShort(t.created_at)}</td>
+                        <td className="px-3 py-2">
+                          <Link to={`/platform/tenants/${t.id}`} className="btn btn-outline-secondary btn-sm">
+                            <i className="bi bi-arrow-right"></i>
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tenants sin actividad reciente */}
+      {extras?.inactive_tenants?.length > 0 && (
+        <div className="card mb-4 border-warning">
+          <div className="card-header dashboard-card-header d-flex align-items-center gap-2">
+            <i className="bi bi-exclamation-circle text-warning"></i>
+            Tenants sin actividad en los últimos 30 días
+            <span className="badge bg-warning text-dark ms-1">{extras.inactive_tenants.length}</span>
+          </div>
+          <div className="card-body p-0">
+            <table className="table table-sm table-hover mb-0">
+              <thead className="table-light">
+                <tr>
+                  <th className="px-3 py-2">Tenant</th>
+                  <th className="px-3 py-2">Plan</th>
+                  <th className="px-3 py-2">Última venta</th>
+                  <th className="px-3 py-2">Total ventas</th>
+                  <th className="px-3 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {extras.inactive_tenants.map(t => (
+                  <tr key={t.id}>
+                    <td className="px-3 py-2">
+                      <div className="fw-semibold">{t.name}</div>
+                      <div className="text-muted small"><code>{t.slug}</code></div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className={`badge ${PLAN_COLORS[t.plan] || 'bg-secondary'} text-capitalize`}>{t.plan}</span>
+                    </td>
+                    <td className="px-3 py-2">
+                      {t.last_sale_date
+                        ? <span className="text-warning">{fmtDateShort(t.last_sale_date)}</span>
+                        : <span className="text-danger">Sin ventas</span>
+                      }
+                    </td>
+                    <td className="px-3 py-2 text-muted">{t.total_sales}</td>
+                    <td className="px-3 py-2">
+                      <Link to={`/platform/tenants/${t.id}`} className="btn btn-outline-secondary btn-sm">
+                        <i className="bi bi-arrow-right"></i>
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Backup */}
       <div className="card mb-4">
         <div className="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
           <div>
@@ -111,6 +269,7 @@ const PlatformDashboard = () => {
         </div>
       </div>
 
+      {/* Desglose por tenant */}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h5 className="mb-0">Desglose por tenant</h5>
       </div>
@@ -123,16 +282,13 @@ const PlatformDashboard = () => {
                 <th>Estado</th>
                 <th className="text-end">Clientes</th>
                 <th className="text-end">Ventas</th>
-                <th className="text-end">Ingresos totales</th>
-                <th className="text-end">Ventas pendientes</th>
-                <th className="text-end">Saldo pendiente</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {breakdown.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center text-muted py-4">Sin tenants registrados</td>
+                  <td colSpan={5} className="text-center text-muted py-4">Sin tenants registrados</td>
                 </tr>
               ) : breakdown.map(t => (
                 <tr key={t.id}>
@@ -147,17 +303,6 @@ const PlatformDashboard = () => {
                   </td>
                   <td className="text-end">{t.total_customers}</td>
                   <td className="text-end">{t.total_sales}</td>
-                  <td className="text-end">${fmt(t.total_revenue)}</td>
-                  <td className="text-end">
-                    {t.pending_sales > 0
-                      ? <span className="badge bg-warning text-dark">{t.pending_sales}</span>
-                      : <span className="text-muted">—</span>}
-                  </td>
-                  <td className="text-end">
-                    {Number(t.pending_balance) > 0
-                      ? <span className="text-danger fw-semibold">${fmt(t.pending_balance)}</span>
-                      : <span className="text-success">$0.00</span>}
-                  </td>
                   <td>
                     <Link to={`/platform/tenants/${t.id}`} className="btn btn-outline-secondary btn-sm">
                       <i className="bi bi-arrow-right"></i>
