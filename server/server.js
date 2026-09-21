@@ -17,6 +17,7 @@ import earningsRoutes from './routes/earningsRoutes.js';
 import exchangeRatesRoutes from './routes/exchangeRatesRoutes.js';
 import platformRoutes from './routes/platformRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
+import profileRoutes from './routes/profileRoutes.js';
 
 const PORT = process.env.PORT;
 const app = express();
@@ -43,6 +44,7 @@ app.use(earningsRoutes);
 app.use(exchangeRatesRoutes);
 app.use(platformRoutes);
 app.use(settingsRoutes);
+app.use(profileRoutes);
 
 app.get("/", (req, res) => {
   res.send("API funcionando 🚀");

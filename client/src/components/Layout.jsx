@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import useConfirm from '../hooks/useConfirm';
@@ -152,14 +152,24 @@ const Layout = () => {
                 )}
               </div>
             </div>
-            <button
-              className="btn btn-sm btn-outline-secondary sidebar-logout"
-              onClick={handleLogout}
-              title={collapsed ? 'Cerrar sesión' : undefined}
-            >
-              <i className="bi bi-box-arrow-right flex-shrink-0"></i>
-              <span>Cerrar sesión</span>
-            </button>
+            <div className="sidebar-footer-actions">
+              <Link
+                to="/profile"
+                className="btn btn-sm btn-outline-secondary sidebar-logout"
+                title={collapsed ? 'Mi perfil' : undefined}
+              >
+                <i className="bi bi-person-gear flex-shrink-0"></i>
+                <span>Mi perfil</span>
+              </Link>
+              <button
+                className="btn btn-sm btn-outline-secondary sidebar-logout"
+                onClick={handleLogout}
+                title={collapsed ? 'Cerrar sesión' : undefined}
+              >
+                <i className="bi bi-box-arrow-right flex-shrink-0"></i>
+                <span>Cerrar sesión</span>
+              </button>
+            </div>
           </div>
         )}
       </aside>

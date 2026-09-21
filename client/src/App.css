@@ -214,6 +214,11 @@
   cursor: not-allowed;
 }
 
+.profile-role-box {
+  background: var(--secondary-bg);
+  border: 1px solid var(--border-input);
+}
+
 .btn-primary {
   background: var(--primary-color);
   color: white;
@@ -691,6 +696,12 @@
   color: #fff;
 }
 
+.sidebar-footer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
 .sidebar-logout {
   width: 100%;
   display: flex;
@@ -702,6 +713,7 @@
   overflow: hidden;
   color: var(--sidebar-text) !important;
   border-color: var(--sidebar-border) !important;
+  text-decoration: none;
 }
 
 .sidebar-logout:hover {

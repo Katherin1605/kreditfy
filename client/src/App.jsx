@@ -20,6 +20,7 @@ import PlatformDashboard from "./views/platform/PlatformDashboard";
 import PlatformTenants from "./views/platform/PlatformTenants";
 import PlatformTenantDetail from "./views/platform/PlatformTenantDetail";
 import PlatformPlans from "./views/platform/PlatformPlans";
+import Profile from "./views/Profile";
 
 const SUPERADMIN_VIEWS = ['admin', 'audit', 'earnings', 'settings'];
 
@@ -55,6 +56,7 @@ function App() {
           <Route path="tenants" element={<PlatformTenants />} />
           <Route path="tenants/:id" element={<PlatformTenantDetail />} />
           <Route path="plans"       element={<PlatformPlans />} />
+          <Route path="profile"     element={<Profile />} />
         </Route>
         <Route path="/" element={<ProtectedRoute element={<Layout />} />}>
           <Route index element={<Dashboard />} />
@@ -67,6 +69,7 @@ function App() {
           <Route path="audit"     element={<ProtectedRoute element={<Audit />}     view="audit" />} />
           <Route path="earnings"  element={<ProtectedRoute element={<Earnings />}  view="earnings" />} />
           <Route path="settings"  element={<ProtectedRoute element={<Settings />}  view="settings" />} />
+          <Route path="profile"   element={<ProtectedRoute element={<Profile />} />} />
         </Route>
       </Routes>
     </BrowserRouter>
