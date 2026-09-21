@@ -41,8 +41,15 @@ const Products = () => {
   const [savingStock, setSavingStock] = useState(false);
   const { confirmModal, ask } = useConfirm();
   const { rates } = useExchangeRates();
+  const formRef = useRef(null);
 
   useEffect(() => { loadProducts(); }, []);
+
+  useEffect(() => {
+    if (showForm && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [showForm]);
 
   const loadProducts = () => {
     axios.get('/products')
@@ -205,9 +212,9 @@ const Products = () => {
     }
   };
 
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredProducts = products
+    .filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name, 'es'));
 
   return (
     <>
@@ -339,14 +346,16 @@ const Products = () => {
       </div>
 
       {showForm && (
-        <FormProducts
-          formData={formData}
-          setFormData={setFormData}
-          editingProduct={editingProduct}
-          onSubmit={handleSubmit}
-          onClose={resetForm}
-          errors={formErrors}
-        />
+        <div ref={formRef}>
+          <FormProducts
+            formData={formData}
+            setFormData={setFormData}
+            editingProduct={editingProduct}
+            onSubmit={handleSubmit}
+            onClose={resetForm}
+            errors={formErrors}
+          />
+        </div>
       )}
 
       <div className="bg-white rounded shadow overflow-hidden">
@@ -358,6 +367,7 @@ const Products = () => {
                 <th className="px-4 py-3">SKU</th>
                 <th className="px-4 py-3">P. Compra</th>
                 <th className="px-4 py-3">P. Venta</th>
+                <th className="px-4 py-3">Ganancia</th>
                 <th className="px-4 py-3">Stock</th>
                 <th className="px-4 py-3">Acciones</th>
               </tr>
@@ -367,7 +377,7 @@ const Products = () => {
                 <TableSkeleton cols={6} />
               ) : filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-5 text-muted">
+                  <td colSpan={7} className="text-center py-5 text-muted">
                     {products.length === 0 ? 'No hay productos registrados' : 'No se encontraron productos'}
                   </td>
                 </tr>
@@ -388,6 +398,20 @@ const Products = () => {
                       }
                     </td>
                     <td className="px-4 py-2"><AmountDisplay amount={p.price} rates={rates} /></td>
+                    <td className="px-4 py-2">
+                      {p.cost_price != null ? (() => {
+                        const profit = p.price - p.cost_price;
+                        const margin = Math.round((profit / p.cost_price) * 100);
+                        return (
+                          <div>
+                            <span className={profit >= 0 ? 'text-success fw-semibold' : 'text-danger fw-semibold'}>
+                              <AmountDisplay amount={profit} rates={rates} />
+                            </span>
+                            <div className="text-muted product-margin-pct">{margin}% margen</div>
+                          </div>
+                        );
+                      })() : <span className="text-muted">—</span>}
+                    </td>
                     <td className="px-4 py-2">
                       <span className={p.stock <= 0 ? 'text-danger fw-bold' : ''}>{p.stock}</span>
                     </td>

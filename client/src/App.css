@@ -219,6 +219,10 @@
   border: 1px solid var(--border-input);
 }
 
+.product-margin-pct {
+  font-size: 0.72rem;
+}
+
 .btn-primary {
   background: var(--primary-color);
   color: white;
