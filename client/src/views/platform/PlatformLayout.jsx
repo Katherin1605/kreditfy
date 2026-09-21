@@ -3,6 +3,7 @@ import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
+import ProfileSwitcher from '../../components/ProfileSwitcher';
 
 const NAV_ITEMS = [
   { to: '/platform', label: 'Dashboard', icon: 'bi-columns-gap', end: true },
@@ -118,6 +119,7 @@ const PlatformLayout = () => {
               <i className="bi bi-person-gear flex-shrink-0"></i>
               <span>Mi perfil</span>
             </Link>
+            <ProfileSwitcher collapsed={collapsed} />
             <button
               className="btn btn-sm btn-outline-secondary sidebar-logout"
               onClick={handleLogout}

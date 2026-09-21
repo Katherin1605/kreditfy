@@ -8,16 +8,19 @@ const decodeJWT = (token) => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [currentAdmin, setCurrentAdmin] = useState(null);
+  const [currentAdmin, setCurrentAdmin]           = useState(null);
+  const [availableProfiles, setAvailableProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   // Shared promise while a refresh is in flight — prevents parallel refresh races
   const refreshPromiseRef = useRef(null);
 
   const clearSession = () => {
     setCurrentAdmin(null);
+    setAvailableProfiles([]);
     localStorage.removeItem('admin');
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('profiles');
     delete axios.defaults.headers.common['Authorization'];
   };
 
@@ -26,8 +29,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const stored = localStorage.getItem('admin');
-    const token  = localStorage.getItem('token');
+    const stored         = localStorage.getItem('admin');
+    const token          = localStorage.getItem('token');
+    const storedProfiles = localStorage.getItem('profiles');
     if (stored && token) {
       const adminData = JSON.parse(stored);
       // Patch tenant fields from token if the stored object predates them
@@ -43,6 +47,9 @@ export const AuthProvider = ({ children }) => {
       }
       setCurrentAdmin(adminData);
       applyToken(token);
+    }
+    if (storedProfiles) {
+      try { setAvailableProfiles(JSON.parse(storedProfiles)); } catch {}
     }
     setLoading(false);
 
@@ -88,12 +95,16 @@ export const AuthProvider = ({ children }) => {
     return () => axios.interceptors.response.eject(interceptor);
   }, []);
 
-  const login = (adminData, token, refreshToken) => {
+  const login = (adminData, token, refreshToken, profiles = null) => {
     setCurrentAdmin(adminData);
     localStorage.setItem('admin', JSON.stringify(adminData));
     localStorage.setItem('token', token);
     localStorage.setItem('refreshToken', refreshToken);
     applyToken(token);
+    if (profiles) {
+      setAvailableProfiles(profiles);
+      localStorage.setItem('profiles', JSON.stringify(profiles));
+    }
   };
 
   const updateCurrentAdmin = (patch) => {
@@ -106,14 +117,16 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setCurrentAdmin(null);
+    setAvailableProfiles([]);
     localStorage.removeItem('admin');
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('profiles');
     delete axios.defaults.headers.common['Authorization'];
   };
 
   return (
-    <AuthContext.Provider value={{ currentAdmin, login, logout, loading, updateCurrentAdmin }}>
+    <AuthContext.Provider value={{ currentAdmin, availableProfiles, login, logout, loading, updateCurrentAdmin }}>
       {children}
     </AuthContext.Provider>
   );

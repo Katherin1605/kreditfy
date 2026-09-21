@@ -70,10 +70,48 @@ export const login = async (req, res) => {
     const token        = jwt.sign(payload, ACCESS_SECRET,  { expiresIn: "15m" });
     const refreshToken = jwt.sign({ id: admin.id }, REFRESH_SECRET, { expiresIn: "7d" });
 
-    res.json({ token, refreshToken, admin: payload });
+    // Si el usuario tiene múltiples perfiles, enviarlos para habilitar el cambio de perfil
+    const profiles = allAdmins.length > 1
+      ? allAdmins.map(a => ({
+          tenant_id:   a.tenant_id,
+          tenant_name: a.tenant_id === null ? 'Kreditfy (Plataforma)' : (a.tenant_name ?? `Negocio #${a.tenant_id}`),
+          role:        a.role,
+        }))
+      : null;
+
+    res.json({ token, refreshToken, admin: payload, ...(profiles ? { profiles } : {}) });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al iniciar sesión" });
+  }
+};
+
+export const switchTenant = async (req, res) => {
+  try {
+    const { tenant_id } = req.body;
+    const email = req.admin.email;
+
+    const targetId = (tenant_id === null || tenant_id === undefined) ? null : parseInt(tenant_id);
+    const admin = await authModel.findAdminByEmailAndTenant(email, targetId);
+
+    if (!admin) return res.status(404).json({ error: 'Perfil no encontrado' });
+    if (!admin.active) return res.status(403).json({ error: 'Esta cuenta está inactiva' });
+
+    const allAdmins = await authModel.findAllAdminsByEmail(email);
+    const profiles  = allAdmins.map(a => ({
+      tenant_id:   a.tenant_id,
+      tenant_name: a.tenant_id === null ? 'Kreditfy (Plataforma)' : (a.tenant_name ?? `Negocio #${a.tenant_id}`),
+      role:        a.role,
+    }));
+
+    const payload      = buildPayload(admin);
+    const token        = jwt.sign(payload, ACCESS_SECRET,  { expiresIn: "15m" });
+    const refreshToken = jwt.sign({ id: admin.id }, REFRESH_SECRET, { expiresIn: "7d" });
+
+    res.json({ token, refreshToken, admin: payload, profiles });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cambiar de perfil' });
   }
 };
 

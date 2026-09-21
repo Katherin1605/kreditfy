@@ -702,6 +702,65 @@
   gap: 0.4rem;
 }
 
+/* ── Profile switcher ── */
+.profile-switcher-wrap {
+  position: relative;
+}
+
+.profile-switcher-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1040;
+}
+
+.profile-switcher-panel {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-input);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-soft);
+  z-index: 1050;
+  overflow: hidden;
+  min-width: 200px;
+}
+
+.profile-switcher-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  padding: 0.5rem 0.85rem 0.3rem;
+}
+
+.profile-switcher-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-color);
+  transition: background var(--transition);
+}
+
+.profile-switcher-item:hover:not(:disabled) {
+  background: var(--secondary-bg);
+}
+
+.profile-switcher-item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.profile-switcher-role {
+  font-size: 0.72rem;
+}
+
 .sidebar-logout {
   width: 100%;
   display: flex;

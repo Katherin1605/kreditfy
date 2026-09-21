@@ -37,7 +37,7 @@ const Login = () => {
         setTenants(res.data.tenants);
         return;
       }
-      login(res.data.admin, res.data.token, res.data.refreshToken);
+      login(res.data.admin, res.data.token, res.data.refreshToken, res.data.profiles ?? null);
       navigate(res.data.admin.role === 'platform_admin' ? '/platform' : '/');
     } catch (err) {
       setError(err.response?.data?.error || 'Error al iniciar sesión');
@@ -55,7 +55,7 @@ const Login = () => {
         password:  formData.password,
         tenant_id: tenantId,
       });
-      login(res.data.admin, res.data.token, res.data.refreshToken);
+      login(res.data.admin, res.data.token, res.data.refreshToken, res.data.profiles ?? null);
       navigate(res.data.admin.role === 'platform_admin' ? '/platform' : '/');
     } catch (err) {
       setError(err.response?.data?.error || 'Error al iniciar sesión');

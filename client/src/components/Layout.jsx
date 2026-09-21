@@ -4,6 +4,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import useConfirm from '../hooks/useConfirm';
 import { useAuth } from '../context/AuthContext';
+import ProfileSwitcher from './ProfileSwitcher';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: 'bi-columns-gap', view: null, end: true },
@@ -161,6 +162,7 @@ const Layout = () => {
                 <i className="bi bi-person-gear flex-shrink-0"></i>
                 <span>Mi perfil</span>
               </Link>
+              <ProfileSwitcher collapsed={collapsed} />
               <button
                 className="btn btn-sm btn-outline-secondary sidebar-logout"
                 onClick={handleLogout}
