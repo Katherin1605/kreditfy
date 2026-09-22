@@ -19,6 +19,7 @@ const FormSales = ({
   const [showProductoDropdown, setShowProductoDropdown] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState('');
   const [cantidad, setCantidad] = useState(1);
+  const [precioUnitario, setPrecioUnitario] = useState('');
   const [stepError, setStepError] = useState('');
   const [localExchangeRate, setLocalExchangeRate] = useState(exchangeRate ?? '');
 
@@ -54,11 +55,14 @@ const FormSales = ({
     if (!product) return;
     const cantidadNum = parseInt(cantidad);
     if (cantidadNum < 1) return;
+    const precio = parseFloat(precioUnitario);
+    if (isNaN(precio) || precio < 0) return;
     const existingIndex = items.findIndex(i => i.product_id === product.id);
     if (existingIndex >= 0) {
       const updated = [...items];
       updated[existingIndex].quantity += cantidadNum;
-      updated[existingIndex].subtotal = updated[existingIndex].quantity * updated[existingIndex].price;
+      updated[existingIndex].price = precio;
+      updated[existingIndex].subtotal = updated[existingIndex].quantity * precio;
       setItems(updated);
     } else {
       setItems([...items, {
@@ -66,12 +70,13 @@ const FormSales = ({
         product_name: product.name,
         product_sku:  product.sku || null,
         quantity:     cantidadNum,
-        price:        parseFloat(product.price),
-        subtotal:     cantidadNum * parseFloat(product.price),
+        price:        precio,
+        subtotal:     cantidadNum * precio,
       }]);
     }
     setSelectedProductId('');
     setCantidad(1);
+    setPrecioUnitario('');
     setProductoSearch('');
   };
 
@@ -232,6 +237,7 @@ const FormSales = ({
                           onMouseDown={() => {
                             setSelectedProductId(String(p.id));
                             setProductoSearch(p.name);
+                            setPrecioUnitario(parseFloat(p.price).toFixed(2));
                             setShowProductoDropdown(false);
                           }}
                         >
@@ -246,7 +252,7 @@ const FormSales = ({
                   )}
                 </div>
               </div>
-              <div className="col-md-3">
+              <div className="col-md-2">
                 <label className="form-label">Cantidad</label>
                 <input
                   type="number"
@@ -256,7 +262,18 @@ const FormSales = ({
                   onChange={e => setCantidad(e.target.value)}
                 />
               </div>
-              <div className="col-md-3 d-flex align-items-end">
+              <div className="col-md-2">
+                <label className="form-label">Precio unit. ($)</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  className="form-control"
+                  placeholder="0.00"
+                  value={precioUnitario}
+                  onChange={e => setPrecioUnitario(e.target.value.replace(/[^0-9.]/g, ''))}
+                />
+              </div>
+              <div className="col-md-2 d-flex align-items-end">
                 <button type="button" className="btn btn-primary w-100" onClick={handleAddItem}>
                   <i className="bi bi-plus-lg me-1"></i>Agregar
                 </button>
