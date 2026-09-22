@@ -149,7 +149,7 @@ const Sales = () => {
         .then(() => {
           toast.success('Venta actualizada');
           resetForm();
-          loadSales(search, page, dateFrom, dateTo);
+          loadSales(search, page, monthFrom, monthTo);
         })
         .catch(err => toast.error(err.response?.data?.error || 'Error al actualizar la venta'));
     } else {
@@ -157,7 +157,7 @@ const Sales = () => {
         .then(() => {
           toast.success('Venta creada');
           resetForm();
-          loadSales(search, page, dateFrom, dateTo);
+          loadSales(search, page, monthFrom, monthTo);
         })
         .catch(err => toast.error(err.response?.data?.error || 'Error al crear la venta'));
     }
@@ -236,7 +236,7 @@ const Sales = () => {
     axios.delete(`/sales/${saleId}`)
       .then(() => {
         toast.success('Venta eliminada');
-        loadSales(search, page, dateFrom, dateTo);
+        loadSales(search, page, monthFrom, monthTo);
       })
       .catch(err => toast.error(err.response?.data?.error || 'Error al eliminar la venta'));
   };
