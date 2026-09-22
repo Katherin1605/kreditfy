@@ -20,3 +20,10 @@ export const currencySymbol = (currency = 'USD') => {
   const found = CURRENCIES.find(c => c.code === currency);
   return found ? found.symbol : '$';
 };
+
+// Parsea solo la parte YYYY-MM-DD para evitar el desfase UTC→local
+export const formatDate = (dateStr, opts = { day: '2-digit', month: '2-digit', year: 'numeric' }) => {
+  if (!dateStr) return '—';
+  const [y, m, d] = String(dateStr).slice(0, 10).split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('es-ES', opts);
+};

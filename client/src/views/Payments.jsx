@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { formatCurrency } from '../utils/currency';
+import { formatCurrency, formatDate } from '../utils/currency';
 import { useExchangeRates } from '../context/ExchangeRatesContext';
 import AmountDisplay from '../components/AmountDisplay';
 import Pagination from '../components/Pagination';
@@ -242,7 +242,7 @@ const Payments = () => {
                           </div>
                           <i className="bi bi-eye text-primary fs-5"></i>
                         </div>
-                        <small className="text-muted">{new Date(s.sale_date || s.created_at).toLocaleDateString('es-ES')}</small>
+                        <small className="text-muted">{formatDate(s.sale_date || s.created_at)}</small>
                         <div className="d-flex justify-content-between mt-2 mb-1 small">
                           <span>Total: <strong><AmountDisplay amount={s.total} rates={rates} storedRate={s.exchange_rate} /></strong></span>
                           <span className="text-muted">{cuotasPagadas}/{s.cuotas} cuotas</span>
@@ -288,7 +288,7 @@ const Payments = () => {
                   </div>
                   <div className="col-4">
                     <p className="text-muted mb-0 small">Fecha</p>
-                    <p className="mb-0">{new Date(selectedSale.sale_date || selectedSale.created_at).toLocaleDateString('es-ES')}</p>
+                    <p className="mb-0">{formatDate(selectedSale.sale_date || selectedSale.created_at)}</p>
                   </div>
                   <div className="col-2">
                     <p className="text-muted mb-0 small">Moneda</p>
@@ -369,7 +369,7 @@ const Payments = () => {
                           {payments.map(p => (
                             <tr key={p.id}>
                               <td className="small text-muted">
-                                {new Date(p.payment_date || p.created_at).toLocaleDateString('es-ES')}
+                                {formatDate(p.payment_date || p.created_at)}
                               </td>
                               <td>
                                 <AmountDisplay amount={p.amount} rates={rates} storedRate={p.exchange_rate} className="text-success fw-bold small" />

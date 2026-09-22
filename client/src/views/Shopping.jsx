@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { formatDate } from '../utils/currency';
 import { useExchangeRates } from '../context/ExchangeRatesContext';
 import AmountDisplay from '../components/AmountDisplay';
 import FormShopping from '../components/FormShopping';
@@ -176,7 +177,7 @@ const Shopping = () => {
               ) : (
                 shopping.map(row => (
                   <tr key={row.id}>
-                    <td className="px-4 py-3">{new Date(row.date).toLocaleDateString('es-ES')}</td>
+                    <td className="px-4 py-3">{formatDate(row.date)}</td>
                     <td className="px-4 py-3">{products.find(p => p.id === row.product_id)?.name || '-'}</td>
                     <td className="px-4 py-3">
                       {(() => {

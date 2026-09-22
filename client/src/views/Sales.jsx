@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { formatCurrency } from '../utils/currency';
+import { formatCurrency, formatDate } from '../utils/currency';
 import { useExchangeRates } from '../context/ExchangeRatesContext';
 import AmountDisplay from '../components/AmountDisplay';
 import FormSales from '../components/FormSales';
@@ -204,7 +204,7 @@ const Sales = () => {
       const headers = ['#ID', 'Fecha', 'Cliente', 'Total (USD)', 'Cuotas', 'Valor Cuota (USD)', 'Pagado (USD)', 'Saldo (USD)', 'Estado'];
       const rows = data.map(s => [
         s.id,
-        new Date(s.sale_date || s.created_at).toLocaleDateString('es-ES'),
+        formatDate(s.sale_date || s.created_at),
         s.customer_name,
         fmt(s.total),
         s.cuotas,
@@ -367,7 +367,7 @@ const Sales = () => {
                         <span className="badge bg-light text-dark border">#{s.id}</span>
                       </td>
                       <td className="px-4 py-2">
-                        {new Date(s.sale_date || s.created_at).toLocaleDateString('es-ES')}
+                        {formatDate(s.sale_date || s.created_at)}
                       </td>
                       <td className="px-4 py-2">{s.customer_name || '-'}</td>
                       <td className="px-4 py-2">
