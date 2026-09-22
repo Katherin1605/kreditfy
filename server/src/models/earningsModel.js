@@ -26,7 +26,7 @@ export const getMonthlySummary = async (year, currency = '', tenantId) => {
   const cFilter = currency ? ` AND currency = $${idx++}` : '';
   if (currency) params.push(currency);
 
-  const [ingresosRes, gastosRes, closingsRes] = await Promise.all([
+  const [ingresosRes, gastosRes, closingsRes, ventasRes] = await Promise.all([
     pool.query(
       `SELECT EXTRACT(MONTH FROM payment_date)::int AS month,
               SUM(amount)::numeric                    AS ingresos
@@ -47,6 +47,14 @@ export const getMonthlySummary = async (year, currency = '', tenantId) => {
       `SELECT * FROM monthly_closings WHERE year = $1 ${tenantId != null ? `AND tenant_id = $2` : ''}`,
       tenantId != null ? [targetYear, tenantId] : [targetYear]
     ),
+    pool.query(
+      `SELECT EXTRACT(MONTH FROM sale_date)::int AS month,
+              SUM(total)::numeric                 AS ventas
+       FROM sales
+       WHERE EXTRACT(YEAR FROM sale_date) = $1 ${tenantFilter}
+       GROUP BY EXTRACT(MONTH FROM sale_date)`,
+      tenantId != null ? [targetYear, tenantId] : [targetYear]
+    ),
   ]);
 
   const MONTH_NAMES = [
@@ -56,18 +64,21 @@ export const getMonthlySummary = async (year, currency = '', tenantId) => {
 
   const months = [];
   for (let m = 1; m <= 12; m++) {
-    const ingRow  = ingresosRes.rows.find(r => r.month === m);
-    const gasRow  = gastosRes.rows.find(r => r.month === m);
-    const closing = closingsRes.rows.find(r => r.month === m);
+    const ingRow   = ingresosRes.rows.find(r => r.month === m);
+    const gasRow   = gastosRes.rows.find(r => r.month === m);
+    const closing  = closingsRes.rows.find(r => r.month === m);
+    const ventaRow = ventasRes.rows.find(r => r.month === m);
 
-    const ingresos = parseFloat(ingRow?.ingresos || 0);
-    const gastos   = parseFloat(gasRow?.gastos   || 0);
+    const ventas   = parseFloat(ventaRow?.ventas  || 0);
+    const ingresos = parseFloat(ingRow?.ingresos   || 0);
+    const gastos   = parseFloat(gasRow?.gastos     || 0);
     const ganancia = ingresos - gastos;
 
     months.push({
       month:      m,
       month_name: MONTH_NAMES[m],
       year:       targetYear,
+      ventas,
       ingresos,
       gastos,
       ganancia,

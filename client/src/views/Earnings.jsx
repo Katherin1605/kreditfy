@@ -66,13 +66,14 @@ const Earnings = () => {
 
   const totals = rows.reduce(
     (acc, r) => ({
+      ventas:   acc.ventas   + parseFloat(r.ventas   || 0),
       ingresos: acc.ingresos + parseFloat(r.ingresos || 0),
       gastos:   acc.gastos   + parseFloat(r.gastos   || 0),
       ganancia: acc.ganancia + parseFloat(r.ganancia  || 0),
       socio_1:  acc.socio_1  + parseFloat(r.socio_1   || 0),
       socio_2:  acc.socio_2  + parseFloat(r.socio_2   || 0),
     }),
-    { ingresos: 0, gastos: 0, ganancia: 0, socio_1: 0, socio_2: 0 }
+    { ventas: 0, ingresos: 0, gastos: 0, ganancia: 0, socio_1: 0, socio_2: 0 }
   );
 
   return (
@@ -102,7 +103,8 @@ const Earnings = () => {
             <thead>
               <tr>
                 <th className="px-4 py-3">Mes</th>
-                <th className="px-4 py-3">Ingresos</th>
+                <th className="px-4 py-3">Ventas</th>
+                <th className="px-4 py-3">Cobrado</th>
                 <th className="px-4 py-3">Gastos</th>
                 <th className="px-4 py-3">Ganancia</th>
                 <th className="px-4 py-3">Socio 1 (50%)</th>
@@ -114,23 +116,26 @@ const Earnings = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-5 text-muted">
+                  <td colSpan={9} className="text-center py-5 text-muted">
                     <div className="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
                     Cargando...
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-5 text-muted">
+                  <td colSpan={9} className="text-center py-5 text-muted">
                     No hay registros para {selectedYear}
                   </td>
                 </tr>
               ) : (
                 rows.map(row => {
-                  const hasData = parseFloat(row.ingresos || 0) > 0 || parseFloat(row.gastos || 0) > 0;
+                  const hasData = parseFloat(row.ventas || 0) > 0 || parseFloat(row.ingresos || 0) > 0 || parseFloat(row.gastos || 0) > 0;
                   return (
                     <tr key={row.month} className={!hasData ? 'earnings-empty-row' : ''}>
                       <td className="px-4 py-2 fw-semibold">{row.month_name}</td>
+                      <td className="px-4 py-2 text-primary">
+                        {hasData ? <AmountDisplay amount={row.ventas} rates={rates} /> : '—'}
+                      </td>
                       <td className="px-4 py-2 text-success">
                         {hasData ? <AmountDisplay amount={row.ingresos} rates={rates} /> : '—'}
                       </td>
@@ -169,6 +174,7 @@ const Earnings = () => {
               <tfoot className="earnings-tfoot">
                 <tr>
                   <td className="px-4 py-2 fw-bold">Totales {selectedYear}</td>
+                  <td className="px-4 py-2 fw-bold text-primary"><AmountDisplay amount={totals.ventas} rates={rates} /></td>
                   <td className="px-4 py-2 fw-bold text-success"><AmountDisplay amount={totals.ingresos} rates={rates} /></td>
                   <td className="px-4 py-2 fw-bold text-danger"><AmountDisplay amount={totals.gastos} rates={rates} /></td>
                   <td className="px-4 py-2 fw-bold"><AmountDisplay amount={totals.ganancia} rates={rates} /></td>
