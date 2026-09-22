@@ -79,7 +79,7 @@ const Sales = () => {
 
   const loadSales = (q = '', p = 1, from = '', to = '') => {
     setLoading(true);
-    const params = { page: p, limit: 15 };
+    const params = { page: p, limit: 10 };
     if (q) params.q = q;
     if (from) params.date_from = from;
     if (to) params.date_to = to;
