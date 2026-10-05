@@ -27,7 +27,7 @@ export const getPaymentsBySaleId = async (sale_id, tenantId) => {
   let where = 'WHERE sale_id = $1';
   if (tenantId != null) { where += ' AND tenant_id = $2'; params.push(tenantId); }
   const result = await pool.query(
-    `SELECT * FROM payments ${where} ORDER BY id`,
+    `SELECT * FROM payments ${where} ORDER BY payment_date ASC, id ASC`,
     params
   );
   return result.rows;
@@ -65,6 +65,48 @@ export const createPayment = async (data, tenantId) => {
     if (sale && totalPagado >= parseFloat(sale.total)) {
       await client.query("UPDATE sales SET status = 'paid' WHERE id = $1", [sale_id]);
     }
+
+    await client.query('COMMIT');
+    return payment;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+export const updatePayment = async (id, data, tenantId) => {
+  const { amount, method, payment_date, exchange_rate } = data;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const params = [id];
+    let where = 'WHERE id = $1';
+    if (tenantId != null) { where += ' AND tenant_id = $2'; params.push(tenantId); }
+    const result = await client.query(
+      `UPDATE payments
+         SET amount = $${params.length + 1},
+             method = $${params.length + 2},
+             payment_date = $${params.length + 3},
+             exchange_rate = $${params.length + 4}
+       ${where}
+       RETURNING *`,
+      [...params, amount, method ?? null, payment_date, exchange_rate ?? null]
+    );
+    const payment = result.rows[0];
+    if (!payment) { await client.query('ROLLBACK'); return null; }
+
+    const sumResult = await client.query(
+      'SELECT SUM(amount) AS total_pagado FROM payments WHERE sale_id = $1',
+      [payment.sale_id]
+    );
+    const totalPagado = parseFloat(sumResult.rows[0].total_pagado);
+    const saleResult = await client.query('SELECT total FROM sales WHERE id = $1', [payment.sale_id]);
+    const saleTotal  = parseFloat(saleResult.rows[0]?.total || 0);
+    const newStatus  = totalPagado >= saleTotal ? 'paid' : 'pending';
+    await client.query('UPDATE sales SET status = $1 WHERE id = $2', [newStatus, payment.sale_id]);
 
     await client.query('COMMIT');
     return payment;

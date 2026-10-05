@@ -1,6 +1,6 @@
 import * as paymentModel from "../models/paymentsModel.js";
-import * as salesModel from "../models/salesModel.js";
-import * as auditModel from "../models/auditModel.js";
+import * as salesModel   from "../models/salesModel.js";
+import * as auditModel   from "../models/auditModel.js";
 
 export const getPayments = async (req, res) => {
   try {
@@ -55,6 +55,29 @@ export const createPayment = async (req, res) => {
     if (error.code === "23503") return res.status(400).json({ error: "La venta especificada no existe" });
     if (error.code === "23514") return res.status(400).json({ error: "Método de pago inválido o monto debe ser mayor a 0" });
     res.status(500).json({ error: "Error al registrar el pago" });
+  }
+};
+
+export const updatePayment = async (req, res) => {
+  try {
+    const { amount, method, payment_date, exchange_rate } = req.body;
+    if (!amount) return res.status(400).json({ error: "El monto es obligatorio" });
+    const payment = await paymentModel.updatePayment(req.params.id, { amount, method, payment_date, exchange_rate }, req.tenantId);
+    if (!payment) return res.status(404).json({ error: "Pago no encontrado" });
+    res.json(payment);
+    salesModel.getSaleById(payment.sale_id, req.tenantId).then(sale => {
+      auditModel.createAuditLog({
+        admin_id: req.admin?.id || null,
+        action: 'UPDATE',
+        table_name: 'payments',
+        record_id: payment.id,
+        description: `Editó pago #${payment.id} a $${payment.amount}${sale?.customer_name ? ` — ${sale.customer_name}` : ''} (venta #${payment.sale_id})`,
+        tenant_id: req.tenantId,
+      }).catch(() => {});
+    }).catch(() => {});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al actualizar el pago" });
   }
 };
 

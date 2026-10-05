@@ -4,6 +4,7 @@ import {
   getPaymentById,
   getPaymentsBySaleId,
   createPayment,
+  updatePayment,
   deletePayment,
 } from "../src/controllers/paymentsController.js";
 import { authenticateToken } from "../src/middleware/authMiddleware.js";
@@ -15,6 +16,7 @@ router.get("/payments", authenticateToken, resolveTenant, getPayments);
 router.get("/payments/sale/:sale_id", authenticateToken, resolveTenant, getPaymentsBySaleId);
 router.get("/payments/:id", authenticateToken, resolveTenant, getPaymentById);
 router.post("/payments", authenticateToken, resolveTenant, createPayment);
+router.put("/payments/:id", authenticateToken, resolveTenant, updatePayment);
 router.delete("/payments/:id", authenticateToken, resolveTenant, deletePayment);
 
 export default router;

@@ -31,9 +31,10 @@ const Payments = () => {
   const [saleDetail, setSaleDetail] = useState(null);
   const [payments, setPayments] = useState([]);
   const [showPayForm, setShowPayForm] = useState(false);
+  const [editingPayment, setEditingPayment] = useState(null);
   const [payForm, setPayForm] = useState({ cuotasAPagar: 1, amount: '', method: '', payment_date: new Date().toISOString().split('T')[0], exchange_rate: '' });
   const debounceRef = useRef(null);
-  const { confirmModal } = useConfirm();
+  const { confirmModal, ask } = useConfirm();
   const { rates } = useExchangeRates();
 
   const [mYear, mMonth] = selectedMonth.split('-').map(Number);
@@ -107,13 +108,34 @@ const Payments = () => {
     setShowPayForm(false);
   };
 
+  const refreshAfterPaymentChange = () =>
+    Promise.all([
+      axios.get(`/sales/${selectedSale.id}`),
+      axios.get(`/payments/sale/${selectedSale.id}`),
+    ]).then(([detailRes, paymentsRes]) => {
+      loadSales(search, page, monthFrom, monthTo);
+      setSaleDetail(detailRes.data);
+      setPayments(paymentsRes.data);
+      setSelectedSale(prev => ({ ...prev, ...detailRes.data }));
+      setShowPayForm(false);
+      setEditingPayment(null);
+      setPayForm({ cuotasAPagar: 1, amount: '', method: '', payment_date: new Date().toISOString().split('T')[0], exchange_rate: '' });
+      if (parseFloat(detailRes.data.balance) <= 0) handleCloseDetail();
+    });
+
   const handleSubmitPago = (e) => {
     e.preventDefault();
     const amount = parseFloat(payForm.amount.replace(/,/g, ''));
-    const balance = parseFloat(selectedSale.balance);
-    if (amount <= 0 || amount > balance) {
-      toast.error('El monto debe ser mayor a 0 y no puede superar el saldo pendiente');
+    if (amount <= 0) {
+      toast.error('El monto debe ser mayor a 0');
       return;
+    }
+    if (!editingPayment) {
+      const balance = parseFloat(selectedSale.balance);
+      if (amount > balance) {
+        toast.error('El monto no puede superar el saldo pendiente');
+        return;
+      }
     }
     const body = {
       sale_id: selectedSale.id,
@@ -122,22 +144,34 @@ const Payments = () => {
       exchange_rate: parseFloat(payForm.exchange_rate) || null,
       ...(payForm.method ? { method: payForm.method } : {})
     };
-    axios.post('/payments', body)
-      .then(() => Promise.all([
-        axios.get(`/sales/${selectedSale.id}`),
-        axios.get(`/payments/sale/${selectedSale.id}`)
-      ]))
-      .then(([detailRes, paymentsRes]) => {
-        toast.success('Pago registrado');
-        loadSales(search, page, monthFrom, monthTo);
-        setSaleDetail(detailRes.data);
-        setPayments(paymentsRes.data);
-        setSelectedSale(prev => ({ ...prev, ...detailRes.data }));
-        setShowPayForm(false);
-        setPayForm({ cuotasAPagar: 1, amount: '', method: '', payment_date: new Date().toISOString().split('T')[0], exchange_rate: '' });
-        if (parseFloat(detailRes.data.balance) <= 0) handleCloseDetail();
-      })
-      .catch(err => toast.error(err.response?.data?.error || 'Error al registrar el pago'));
+    const request = editingPayment
+      ? axios.put(`/payments/${editingPayment.id}`, body)
+      : axios.post('/payments', body);
+    request
+      .then(() => refreshAfterPaymentChange())
+      .then(() => toast.success(editingPayment ? 'Pago actualizado' : 'Pago registrado'))
+      .catch(err => toast.error(err.response?.data?.error || (editingPayment ? 'Error al actualizar el pago' : 'Error al registrar el pago')));
+  };
+
+  const handleEditPago = (pago) => {
+    setEditingPayment(pago);
+    setPayForm({
+      cuotasAPagar: 1,
+      amount: parseFloat(pago.amount).toFixed(2),
+      method: pago.method || '',
+      payment_date: pago.payment_date ? pago.payment_date.split('T')[0] : new Date().toISOString().split('T')[0],
+      exchange_rate: pago.exchange_rate ? String(pago.exchange_rate) : '',
+    });
+    setShowPayForm(true);
+  };
+
+  const handleDeletePago = async (pago) => {
+    const ok = await ask('¿Eliminar este pago? El saldo de la venta será restaurado.');
+    if (!ok) return;
+    axios.delete(`/payments/${pago.id}`)
+      .then(() => refreshAfterPaymentChange())
+      .then(() => toast.success('Pago eliminado'))
+      .catch(err => toast.error(err.response?.data?.error || 'Error al eliminar el pago'));
   };
 
   const getCuotasPagadas = (sale) => {
@@ -363,6 +397,7 @@ const Payments = () => {
                             <th className="small">Fecha</th>
                             <th className="small">Monto</th>
                             <th className="small">Método</th>
+                            <th></th>
                           </tr>
                         </thead>
                         <tbody>
@@ -377,6 +412,24 @@ const Payments = () => {
                               <td className="small text-muted">
                                 {METHOD_LABELS[p.method] || p.method || '—'}
                               </td>
+                              <td className="text-end">
+                                <button
+                                  type="button"
+                                  className="btn btn-xs btn-outline-primary me-1"
+                                  title="Editar pago"
+                                  onClick={() => handleEditPago(p)}
+                                >
+                                  <i className="bi bi-pencil"></i>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-xs btn-outline-danger"
+                                  title="Eliminar pago"
+                                  onClick={() => handleDeletePago(p)}
+                                >
+                                  <i className="bi bi-trash"></i>
+                                </button>
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -385,7 +438,7 @@ const Payments = () => {
                   </>
                 )}
 
-                {parseFloat(selectedSale.balance) > 0 && (
+                {(parseFloat(selectedSale.balance) > 0 || showPayForm) && (
                   <>
                     {!showPayForm ? (
                       <button className="btn btn-success w-100 mt-3" onClick={() => {
@@ -401,8 +454,8 @@ const Payments = () => {
                     ) : (
                       <form onSubmit={handleSubmitPago} className="mt-3" noValidate>
                         <hr />
-                        <p className="fw-bold mb-3">Nuevo Pago</p>
-                        {parseFloat(selectedSale.valor_cuota || 0) > 0 && (
+                        <p className="fw-bold mb-3">{editingPayment ? 'Editar Pago' : 'Nuevo Pago'}</p>
+                        {!editingPayment && parseFloat(selectedSale.valor_cuota || 0) > 0 && (
                           <div className="mb-3">
                             <label className="form-label">Cuotas a pagar</label>
                             <input
@@ -489,7 +542,7 @@ const Payments = () => {
                         </div>
                         <div className="d-flex gap-2">
                           <button type="submit" className="btn btn-success flex-fill">Guardar Pago</button>
-                          <button type="button" className="btn btn-outline-secondary" onClick={() => setShowPayForm(false)}>Cancelar</button>
+                          <button type="button" className="btn btn-outline-secondary" onClick={() => { setShowPayForm(false); setEditingPayment(null); }}>Cancelar</button>
                         </div>
                       </form>
                     )}
