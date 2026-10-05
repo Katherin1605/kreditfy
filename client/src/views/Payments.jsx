@@ -31,7 +31,7 @@ const Payments = () => {
   const [saleDetail, setSaleDetail] = useState(null);
   const [payments, setPayments] = useState([]);
   const [showPayForm, setShowPayForm] = useState(false);
-  const [payForm, setPayForm] = useState({ amount: '', method: '', payment_date: new Date().toISOString().split('T')[0], exchange_rate: '' });
+  const [payForm, setPayForm] = useState({ cuotasAPagar: 1, amount: '', method: '', payment_date: new Date().toISOString().split('T')[0], exchange_rate: '' });
   const debounceRef = useRef(null);
   const { confirmModal } = useConfirm();
   const { rates } = useExchangeRates();
@@ -88,7 +88,7 @@ const Payments = () => {
   const handleSelectSale = (sale) => {
     setSelectedSale(sale);
     setShowPayForm(false);
-    setPayForm({ amount: '', method: '', payment_date: new Date().toISOString().split('T')[0], exchange_rate: '' });
+    setPayForm({ cuotasAPagar: 1, amount: '', method: '', payment_date: new Date().toISOString().split('T')[0], exchange_rate: '' });
     Promise.all([
       axios.get(`/sales/${sale.id}`),
       axios.get(`/payments/sale/${sale.id}`)
@@ -134,7 +134,7 @@ const Payments = () => {
         setPayments(paymentsRes.data);
         setSelectedSale(prev => ({ ...prev, ...detailRes.data }));
         setShowPayForm(false);
-        setPayForm({ amount: '', method: '', payment_date: new Date().toISOString().split('T')[0], exchange_rate: '' });
+        setPayForm({ cuotasAPagar: 1, amount: '', method: '', payment_date: new Date().toISOString().split('T')[0], exchange_rate: '' });
         if (parseFloat(detailRes.data.balance) <= 0) handleCloseDetail();
       })
       .catch(err => toast.error(err.response?.data?.error || 'Error al registrar el pago'));
@@ -388,13 +388,43 @@ const Payments = () => {
                 {parseFloat(selectedSale.balance) > 0 && (
                   <>
                     {!showPayForm ? (
-                      <button className="btn btn-success w-100 mt-3" onClick={() => setShowPayForm(true)}>
+                      <button className="btn btn-success w-100 mt-3" onClick={() => {
+                          const suggested = Math.min(
+                            parseFloat(selectedSale.valor_cuota || 0),
+                            parseFloat(selectedSale.balance)
+                          );
+                          setPayForm(f => ({ ...f, cuotasAPagar: 1, amount: suggested > 0 ? suggested.toFixed(2) : '' }));
+                          setShowPayForm(true);
+                        }}>
                         <i className="bi bi-cash-coin me-2"></i>Registrar Pago
                       </button>
                     ) : (
                       <form onSubmit={handleSubmitPago} className="mt-3" noValidate>
                         <hr />
                         <p className="fw-bold mb-3">Nuevo Pago</p>
+                        {parseFloat(selectedSale.valor_cuota || 0) > 0 && (
+                          <div className="mb-3">
+                            <label className="form-label">Cuotas a pagar</label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              min={1}
+                              max={selectedSale.cuotas - getCuotasPagadas(selectedSale) || 1}
+                              value={payForm.cuotasAPagar}
+                              onChange={e => {
+                                const n = Math.max(1, parseInt(e.target.value) || 1);
+                                const suggested = Math.min(
+                                  n * parseFloat(selectedSale.valor_cuota),
+                                  parseFloat(selectedSale.balance)
+                                );
+                                setPayForm({ ...payForm, cuotasAPagar: n, amount: suggested.toFixed(2) });
+                              }}
+                            />
+                            <small className="text-muted">
+                              {formatCurrency(selectedSale.valor_cuota || 0, 'USD')}/cuota · {selectedSale.cuotas - getCuotasPagadas(selectedSale)} restantes
+                            </small>
+                          </div>
+                        )}
                         <div className="mb-3">
                           <label className="form-label">Monto *</label>
                           <input
