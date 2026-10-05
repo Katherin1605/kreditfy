@@ -129,7 +129,7 @@ const Payments = () => {
       ]))
       .then(([detailRes, paymentsRes]) => {
         toast.success('Pago registrado');
-        loadSales(search, page, dateFrom, dateTo);
+        loadSales(search, page, monthFrom, monthTo);
         setSaleDetail(detailRes.data);
         setPayments(paymentsRes.data);
         setSelectedSale(prev => ({ ...prev, ...detailRes.data }));
