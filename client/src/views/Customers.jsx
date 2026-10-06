@@ -413,25 +413,19 @@ const Customers = () => {
                         <div className="col-4">
                           <div className="account-statement-summary-box account-statement-summary-ventas">
                             <p className="account-statement-summary-label">Total en ventas</p>
-                            <p className="account-statement-summary-value">
-                              <AmountDisplay amount={accountModal.data.summary.totalVentas} rates={rates} />
-                            </p>
+                            <p className="account-statement-summary-value">{formatCurrency(accountModal.data.summary.totalVentas, 'USD')}</p>
                           </div>
                         </div>
                         <div className="col-4">
                           <div className="account-statement-summary-box account-statement-summary-cobrado">
                             <p className="account-statement-summary-label">Total cobrado</p>
-                            <p className="account-statement-summary-value">
-                              <AmountDisplay amount={accountModal.data.summary.totalCobrado} rates={rates} />
-                            </p>
+                            <p className="account-statement-summary-value">{formatCurrency(accountModal.data.summary.totalCobrado, 'USD')}</p>
                           </div>
                         </div>
                         <div className="col-4">
                           <div className={`account-statement-summary-box ${accountModal.data.summary.saldoPendiente > 0 ? 'account-statement-summary-pendiente' : 'account-statement-summary-cobrado'}`}>
                             <p className="account-statement-summary-label">Saldo pendiente</p>
-                            <p className="account-statement-summary-value">
-                              <AmountDisplay amount={accountModal.data.summary.saldoPendiente} rates={rates} />
-                            </p>
+                            <p className="account-statement-summary-value">{formatCurrency(accountModal.data.summary.saldoPendiente, 'USD')}</p>
                           </div>
                         </div>
                       </div>
@@ -469,7 +463,7 @@ const Customers = () => {
                                     <tr key={p.id}>
                                       <td className="text-muted">{formatDate(p.payment_date)}</td>
                                       <td>
-                                        <AmountDisplay amount={p.amount} rates={rates} storedRate={sale.exchange_rate} className="text-success fw-semibold" />
+                                        <AmountDisplay amount={p.amount} rates={rates} storedRate={p.exchange_rate} className="text-success fw-semibold" />
                                       </td>
                                       <td className="text-muted">{{ cash: 'Efectivo', transfer: 'Pago Móvil', card: 'Cobro Externo' }[p.method] || '—'}</td>
                                     </tr>
@@ -481,8 +475,8 @@ const Customers = () => {
                             )}
 
                             <div className="account-statement-sale-footer">
-                              <span>Cobrado: <AmountDisplay amount={sale.total_paid} rates={rates} storedRate={sale.exchange_rate} className="d-inline text-success fw-semibold" /></span>
-                              <span>Saldo: <AmountDisplay amount={sale.balance} rates={rates} storedRate={sale.exchange_rate} className={`d-inline fw-semibold ${sale.balance > 0 ? 'text-warning' : 'text-success'}`} /></span>
+                              <span>Cobrado: <strong className="text-success">{formatCurrency(sale.total_paid, 'USD')}</strong></span>
+                              <span>Saldo: <strong className={sale.balance > 0 ? 'text-warning' : 'text-success'}>{formatCurrency(sale.balance, 'USD')}</strong></span>
                             </div>
                           </div>
                         ))
