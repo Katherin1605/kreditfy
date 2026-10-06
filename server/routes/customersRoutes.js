@@ -3,6 +3,7 @@ import {
   getCustomers,
   createCustomer,
   getCustomerById,
+  getCustomerAccount,
   updateCustomer,
   deleteCustomer,
   importCustomers,
@@ -13,6 +14,7 @@ import { resolveTenant } from "../src/middleware/resolveTenant.js";
 const router = Router();
 
 router.get("/customers", authenticateToken, resolveTenant, getCustomers);
+router.get("/customers/:id/account", authenticateToken, resolveTenant, getCustomerAccount);
 router.get("/customers/:id", authenticateToken, resolveTenant, getCustomerById);
 router.post("/customers/import", authenticateToken, resolveTenant, importCustomers);
 router.post("/customers", authenticateToken, resolveTenant, createCustomer);

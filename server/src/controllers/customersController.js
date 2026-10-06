@@ -97,6 +97,18 @@ export const importCustomers = async (req, res) => {
   }
 };
 
+export const getCustomerAccount = async (req, res) => {
+  try {
+    const customer = await customerModel.getCustomerById(req.params.id, req.tenantId);
+    if (!customer) return res.status(404).json({ error: "Cliente no encontrado" });
+    const account = await customerModel.getCustomerAccount(req.params.id, req.tenantId);
+    res.json({ customer, ...account });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener el estado de cuenta" });
+  }
+};
+
 export const deleteCustomer = async (req, res) => {
   try {
     const existing = await customerModel.getCustomerById(req.params.id, req.tenantId);

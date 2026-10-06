@@ -1236,3 +1236,122 @@ table tbody tr:hover {
 
 /* ── Utilidades ────────────────────────────────── */
 .btn-xs { padding: 0.15rem 0.4rem; font-size: 0.7rem; line-height: 1.4; }
+
+/* ── Estado de Cuenta ──────────────────────────── */
+.account-statement-customer-box {
+  background: #eef4ff;
+  border: 1px solid #c7d9f8;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+}
+.account-statement-section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #3b6fd4;
+  margin-bottom: 0.5rem;
+}
+.account-statement-summary-box {
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  text-align: center;
+}
+.account-statement-summary-ventas  { background: #e8f0fe; border: 1px solid #c0d0f5; color: #1a4fc4; }
+.account-statement-summary-cobrado { background: #e8f8f0; border: 1px solid #a8dfc0; color: #146c43; }
+.account-statement-summary-pendiente{ background: #fff8e1; border: 1px solid #ffe082; color: #7c5a00; }
+.account-statement-summary-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+  margin-bottom: 0.25rem;
+}
+.account-statement-summary-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+}
+.account-statement-sale-block {
+  border: 1px solid #d0ddf5;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.account-statement-sale-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  background: #f0f5ff;
+  border-bottom: 1px solid #d0ddf5;
+}
+.account-statement-payments-table { font-size: 0.875rem; }
+.account-statement-payments-table thead th {
+  background: transparent;
+  border-bottom: 1px solid #d0ddf5;
+  padding: 0.4rem 1rem;
+  color: #3b6fd4;
+  font-weight: 600;
+}
+.account-statement-payments-table tbody td { padding: 0.35rem 1rem; }
+.account-statement-sale-footer {
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.5rem 1rem;
+  background: #f0f5ff;
+  border-top: 1px solid #d0ddf5;
+  font-size: 0.85rem;
+}
+
+/* ── Impresión ─────────────────────────────────── */
+.print-only { display: none; }
+
+@media print {
+  body * { visibility: hidden; }
+  .account-statement-printable,
+  .account-statement-printable * { visibility: visible; }
+  .account-statement-printable {
+    position: fixed;
+    inset: 0;
+    padding: 1.5cm 2cm;
+    background: white;
+    overflow: visible;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .print-only { display: block !important; }
+  .account-statement-sale-block { break-inside: avoid; margin-bottom: 0.75rem; }
+
+  /* Encabezado del PDF */
+  .account-statement-print-header {
+    background: #1a3e8c !important;
+    color: white !important;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    display: flex !important;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .account-statement-print-header h4 { color: white !important; margin: 0; font-size: 1.3rem; }
+  .account-statement-print-header small { color: #a8c0e8 !important; font-size: 0.75rem; }
+
+  /* Sección cliente */
+  .account-statement-customer-box {
+    background: #eef4ff !important;
+    border: 1px solid #c7d9f8 !important;
+  }
+  .account-statement-section-label { color: #1a3e8c !important; }
+
+  /* Tarjetas de resumen */
+  .account-statement-summary-ventas   { background: #e8f0fe !important; border: 1px solid #c0d0f5 !important; }
+  .account-statement-summary-cobrado  { background: #e8f8f0 !important; border: 1px solid #a8dfc0 !important; }
+  .account-statement-summary-pendiente{ background: #fff8e1 !important; border: 1px solid #ffe082 !important; }
+
+  /* Cabecera de ventas */
+  .account-statement-sale-header { background: #e8f0fe !important; border-color: #c0d0f5 !important; }
+  .account-statement-sale-footer { background: #f5f8ff !important; border-color: #c0d0f5 !important; }
+  .account-statement-payments-table thead th { color: #1a3e8c !important; border-color: #c0d0f5 !important; }
+  .account-statement-sale-block { border-color: #c0d0f5 !important; }
+}

@@ -74,6 +74,61 @@ export const getCustomerPendingSalesCount = async (id, tenantId) => {
   return parseInt(result.rows[0].count);
 };
 
+export const getCustomerAccount = async (customerId, tenantId) => {
+  const params = [customerId];
+  let tenantCond = '';
+  if (tenantId != null) { tenantCond = ' AND s.tenant_id = $2'; params.push(tenantId); }
+
+  const salesRes = await pool.query(
+    `SELECT s.id, s.sale_date, s.total, s.cuotas,
+            ROUND(s.total / NULLIF(s.cuotas, 0), 2) AS valor_cuota,
+            s.status, s.currency, s.exchange_rate,
+            COALESCE(SUM(p.amount), 0)           AS total_paid,
+            s.total - COALESCE(SUM(p.amount), 0) AS balance
+     FROM sales s
+     LEFT JOIN payments p ON s.id = p.sale_id
+     WHERE s.customer_id = $1${tenantCond}
+     GROUP BY s.id
+     ORDER BY s.sale_date ASC, s.id ASC`,
+    params
+  );
+  const sales = salesRes.rows;
+
+  let payments = [];
+  if (sales.length > 0) {
+    const paymentsRes = await pool.query(
+      `SELECT id, sale_id, amount, method, payment_date, exchange_rate
+       FROM payments WHERE sale_id = ANY($1)
+       ORDER BY payment_date ASC, id ASC`,
+      [sales.map(s => s.id)]
+    );
+    payments = paymentsRes.rows;
+  }
+
+  const byId = {};
+  for (const p of payments) {
+    if (!byId[p.sale_id]) byId[p.sale_id] = [];
+    byId[p.sale_id].push(p);
+  }
+
+  const salesWithPayments = sales.map(s => ({
+    ...s,
+    total:       parseFloat(s.total),
+    total_paid:  parseFloat(s.total_paid),
+    balance:     parseFloat(s.balance),
+    valor_cuota: parseFloat(s.valor_cuota || 0),
+    payments:    byId[s.id] || [],
+  }));
+
+  const totalVentas  = salesWithPayments.reduce((sum, s) => sum + s.total, 0);
+  const totalCobrado = salesWithPayments.reduce((sum, s) => sum + s.total_paid, 0);
+
+  return {
+    sales:   salesWithPayments,
+    summary: { totalVentas, totalCobrado, saldoPendiente: totalVentas - totalCobrado },
+  };
+};
+
 export const deleteCustomer = async (id, tenantId) => {
   const params = [id];
   let where = 'WHERE id = $1';
