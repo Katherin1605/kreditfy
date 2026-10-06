@@ -26,7 +26,7 @@ export const getStats = async (tenantId, lowStockThreshold = 5) => {
 
     pool.query(`
       SELECT
-        s.id, c.name AS customer_name, s.currency,
+        s.id, s.customer_id, c.name AS customer_name, s.currency,
         s.total,
         COALESCE(SUM(p.amount), 0)           AS total_paid,
         s.total - COALESCE(SUM(p.amount), 0) AS balance
@@ -34,7 +34,7 @@ export const getStats = async (tenantId, lowStockThreshold = 5) => {
       LEFT JOIN customers c ON s.customer_id = c.id
       LEFT JOIN payments  p ON s.id = p.sale_id
       WHERE s.status != 'paid' ${tf2}
-      GROUP BY s.id, c.name, s.total, s.created_at
+      GROUP BY s.id, s.customer_id, c.name, s.total, s.created_at
       ORDER BY s.created_at DESC
       LIMIT 8
     `, p),
@@ -47,7 +47,7 @@ export const getStats = async (tenantId, lowStockThreshold = 5) => {
 
     pool.query(`
       SELECT
-        s.id, c.name AS customer_name,
+        s.id, s.customer_id, c.name AS customer_name,
         s.total,
         COALESCE(SUM(p.amount), 0)::numeric AS total_paid,
         MAX(p.payment_date)                 AS last_payment_date
@@ -55,7 +55,7 @@ export const getStats = async (tenantId, lowStockThreshold = 5) => {
       LEFT JOIN customers c ON s.customer_id = c.id
       LEFT JOIN payments  p ON s.id = p.sale_id
       WHERE s.status = 'paid' ${tf2}
-      GROUP BY s.id, c.name, s.total, s.created_at
+      GROUP BY s.id, s.customer_id, c.name, s.total, s.created_at
       ORDER BY MAX(p.payment_date) DESC NULLS LAST, s.created_at DESC
       LIMIT 8
     `, p),

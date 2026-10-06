@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/currency';
 import { useExchangeRates } from '../context/ExchangeRatesContext';
 import AmountDisplay from '../components/AmountDisplay';
+import CustomerAccountModal from '../components/CustomerAccountModal';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const METRICS = [
@@ -28,6 +29,10 @@ const Dashboard = () => {
   const [monthlyStats, setMonthlyStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [salesTab, setSalesTab] = useState('pending');
+  const [accountModal, setAccountModal] = useState({ show: false, customer: null });
+
+  const openAccount = (s) => setAccountModal({ show: true, customer: { id: s.customer_id, name: s.customer_name } });
+  const closeAccount = () => setAccountModal({ show: false, customer: null });
 
   useEffect(() => {
     Promise.all([
@@ -189,6 +194,7 @@ const Dashboard = () => {
                         <th className="px-3 py-2">Total</th>
                         <th className="px-3 py-2">Cobrado</th>
                         <th className="px-3 py-2">Saldo</th>
+                        <th className="px-3 py-2"></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -201,6 +207,11 @@ const Dashboard = () => {
                           <td className="px-3 py-2"><AmountDisplay amount={s.total}      rates={rates} /></td>
                           <td className="px-3 py-2 text-success"><AmountDisplay amount={s.total_paid} rates={rates} /></td>
                           <td className="px-3 py-2 fw-bold text-warning"><AmountDisplay amount={s.balance} rates={rates} /></td>
+                          <td className="px-3 py-2">
+                            <button className="btn btn-xs btn-outline-secondary" onClick={() => openAccount(s)} title="Ver estado de cuenta">
+                              <i className="bi bi-file-text"></i>
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -220,6 +231,7 @@ const Dashboard = () => {
                         <th className="px-3 py-2">Cliente</th>
                         <th className="px-3 py-2">Total</th>
                         <th className="px-3 py-2">Último pago</th>
+                        <th className="px-3 py-2"></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -236,6 +248,11 @@ const Dashboard = () => {
                             {s.last_payment_date
                               ? new Date(s.last_payment_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
                               : '-'}
+                          </td>
+                          <td className="px-3 py-2">
+                            <button className="btn btn-xs btn-outline-secondary" onClick={() => openAccount(s)} title="Ver estado de cuenta">
+                              <i className="bi bi-file-text"></i>
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -281,6 +298,12 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      <CustomerAccountModal
+        show={accountModal.show}
+        customer={accountModal.customer}
+        onClose={closeAccount}
+      />
     </>
   );
 };
