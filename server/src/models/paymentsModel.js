@@ -119,8 +119,33 @@ export const updatePayment = async (id, data, tenantId) => {
 };
 
 export const deletePayment = async (id, tenantId) => {
-  const params = [id];
-  let where = 'WHERE id = $1';
-  if (tenantId != null) { where += ' AND tenant_id = $2'; params.push(tenantId); }
-  await pool.query(`DELETE FROM payments ${where}`, params);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const params = [id];
+    let where = 'WHERE id = $1';
+    if (tenantId != null) { where += ' AND tenant_id = $2'; params.push(tenantId); }
+    const deleted = await client.query(`DELETE FROM payments ${where} RETURNING sale_id`, params);
+    const sale_id = deleted.rows[0]?.sale_id;
+
+    if (sale_id) {
+      const sumResult = await client.query(
+        'SELECT SUM(amount) AS total_pagado FROM payments WHERE sale_id = $1',
+        [sale_id]
+      );
+      const totalPagado = parseFloat(sumResult.rows[0].total_pagado || 0);
+      const saleResult = await client.query('SELECT total FROM sales WHERE id = $1', [sale_id]);
+      const saleTotal  = parseFloat(saleResult.rows[0]?.total || 0);
+      const newStatus  = totalPagado >= saleTotal ? 'paid' : 'pending';
+      await client.query('UPDATE sales SET status = $1 WHERE id = $2', [newStatus, sale_id]);
+    }
+
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 };

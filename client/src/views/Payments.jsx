@@ -23,6 +23,7 @@ const METHOD_LABELS = { cash: 'Efectivo', transfer: 'Transferencia', card: 'Tarj
 const Payments = () => {
   const [sales, setSales] = useState([]);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('pending');
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
@@ -42,21 +43,21 @@ const Payments = () => {
   const monthTo   = new Date(mYear, mMonth, 0).toISOString().split('T')[0];
 
   useEffect(() => {
-    loadSales(search, page, monthFrom, monthTo);
+    loadSales(search, page, monthFrom, monthTo, statusFilter);
   }, [page]);
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setPage(1);
-      loadSales(search, 1, monthFrom, monthTo);
+      loadSales(search, 1, monthFrom, monthTo, statusFilter);
     }, 350);
   }, [search]);
 
   useEffect(() => {
     setPage(1);
-    loadSales(search, 1, monthFrom, monthTo);
-  }, [selectedMonth]);
+    loadSales(search, 1, monthFrom, monthTo, statusFilter);
+  }, [selectedMonth, statusFilter]);
 
   useEffect(() => {
     if (!showPayForm) return;
@@ -65,9 +66,9 @@ const Payments = () => {
       .catch(() => {});
   }, [payForm.payment_date, showPayForm]);
 
-  const loadSales = (q = '', p = 1, from = '', to = '') => {
+  const loadSales = (q = '', p = 1, from = '', to = '', status = 'pending') => {
     setLoading(true);
-    const params = { page: p, limit: LIMIT, status: 'pending' };
+    const params = { page: p, limit: LIMIT, status };
     if (q) params.q = q;
     if (from) params.date_from = from;
     if (to) params.date_to = to;
@@ -120,7 +121,6 @@ const Payments = () => {
       setShowPayForm(false);
       setEditingPayment(null);
       setPayForm({ cuotasAPagar: 1, amount: '', method: '', payment_date: new Date().toISOString().split('T')[0], exchange_rate: '' });
-      if (parseFloat(detailRes.data.balance) <= 0) handleCloseDetail();
     });
 
   const handleSubmitPago = (e) => {
@@ -197,11 +197,27 @@ const Payments = () => {
         <div className="col-lg-5">
           <div className="card">
             <div className="card-header dashboard-card-header d-flex justify-content-between align-items-center">
-              <strong>Ventas Pendientes</strong>
+              <strong>{statusFilter === 'pending' ? 'Ventas Pendientes' : 'Ventas Pagadas'}</strong>
               <span className="badge bg-secondary">{pagination.total}</span>
             </div>
 
             <div className="card-body border-bottom pb-3 pt-3 px-3">
+              <div className="btn-group w-100 mb-3" role="group">
+                <button
+                  type="button"
+                  className={`btn btn-sm ${statusFilter === 'pending' ? 'btn-primary' : 'btn-outline-primary'}`}
+                  onClick={() => { setStatusFilter('pending'); setSelectedSale(null); setSaleDetail(null); setPayments([]); }}
+                >
+                  <i className="bi bi-hourglass-split me-1"></i>Pendientes
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${statusFilter === 'paid' ? 'btn-success' : 'btn-outline-success'}`}
+                  onClick={() => { setStatusFilter('paid'); setSelectedSale(null); setSaleDetail(null); setPayments([]); }}
+                >
+                  <i className="bi bi-check-circle me-1"></i>Pagadas
+                </button>
+              </div>
               <div className="input-group input-group-sm mb-2">
                 <span className="input-group-text bg-white border-end-0">
                   <i className="bi bi-search text-muted"></i>
@@ -255,7 +271,7 @@ const Payments = () => {
                 </div>
               ) : sales.length === 0 ? (
                 <p className="text-muted text-center py-4">
-                  {hasFilters ? 'Sin resultados para ese filtro' : 'No hay ventas pendientes'}
+                  {hasFilters ? 'Sin resultados para ese filtro' : statusFilter === 'paid' ? 'No hay ventas pagadas' : 'No hay ventas pendientes'}
                 </p>
               ) : (
                 sales.map(s => {
@@ -307,9 +323,10 @@ const Payments = () => {
               <div className="card-header dashboard-card-header d-flex justify-content-between align-items-center">
                 <div className="d-flex align-items-center gap-2">
                   <strong>Detalle de Venta</strong>
-                  {isOverdue(selectedSale) && (
-                    <span className="badge bg-danger">Vencida</span>
-                  )}
+                  {parseFloat(selectedSale.balance) <= 0
+                    ? <span className="badge bg-success">Pagada</span>
+                    : isOverdue(selectedSale) && <span className="badge bg-danger">Vencida</span>
+                  }
                 </div>
                 <button type="button" className="btn-close" onClick={handleCloseDetail} />
               </div>
